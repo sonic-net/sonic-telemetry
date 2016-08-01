@@ -1,0 +1,96 @@
+<!-- Copyright (c) 2015 Dell Inc.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may
+ not use this file except in compliance with the License. You may obtain
+ a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+ THIS CODE IS PROVIDED ON AN  *AS IS* BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
+ LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS
+ FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR NON-INFRINGEMENT.
+
+ See the Apache Version 2.0 License for specific language governing
+ permissions and limitations under the License.
+-->
+<pas>
+        <subcat id="chassis"/>
+        <subcat id="entity"/>
+        <subcat id="psu"/>
+        <subcat id="fan-tray"/>
+        <subcat id="card"/>
+        <subcat id="fan"/>
+        <subcat id="led" entity-type="psu"/>
+        <subcat id="led" entity-type="fan-tray"/>
+        <subcat id="led" entity-type="card"/>
+        <subcat id="display" entity-type="card"/>
+        <subcat id="temperature" entity-type="card"/>
+        <subcat id="temp-threshold" entity-type="card"/>
+        <subcat id="media"/>
+        <subcat id="media-channel"/>
+        <subcat id="media-config"/>
+
+        <entity entity-type="psu" poll-interval="2000"/>
+        <entity entity-type="fan-tray" poll-interval="2000"/>
+        <entity entity-type="card" poll-interval="5000"/>
+
+        <card type="0xfe00"/>
+
+        <fan entity-type="psu" margin="15" incr="1" decr="15" limit="45"/>
+        <fan entity-type="fan-tray" margin="15" incr="1" decr="15" limit="45"/>
+
+        <led-groups entity-type="fan-tray">
+          <led-group>
+            <led id="Fantray Fault"/>
+          </led-group>
+        </led-groups>
+
+        <led-groups entity-type="card">
+          <led-group>
+            <led id="Fan Fault"/>
+          </led-group>
+          <led-group>
+            <led id="PSU Fault"/>
+          </led-group>
+          <led-group>
+            <led id="Beacon"/>
+          </led-group>
+          <led-group>
+            <led id="Alarm Minor"/>
+            <led id="Alarm Major"/>
+          </led-group>
+          <led-group>
+            <led id="Stack Master" default="on"/>
+          </led-group>
+        </led-groups>
+
+        <media poll-interval="2000" rtd-interval="60"/>
+        <chassis total_mac_address="129"/>
+
+        <phy-config>
+
+            <!-- type is mediatype in string format and type-enum-value is the enum value generated -->
+            <!-- from yang file for each media type -->
+
+            <!-- mode is interface mode which should be configured in phy SGMII/SFI/GMII/etc -->
+            <!-- autoneg can be true/false -->
+
+            <!-- supported-speeds is list of supported speeds example :"10M/100M/1000M" -->
+            <!-- Valid data: 10M for 10MBPS, 100M for 100MBPS, 1000M/1G for 1GBPS -->
+            <!-- 10G for 10GBPS, 40G for 40GBPS -->
+
+            <!-- External phy config format -->
+            <!-- <external-phy mode="na" autoneg="na" supported-speeds="na" /> -->
+
+            <phy-config-for-media-type type="PLATFORM_MEDIA_TYPE_SFP_T" type-enum-value="58">
+                <internal-phy mode="SGMII" autoneg="1" supported-speeds="10M/100M/1000M" />
+            </phy-config-for-media-type>
+
+            <phy-config-for-media-type type="PLATFORM_MEDIA_TYPE_AR_SFPPLUS_10GBASE_T" type-enum-value="11">
+                <internal-phy mode="SFI" autoneg="1" supported-speeds="100M/1G/10G" />
+            </phy-config-for-media-type>
+
+            <phy-config-for-media-type type="PLATFORM_MEDIA_TYPE_AR_4X1_1000BASE_T" type-enum-value="34">
+                <internal-phy mode="SGMII" autoneg="1" supported-speeds="10M/100M/1000M" />
+            </phy-config-for-media-type>
+
+        </phy-config>
+</pas>

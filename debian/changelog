@@ -1,0 +1,5 @@
+sonic-platform-s6000-config (1.0.1) main; urgency=medium
+
+	 * Initial release
+
+ -- Dell Team <support@dell.com> Mon, 29 Feb 2016 11:12:18 -0800

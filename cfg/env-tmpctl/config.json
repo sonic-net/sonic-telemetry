@@ -1,0 +1,94 @@
+{ "cooling": {
+    "levels": {
+        "normal-zone": [
+            [ { "entity-type": "psu",      "airflow": "normal", "speed": 7200 },
+              { "entity-type": "fan-tray", "airflow": "normal", "speed": 7000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "normal", "speed": 10800 },
+              { "entity-type": "fan-tray", "airflow": "normal", "speed": 10000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "normal", "speed": 14400 },
+              { "entity-type": "fan-tray", "airflow": "normal", "speed": 13000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "normal", "speed": 16200 },
+              { "entity-type": "fan-tray", "airflow": "normal", "speed": 16000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "normal", "speed": 18000 },
+              { "entity-type": "fan-tray", "airflow": "normal", "speed": 19000 }
+            ]            
+        ],
+
+        "reverse-zone": [
+            [ { "entity-type": "psu",      "airflow": "reverse", "speed": 7200 },
+              { "entity-type": "fan-tray", "airflow": "reverse", "speed": 7000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "reverse", "speed": 10800 },
+              { "entity-type": "fan-tray", "airflow": "reverse", "speed": 10000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "reverse", "speed": 14400 },
+              { "entity-type": "fan-tray", "airflow": "reverse", "speed": 13000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "reverse", "speed": 16200 },
+              { "entity-type": "fan-tray", "airflow": "reverse", "speed": 16000 }
+            ],
+            [ { "entity-type": "psu",      "airflow": "reverse", "speed": 18000 },
+              { "entity-type": "fan-tray", "airflow": "reverse", "speed": 19000 }
+            ]            
+        ]
+    },
+      
+    "thresholds": [
+        { "sensor": "NPU temp sensor", "temperature": { "hi":  77, "lo": 72 }, "level": [ { "zone": "normal-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "NPU temp sensor", "temperature": { "hi":  85, "lo": 80 }, "level": [ { "zone": "normal-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "NPU temp sensor", "temperature": { "hi":  93, "lo": 88 }, "level": [ { "zone": "normal-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "NPU temp sensor", "temperature": { "hi": 101, "lo": 96 }, "level": [ { "zone": "normal-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "NPU temp sensor", "temperature": { "hi": 70, "lo": 65 }, "level": [ { "zone": "reverse-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "NPU temp sensor", "temperature": { "hi": 78, "lo": 73 }, "level": [ { "zone": "reverse-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "NPU temp sensor", "temperature": { "hi": 86, "lo": 81 }, "level": [ { "zone": "reverse-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "NPU temp sensor", "temperature": { "hi": 94, "lo": 89 }, "level": [ { "zone": "reverse-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 52, "lo": 47 }, "level": [ { "zone": "normal-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 60, "lo": 55 }, "level": [ { "zone": "normal-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 68, "lo": 63 }, "level": [ { "zone": "normal-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 76, "lo": 71 }, "level": [ { "zone": "normal-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 43, "lo": 38 }, "level": [ { "zone": "reverse-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 51, "lo": 46 }, "level": [ { "zone": "reverse-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 59, "lo": 54 }, "level": [ { "zone": "reverse-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "T2 temp sensor", "temperature": { "hi": 67, "lo": 62 }, "level": [ { "zone": "reverse-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 32, "lo": 27 }, "level": [ { "zone": "normal-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 40, "lo": 35 }, "level": [ { "zone": "normal-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 48, "lo": 43 }, "level": [ { "zone": "normal-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 56, "lo": 51 }, "level": [ { "zone": "normal-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 33, "lo": 28 }, "level": [ { "zone": "reverse-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 41, "lo": 36 }, "level": [ { "zone": "reverse-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 49, "lo": 44 }, "level": [ { "zone": "reverse-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "system-NIC temp sensor", "temperature": { "hi": 57, "lo": 52 }, "level": [ { "zone": "reverse-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 36, "lo": 31 }, "level": [ { "zone": "normal-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 44, "lo": 39 }, "level": [ { "zone": "normal-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 52, "lo": 47 }, "level": [ { "zone": "normal-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 60, "lo": 55 }, "level": [ { "zone": "normal-zone", "hi": 4, "lo": 3 } ] },
+
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 37, "lo": 32 }, "level": [ { "zone": "reverse-zone", "hi": 1, "lo": 0 } ] },
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 45, "lo": 40 }, "level": [ { "zone": "reverse-zone", "hi": 2, "lo": 1 } ] },
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 53, "lo": 49 }, "level": [ { "zone": "reverse-zone", "hi": 3, "lo": 2 } ] },
+        { "sensor": "Ambient temp sensor", "temperature": { "hi": 61, "lo": 56 }, "level": [ { "zone": "reverse-zone", "hi": 4, "lo": 3 } ] }
+    ]
+  },
+  
+  "faults": [
+      { "sensor": "T2 temp sensor",
+        "thresholds": [ { "hi": 50, "lo": 50 }, { "hi": 60, "lo": 60 }, { "hi": 80, "lo": 80 }, { "hi": 85, "lo": 85 } ]
+      },
+      { "sensor": "system-NIC temp sensor",
+        "thresholds": [ { "hi": 50, "lo": 50 }, { "hi": 60, "lo": 60 }, { "hi": 80, "lo": 80 }, { "hi": 85, "lo": 85 } ]
+      },
+      { "sensor": "Ambient temp sensor",
+        "thresholds": [ { "hi": 50, "lo": 50 }, { "hi": 60, "lo": 60 }, { "hi": 80, "lo": 80 }, { "hi": 85, "lo": 85 } ]
+      }
+  ]
+}

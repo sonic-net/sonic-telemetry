@@ -1,0 +1,91 @@
+<!-- Copyright (c) 2015 Dell Inc.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may
+ not use this file except in compliance with the License. You may obtain
+ a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+ THIS CODE IS PROVIDED ON AN  *AS IS* BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
+ LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS
+ FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR NON-INFRINGEMENT.
+
+ See the Apache Version 2.0 License for specific language governing
+ permissions and limitations under the License.
+-->
+<root>
+    <entity instance="1" type="SDI_ENTITY_SYSTEM_BOARD" presence="FIXED_SLOT" alias="System Board" cold_reset="0x3c" cold_reset_register="reset_register1" warm_reset="0x3e" warm_reset_register="reset_register1" >
+        <resource reference="tmp75-0" name="T2 temp sensor" />
+        <resource reference="tmp75-1" name="system-NIC temp sensor" />
+        <resource reference="tmp75-2" name="Ambient temp sensor" />
+<!-- On some boxes the following sensors are not found or detected.
+     Hence disable them as workaround
+        <resource reference="emc142x-0-1" name="CPU0 temp sensor" />
+        <resource reference="emc142x-0-2" name="CPU1 temp sensor" />
+  -->
+        <resource reference="master-led" name="Stack Master" />
+        <resource reference="system_critical_led" name="Alarm Major" />
+        <resource reference="system_noncritical_led" name="Alarm Minor" />
+        <resource reference="locator_function_enable_led" name="Beacon" />
+        <resource reference="psu_failed_led" name="PSU Fault" />
+        <resource reference="fan_failed_led" name="Fan Fault" />
+        <resource reference="stack_led" name="Stack ID" />
+        <resource reference="sys_eeprom" name="Entity Info" />
+        <resource reference="qsfp-1" name="Optics Media 1" />
+        <resource reference="qsfp-2" name="Optics Media 2" />
+        <resource reference="qsfp-3" name="Optics Media 3" />
+        <resource reference="qsfp-4" name="Optics Media 4" />
+        <resource reference="qsfp-5" name="Optics Media 5" />
+        <resource reference="qsfp-6" name="Optics Media 6" />
+        <resource reference="qsfp-7" name="Optics Media 7" />
+        <resource reference="qsfp-8" name="Optics Media 8" />
+        <resource reference="qsfp-9" name="Optics Media 9" />
+        <resource reference="qsfp-10" name="Optics Media 10" />
+        <resource reference="qsfp-11" name="Optics Media 11" />
+        <resource reference="qsfp-12" name="Optics Media 12" />
+        <resource reference="qsfp-13" name="Optics Media 13" />
+        <resource reference="qsfp-14" name="Optics Media 14" />
+        <resource reference="qsfp-15" name="Optics Media 15" />
+        <resource reference="qsfp-16" name="Optics Media 16" />
+        <resource reference="qsfp-17" name="Optics Media 17" />
+        <resource reference="qsfp-18" name="Optics Media 18" />
+        <resource reference="qsfp-19" name="Optics Media 19" />
+        <resource reference="qsfp-20" name="Optics Media 20" />
+        <resource reference="qsfp-21" name="Optics Media 21" />
+        <resource reference="qsfp-22" name="Optics Media 22" />
+        <resource reference="qsfp-23" name="Optics Media 23" />
+        <resource reference="qsfp-24" name="Optics Media 24" />
+        <resource reference="qsfp-25" name="Optics Media 25" />
+        <resource reference="qsfp-26" name="Optics Media 26" />
+        <resource reference="qsfp-27" name="Optics Media 27" />
+        <resource reference="qsfp-28" name="Optics Media 28" />
+        <resource reference="qsfp-29" name="Optics Media 29" />
+        <resource reference="qsfp-30" name="Optics Media 30" />
+        <resource reference="qsfp-31" name="Optics Media 31" />
+        <resource reference="qsfp-32" name="Optics Media 32" />
+    </entity>
+    <entity instance="1" type="SDI_ENTITY_FAN_TRAY" presence="fantray1_presence" alias="Fan Tray-1">
+        <resource reference="fan-1" name="Fan 1" />
+        <resource reference="fan-2" name="Fan 2" />
+        <resource reference="fan_tray_fru0" name="Entity Info" />
+        <resource reference="fan0_failed_led" name="Fantray Fault" />
+    </entity>
+    <entity instance="2" type="SDI_ENTITY_FAN_TRAY" presence="fantray2_presence" alias="Fan Tray-2">
+        <resource reference="fan-3" name="Fan 1" />
+        <resource reference="fan-4" name="Fan 2" />
+        <resource reference="fan_tray_fru1" name="Entity Info" />
+        <resource reference="fan1_failed_led" name="Fantray Fault" />
+    </entity>
+    <entity instance="3" type="SDI_ENTITY_FAN_TRAY" presence="fantray3_presence" alias="Fan Tray-3">
+        <resource reference="fan-5" name="Fan 1" />
+        <resource reference="fan-6" name="Fan 2" />
+        <resource reference="fan_tray_fru2" name="Entity Info" />
+        <resource reference="fan2_failed_led" name="Fantray Fault" />
+    </entity>
+    <entity instance="1" type="SDI_ENTITY_PSU_TRAY" presence="psu1_presence" power_output_status="psu1_output_power_status" fault="psu1_fault" alias="PSU Tray-1" power="psu1_status_ctrl">
+        <resource reference="psu-0-Fan-1" name="Fan of PSU-1" />
+        <resource reference="psu_fru0" name="Entity Info" />
+    </entity>
+    <entity instance="2" type="SDI_ENTITY_PSU_TRAY" presence="psu2_presence" power_output_status="psu2_output_power_status" fault="psu2_fault" alias="PSU Tray-2" power="psu2_status_ctrl">
+        <resource reference="psu-1-Fan-1" name="Fan of PSU-2" />
+        <resource reference="psu_fru1" name="Entity Info" />
+    </entity>
+</root>

@@ -1,0 +1,13 @@
+[Unit]
+Description= This PAS service is to initialize platform.
+After=sonic-object-library.service
+Wants=sonic-object-library.service
+DefaultDependencies=no
+
+[Service]
+ExecStart=/usr/bin/pas_monitor.sh
+
+
+[Install]
+WantedBy=multi-user.target
+

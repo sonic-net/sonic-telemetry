@@ -1,0 +1,1596 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2015 Dell Inc.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may
+ not use this file except in compliance with the License. You may obtain
+ a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+ THIS CODE IS PROVIDED ON AN  *AS IS* BASIS, WITHOUT WARRANTIES OR
+ CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
+ LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS
+ FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR NON-INFRINGEMENT.
+
+ See the Apache Version 2.0 License for specific language governing
+ permissions and limitations under the License.
+-->
+
+<!--=======================================================-->
+<!--     SAI Platform Initialization configuration         -->
+<!--=======================================================-->
+
+<SAI>
+
+    <!--=======================================================-->
+    <!--              Generic Platform Info                    -->
+    <!--=======================================================-->
+
+    <PLATFORM_INFO type="generic">
+
+        <!--=======================================================-->
+        <!--               Switch Level info                       -->
+        <!--=======================================================-->
+
+        <SWITCH instance="0">
+            <!-- Trident2 Supports maximum MTU of 9216 Bytes. BCM56850 Errata -->
+            <PORT_INFO cpu_port="0" max_logical_ports="104"
+                max_physical_ports="32" max_lane_per_port="4" max_port_mtu="9216"/>
+            <TABLE_SIZE l2_table="163840" l3_table="90112"/>
+            <QOS hierarchy_levels="3" max_hierarchy_node_childs="48"
+                traffic_class="16" max_buffer_size="12188" num_pg="8"
+                cell_size="208" ing_max_buf_pools="4" egr_max_buf_pools="4"/>
+            <PORT_QUEUE queue_count="20" uc_count="10" mc_count="10"/>
+            <CPU_PORT_QUEUE queue_count="43" uc_count="0" mc_count="43"/>
+        </SWITCH>
+
+        <!--========================================================-->
+        <!-- Scheduler group hierarchy levels for default qos init  -->
+        <!-- Levels 3; Level-0:Port Level-1:L0 Level-2:L1           -->
+        <!-- Port has 1 L0 node as child                            -->
+        <!-- L0.0 has 1 L1 node as child                            -->
+        <!-- L1 node has 43 multicast queues as child               -->
+        <!--========================================================-->
+        <CPU_SCHEDULER_HIERARCHY_TREE num_levels="3">
+            <LEVEL level_idx="0" scheduler_group_count="1">
+                <SCHEDULER_GROUP index="0" child_count="1">
+                    <child-scheduler-group child_level ="1" index="0"/>
+                </SCHEDULER_GROUP>
+            </LEVEL>
+
+            <LEVEL level_idx="1" scheduler_group_count="1">
+                <SCHEDULER_GROUP index="0" child_count="1">
+                    <child-scheduler-group child_level="2" index="0"/>
+                </SCHEDULER_GROUP>
+            </LEVEL>
+
+            <LEVEL level_idx="2" scheduler_group_count="1">
+                <SCHEDULER_GROUP index="0" child_count="43">
+                    <child-queue queue-number="0" type="MCAST" index="0"/>
+                    <child-queue queue-number="1" type="MCAST" index="1"/>
+                    <child-queue queue-number="2" type="MCAST" index="2"/>
+                    <child-queue queue-number="3" type="MCAST" index="3"/>
+                    <child-queue queue-number="4" type="MCAST" index="4"/>
+                    <child-queue queue-number="5" type="MCAST" index="5"/>
+                    <child-queue queue-number="6" type="MCAST" index="6"/>
+                    <child-queue queue-number="7" type="MCAST" index="7"/>
+                    <child-queue queue-number="8" type="MCAST" index="8"/>
+                    <child-queue queue-number="9" type="MCAST" index="9"/>
+                    <child-queue queue-number="10" type="MCAST" index="10"/>
+                    <child-queue queue-number="11" type="MCAST" index="11"/>
+                    <child-queue queue-number="12" type="MCAST" index="12"/>
+                    <child-queue queue-number="13" type="MCAST" index="13"/>
+                    <child-queue queue-number="14" type="MCAST" index="14"/>
+                    <child-queue queue-number="15" type="MCAST" index="15"/>
+                    <child-queue queue-number="16" type="MCAST" index="16"/>
+                    <child-queue queue-number="17" type="MCAST" index="17"/>
+                    <child-queue queue-number="18" type="MCAST" index="18"/>
+                    <child-queue queue-number="19" type="MCAST" index="19"/>
+                    <child-queue queue-number="20" type="MCAST" index="20"/>
+                    <child-queue queue-number="21" type="MCAST" index="21"/>
+                    <child-queue queue-number="22" type="MCAST" index="22"/>
+                    <child-queue queue-number="23" type="MCAST" index="23"/>
+                    <child-queue queue-number="24" type="MCAST" index="24"/>
+                    <child-queue queue-number="25" type="MCAST" index="25"/>
+                    <child-queue queue-number="26" type="MCAST" index="26"/>
+                    <child-queue queue-number="27" type="MCAST" index="27"/>
+                    <child-queue queue-number="28" type="MCAST" index="28"/>
+                    <child-queue queue-number="29" type="MCAST" index="29"/>
+                    <child-queue queue-number="30" type="MCAST" index="30"/>
+                    <child-queue queue-number="31" type="MCAST" index="31"/>
+                    <child-queue queue-number="32" type="MCAST" index="32"/>
+                    <child-queue queue-number="33" type="MCAST" index="33"/>
+                    <child-queue queue-number="34" type="MCAST" index="34"/>
+                    <child-queue queue-number="35" type="MCAST" index="35"/>
+                    <child-queue queue-number="36" type="MCAST" index="36"/>
+                    <child-queue queue-number="37" type="MCAST" index="37"/>
+                    <child-queue queue-number="38" type="MCAST" index="38"/>
+                    <child-queue queue-number="39" type="MCAST" index="39"/>
+                    <child-queue queue-number="40" type="MCAST" index="40"/>
+                    <child-queue queue-number="41" type="MCAST" index="41"/>
+                    <child-queue queue-number="42" type="MCAST" index="42"/>
+                </SCHEDULER_GROUP>
+            </LEVEL>
+
+        </CPU_SCHEDULER_HIERARCHY_TREE>
+        <!--========================================================-->
+        <!-- Scheduler group hierarchy levels for default qos init  -->
+        <!-- Levels 3; Level-0:Port Level-1:L0 Level-2:L1           -->
+        <!-- Port has 5 L0 nodes as child                           -->
+        <!-- L0.0 has 8 L1 nodes as child                           -->
+        <!-- L0.4 has 2 L1 nodes as child . This is a control node  -->
+        <!-- Each L1 node has unicast and multicast queue as child  -->
+        <!--========================================================-->
+        <SCHEDULER_HIERARCHY_TREE num_levels="3">
+            <LEVEL level_idx="0" scheduler_group_count="1">
+                <SCHEDULER_GROUP index="0" child_count="4">
+                    <child-scheduler-group child_level ="1" index="0"/>
+                    <child-scheduler-group child_level ="1" index="1"/>
+                    <child-scheduler-group child_level ="1" index="2"/>
+                    <child-scheduler-group child_level ="1" index="3"/>
+                </SCHEDULER_GROUP>
+            </LEVEL>
+
+            <LEVEL level_idx="1" scheduler_group_count="4">
+                <SCHEDULER_GROUP index="0" child_count="8">
+                    <child-scheduler-group child_level="2" index="0"/>
+                    <child-scheduler-group child_level="2" index="1"/>
+                    <child-scheduler-group child_level="2" index="2"/>
+                    <child-scheduler-group child_level="2" index="3"/>
+                    <child-scheduler-group child_level="2" index="4"/>
+                    <child-scheduler-group child_level="2" index="5"/>
+                    <child-scheduler-group child_level="2" index="6"/>
+                    <child-scheduler-group child_level="2" index="7"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="1" child_count="0">
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="2" child_count="0">
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="3" child_count="2">
+                    <child-scheduler-group child_level="2" index="8"/>
+                    <child-scheduler-group child_level="2" index="9"/>
+                </SCHEDULER_GROUP>
+            </LEVEL>
+
+            <LEVEL level_idx="2" scheduler_group_count="10">
+                <SCHEDULER_GROUP index="0" child_count="2">
+                    <child-queue queue-number="0" type="UCAST" index="0"/>
+                    <child-queue queue-number="0" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="1" child_count="2">
+                    <child-queue queue-number="1" type="UCAST" index="0"/>
+                    <child-queue queue-number="1" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="2" child_count="2">
+                    <child-queue queue-number="2" type="UCAST" index="0"/>
+                    <child-queue queue-number="2" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="3" child_count="2">
+                    <child-queue queue-number="3" type="UCAST" index="0"/>
+                    <child-queue queue-number="3" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="4" child_count="2">
+                    <child-queue queue-number="4" type="UCAST" index="0"/>
+                    <child-queue queue-number="4" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="5" child_count="2">
+                    <child-queue queue-number="5" type="UCAST" index="0"/>
+                    <child-queue queue-number="5" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="6" child_count="2">
+                    <child-queue queue-number="6" type="UCAST" index="0"/>
+                    <child-queue queue-number="6" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="7" child_count="2">
+                    <child-queue queue-number="7" type="UCAST" index="0"/>
+                    <child-queue queue-number="7" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="8" child_count="2">
+                    <child-queue queue-number="8" type="UCAST" index="0"/>
+                    <child-queue queue-number="8" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+
+                <SCHEDULER_GROUP index="9" child_count="2">
+                    <child-queue queue-number="9" type="UCAST" index="0"/>
+                    <child-queue queue-number="9" type="MCAST" index="1"/>
+                </SCHEDULER_GROUP>
+             </LEVEL>
+
+        </SCHEDULER_HIERARCHY_TREE>
+    </PLATFORM_INFO>
+
+    <!--=======================================================-->
+    <!--               Vendor Specific Info                    -->
+    <!--=======================================================-->
+
+    <PLATFORM_INFO type="vendor">
+
+        <!--=======================================================-->
+        <!--               Switch Level info                       -->
+        <!--=======================================================-->
+
+        <SWITCH instance="0" type="BCM56850_A2_TRIDENT2">
+            <CAPABILITIES bitmask="0x1f"/>
+            <SW_LINKSCAN interval="100000"/>
+        </SWITCH>
+
+        <!--=======================================================-->
+        <!--               Port Level info                         -->
+        <!--=======================================================-->
+        <!--  32 Physical ports   ; 104 Logical ports              -->
+        <!--=======================================================-->
+        <!--  128 port instances  ; 104 active port instances      -->
+        <!--  8 Non-breakout port ; 24 inactive ports              -->
+        <!--=======================================================-->
+
+        <PORT instance="0" active="true">
+            <ID valid="true" logical_port="1" hw_port="25" serdes_type="warpcore" port_group="0"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0002" rx="0x000e"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="1" active="true">
+            <ID valid="false" logical_port="2" hw_port="26" serdes_type="warpcore" port_group="0"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="2" active="true">
+            <ID valid="false" logical_port="3" hw_port="27" serdes_type="warpcore" port_group="0"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="3" active="true">
+            <ID valid="false" logical_port="4" hw_port="28" serdes_type="warpcore" port_group="0"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xd2b0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="4" active="true">
+            <ID valid="true" logical_port="5" hw_port="29" serdes_type="warpcore" port_group="1"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0009" rx="0x000c"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x6" predriver="0x6"/>
+        </PORT>
+
+        <PORT instance="5" active="true">
+            <ID valid="false" logical_port="6" hw_port="30" serdes_type="warpcore" port_group="1"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xd2b0" idriver="0x7" predriver="0x7"/>
+        </PORT>
+
+        <PORT instance="6" active="true">
+            <ID valid="false" logical_port="7" hw_port="31" serdes_type="warpcore" port_group="1"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x6" predriver="0x6"/>
+        </PORT>
+
+        <PORT instance="7" active="true">
+            <ID valid="false" logical_port="8" hw_port="32" serdes_type="warpcore" port_group="1"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x6" predriver="0x6"/>
+        </PORT>
+
+        <PORT instance="8" active="true">
+            <ID valid="true" logical_port="9" hw_port="33" serdes_type="warpcore" port_group="2"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0002" rx="0x000e"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="9" active="true">
+            <ID valid="false" logical_port="10" hw_port="34" serdes_type="warpcore" port_group="2"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="10" active="true">
+            <ID valid="false" logical_port="11" hw_port="35" serdes_type="warpcore" port_group="2"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="11" active="true">
+            <ID valid="false" logical_port="12" hw_port="36" serdes_type="warpcore" port_group="2"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="12" active="true">
+            <ID valid="true" logical_port="13" hw_port="37" serdes_type="warpcore" port_group="3"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x000e" rx="0x0003"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="13" active="true">
+            <ID valid="false" logical_port="14" hw_port="38" serdes_type="warpcore" port_group="3"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="14" active="true">
+            <ID valid="false" logical_port="15" hw_port="39" serdes_type="warpcore" port_group="3"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="15" active="true">
+            <ID valid="false" logical_port="16" hw_port="40" serdes_type="warpcore" port_group="3"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="16" active="true">
+            <ID valid="true" logical_port="17" hw_port="45" serdes_type="warpcore" port_group="4"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0008" rx="0x000e"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="17" active="true">
+            <ID valid="false" logical_port="18" hw_port="46" serdes_type="warpcore" port_group="4"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="18" active="true">
+            <ID valid="false" logical_port="19" hw_port="47" serdes_type="warpcore" port_group="4"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="19" active="true">
+            <ID valid="false" logical_port="20" hw_port="48" serdes_type="warpcore" port_group="4"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0213" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="20" active="true">
+            <ID valid="true" logical_port="21" hw_port="41" serdes_type="warpcore" port_group="5"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x3021" rx="0x0213"/>
+            <POLARITY tx="0x000b" rx="0x0003"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="21" active="true">
+            <ID valid="false" logical_port="22" hw_port="42" serdes_type="warpcore" port_group="5"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x3021" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="22" active="true">
+            <ID valid="false" logical_port="23" hw_port="43" serdes_type="warpcore" port_group="5"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x3021" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0X4" predriver="0X4"/>
+        </PORT>
+
+        <PORT instance="23" active="true">
+            <ID valid="false" logical_port="24" hw_port="44" serdes_type="warpcore" port_group="5"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x3021" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="24" active="true">
+            <ID valid="true" logical_port="25" hw_port="1" serdes_type="warpcore" port_group="6"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x000d" rx="0x000e"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+
+        <PORT instance="25" active="true">
+            <ID valid="false" logical_port="26" hw_port="2" serdes_type="warpcore" port_group="6"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="26" active="true">
+            <ID valid="false" logical_port="27" hw_port="3" serdes_type="warpcore" port_group="6"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="27" active="true">
+            <ID valid="false" logical_port="28" hw_port="4" serdes_type="warpcore" port_group="6"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="28" active="true">
+            <ID valid="true" logical_port="29" hw_port="5" serdes_type="warpcore" port_group="7"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x000c"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="29" active="true">
+            <ID valid="false" logical_port="30" hw_port="6" serdes_type="warpcore" port_group="7"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="30" active="true">
+            <ID valid="false" logical_port="31" hw_port="7" serdes_type="warpcore" port_group="7"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="31" active="true">
+            <ID valid="false" logical_port="32" hw_port="8" serdes_type="warpcore" port_group="7"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="32" active="true">
+            <ID valid="true" logical_port="33" hw_port="13" serdes_type="warpcore" port_group="8"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x000e"/>
+            <PRE_EMPHASIS type="default" preemp="0xb270" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="33" active="true">
+            <ID valid="false" logical_port="34" hw_port="14" serdes_type="warpcore" port_group="8"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="34" active="true">
+            <ID valid="false" logical_port="35" hw_port="15" serdes_type="warpcore" port_group="8"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb270" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="35" active="true">
+            <ID valid="false" logical_port="36" hw_port="16" serdes_type="warpcore" port_group="8"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb270" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="36" active="true">
+            <ID valid="true" logical_port="37" hw_port="9" serdes_type="warpcore" port_group="9"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x3021" rx="0x3120"/>
+            <POLARITY tx="0x0004" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="37" active="true">
+            <ID valid="false" logical_port="38" hw_port="10" serdes_type="warpcore" port_group="9"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x3021" rx="0x3120"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="38" active="true">
+            <ID valid="false" logical_port="39" hw_port="11" serdes_type="warpcore" port_group="9"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x3021" rx="0x3120"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbf00" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="39" active="true">
+            <ID valid="false" logical_port="40" hw_port="12" serdes_type="warpcore" port_group="9"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x3021" rx="0x3120"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="40" active="true">
+            <ID valid="true" logical_port="41" hw_port="17" serdes_type="warpcore" port_group="10"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x000e"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="41" active="true">
+            <ID valid="false" logical_port="42" hw_port="18" serdes_type="warpcore" port_group="10"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="42" active="true">
+            <ID valid="false" logical_port="43" hw_port="19" serdes_type="warpcore" port_group="10"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="43" active="true">
+            <ID valid="false" logical_port="44" hw_port="20" serdes_type="warpcore" port_group="10"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="44" active="true">
+            <ID valid="true" logical_port="45" hw_port="21" serdes_type="warpcore" port_group="11"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x000e" rx="0x000c"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="45" active="true">
+            <ID valid="false" logical_port="46" hw_port="22" serdes_type="warpcore" port_group="11"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="46" active="true">
+            <ID valid="false" logical_port="47" hw_port="23" serdes_type="warpcore" port_group="11"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="47" active="true">
+            <ID valid="false" logical_port="48" hw_port="24" serdes_type="warpcore" port_group="11"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="48" active="true">
+            <ID valid="true" logical_port="49" hw_port="53" serdes_type="warpcore" port_group="12"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0231" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="49" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="54" serdes_type="warpcore" port_group="12"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0231" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="50" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="55" serdes_type="warpcore" port_group="12"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0231" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="51" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="56" serdes_type="warpcore" port_group="12"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0231" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="52" active="true">
+            <ID valid="true" logical_port="50" hw_port="49" serdes_type="warpcore" port_group="13"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x1302"/>
+            <POLARITY tx="0x0003" rx="0x000b"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="53" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="50" serdes_type="warpcore" port_group="13"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x1302"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="54" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="51" serdes_type="warpcore" port_group="13"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x1302"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="55" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="52" serdes_type="warpcore" port_group="13"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x1302"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="56" active="true">
+            <ID valid="true" logical_port="51" hw_port="57" serdes_type="warpcore" port_group="14"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="57" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="58" serdes_type="warpcore" port_group="14"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="58" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="59" serdes_type="warpcore" port_group="14"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="59" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="60" serdes_type="warpcore" port_group="14"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="60" active="true">
+            <ID valid="true" logical_port="52" hw_port="61" serdes_type="warpcore" port_group="15"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0213" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="61" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="62" serdes_type="warpcore" port_group="15"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0213" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="62" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="63" serdes_type="warpcore" port_group="15"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0213" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="63" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="64" serdes_type="warpcore" port_group="15"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0213" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="64" active="true">
+            <ID valid="true" logical_port="53" hw_port="69" serdes_type="warpcore" port_group="16"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2130" rx="0x0213"/>
+            <POLARITY tx="0x000f" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="65" active="true">
+            <ID valid="false" logical_port="54" hw_port="70" serdes_type="warpcore" port_group="16"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2130" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="66" active="true">
+            <ID valid="false" logical_port="55" hw_port="71" serdes_type="warpcore" port_group="16"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2130" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="67" active="true">
+            <ID valid="false" logical_port="56" hw_port="72" serdes_type="warpcore" port_group="16"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2130" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="68" active="true">
+            <ID valid="true" logical_port="57" hw_port="65" serdes_type="warpcore" port_group="17"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x0132"/>
+            <POLARITY tx="0x0009" rx="0x0003"/>
+            <PRE_EMPHASIS type="default" preemp="0xa370" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="69" active="true">
+            <ID valid="false" logical_port="58" hw_port="66" serdes_type="warpcore" port_group="17"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xa370" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="70" active="true">
+            <ID valid="false" logical_port="59" hw_port="67" serdes_type="warpcore" port_group="17"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa370" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="71" active="true">
+            <ID valid="false" logical_port="60" hw_port="68" serdes_type="warpcore" port_group="17"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x0132"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa370" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="72" active="true">
+            <ID valid="true" logical_port="61" hw_port="73" serdes_type="warpcore" port_group="18"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="73" active="true">
+            <ID valid="false" logical_port="62" hw_port="74" serdes_type="warpcore" port_group="18"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="74" active="true">
+            <ID valid="false" logical_port="63" hw_port="75" serdes_type="warpcore" port_group="18"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="75" active="true">
+            <ID valid="false" logical_port="64" hw_port="76" serdes_type="warpcore" port_group="18"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xa760" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="76" active="true">
+            <ID valid="true" logical_port="65" hw_port="77" serdes_type="warpcore" port_group="19"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x000e" rx="0x0003"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="77" active="true">
+            <ID valid="false" logical_port="66" hw_port="78" serdes_type="warpcore" port_group="19"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="78" active="true">
+            <ID valid="false" logical_port="67" hw_port="79" serdes_type="warpcore" port_group="19"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="79" active="true">
+            <ID valid="false" logical_port="68" hw_port="80" serdes_type="warpcore" port_group="19"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x1203" rx="0x0123"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xaf40" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="80" active="true">
+            <ID valid="true" logical_port="69" hw_port="109" serdes_type="warpcore" port_group="20"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0008"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="81" active="true">
+            <ID valid="false" logical_port="70" hw_port="110" serdes_type="warpcore" port_group="20"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="82" active="true">
+            <ID valid="false" logical_port="71" hw_port="111" serdes_type="warpcore" port_group="20"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbff0" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="83" active="true">
+            <ID valid="false" logical_port="72" hw_port="112" serdes_type="warpcore" port_group="20"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="84" active="true">
+            <ID valid="true" logical_port="73" hw_port="105" serdes_type="warpcore" port_group="21"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x000b" rx="0x000d"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="85" active="true">
+            <ID valid="false" logical_port="74" hw_port="106" serdes_type="warpcore" port_group="21"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="86" active="true">
+            <ID valid="false" logical_port="75" hw_port="107" serdes_type="warpcore" port_group="21"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="87" active="true">
+            <ID valid="false" logical_port="76" hw_port="108" serdes_type="warpcore" port_group="21"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xb330" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="88" active="true">
+            <ID valid="true" logical_port="77" hw_port="113" serdes_type="warpcore" port_group="22"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0008"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="89" active="true">
+            <ID valid="false" logical_port="78" hw_port="114" serdes_type="warpcore" port_group="22"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="90" active="true">
+            <ID valid="false" logical_port="79" hw_port="115" serdes_type="warpcore" port_group="22"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="91" active="true">
+            <ID valid="false" logical_port="80" hw_port="116" serdes_type="warpcore" port_group="22"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x1" predriver="0x1"/>
+        </PORT>
+
+        <PORT instance="92" active="true">
+            <ID valid="true" logical_port="81" hw_port="117" serdes_type="warpcore" port_group="23"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x0231"/>
+            <POLARITY tx="0x000e" rx="0x0003"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="93" active="true">
+            <ID valid="false" logical_port="82" hw_port="118" serdes_type="warpcore" port_group="23"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x0231"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="94" active="true">
+            <ID valid="false" logical_port="83" hw_port="119" serdes_type="warpcore" port_group="23"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x0231"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="95" active="true">
+            <ID valid="false" logical_port="84" hw_port="120" serdes_type="warpcore" port_group="23"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x1203" rx="0x0231"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x3" predriver="0x3"/>
+        </PORT>
+
+        <PORT instance="96" active="true">
+            <ID valid="true" logical_port="85" hw_port="125" serdes_type="warpcore" port_group="24"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0008"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="97" active="true">
+            <ID valid="false" logical_port="86" hw_port="126" serdes_type="warpcore" port_group="24"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="98" active="true">
+            <ID valid="false" logical_port="87" hw_port="127" serdes_type="warpcore" port_group="24"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="99" active="true">
+            <ID valid="false" logical_port="88" hw_port="128" serdes_type="warpcore" port_group="24"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x0132" rx="0x0132"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcec0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="100" active="true">
+            <ID valid="true" logical_port="89" hw_port="121" serdes_type="warpcore" port_group="25"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x000b" rx="0x000d"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="101" active="true">
+            <ID valid="false" logical_port="90" hw_port="122" serdes_type="warpcore" port_group="25"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="102" active="true">
+            <ID valid="false" logical_port="91" hw_port="123" serdes_type="warpcore" port_group="25"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="103" active="true">
+            <ID valid="false" logical_port="92" hw_port="124" serdes_type="warpcore" port_group="25"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="104" active="true">
+            <ID valid="true" logical_port="93" hw_port="81" serdes_type="warpcore" port_group="26"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0002" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="105" active="true">
+            <ID valid="false" logical_port="94" hw_port="82" serdes_type="warpcore" port_group="26"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="106" active="true">
+            <ID valid="false" logical_port="95" hw_port="83" serdes_type="warpcore" port_group="26"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="107" active="true">
+            <ID valid="false" logical_port="96" hw_port="84" serdes_type="warpcore" port_group="26"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xbb10" idriver="0x2" predriver="0x2"/>
+        </PORT>
+
+        <PORT instance="108" active="true">
+            <ID valid="true" logical_port="97" hw_port="85" serdes_type="warpcore" port_group="27"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x000e" rx="0x000C"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="109" active="true">
+            <ID valid="false" logical_port="98" hw_port="86" serdes_type="warpcore" port_group="27"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <PORT instance="110" active="true">
+            <ID valid="false" logical_port="99" hw_port="87" serdes_type="warpcore" port_group="27"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <PORT instance="111" active="true">
+            <ID valid="false" logical_port="100" hw_port="88" serdes_type="warpcore" port_group="27"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="true" lane_1="true" lane_4="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x1203" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="112" active="true">
+            <ID valid="true" logical_port="101" hw_port="93" serdes_type="warpcore" port_group="28"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0002" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="113" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="94" serdes_type="warpcore" port_group="28"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="114" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="95" serdes_type="warpcore" port_group="28"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="115" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="96" serdes_type="warpcore" port_group="28"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc2f0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="116" active="true">
+            <ID valid="true" logical_port="102" hw_port="89" serdes_type="warpcore" port_group="29"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x000b" rx="0x0002"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="117" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="90" serdes_type="warpcore" port_group="29"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="118" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="91" serdes_type="warpcore" port_group="29"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="119" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="92" serdes_type="warpcore" port_group="29"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x3021" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x4" predriver="0x4"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="120" active="true">
+            <ID valid="true" logical_port="103" hw_port="101" serdes_type="warpcore" port_group="30"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x1203" rx="0x1320"/>
+            <POLARITY tx="0x0006" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcec0" idriver="0x6" predriver="0x6"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="121" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="102" serdes_type="warpcore" port_group="30"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x1203" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xcec0" idriver="0x6" predriver="0x6"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="122" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="103" serdes_type="warpcore" port_group="30"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x1203" rx="0x1320"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x6" predriver="0x6"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="123" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="104" serdes_type="warpcore" port_group="30"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x1203" rx="0x1320"/>
+            <POLARITY tx="0x0000" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xc6e0" idriver="0x7" predriver="0x7"/>
+        </PORT>
+
+        <!-- Breakout support disabled port -->
+        <PORT instance="124" active="true">
+            <ID valid="true" logical_port="104" hw_port="97" serdes_type="warpcore" port_group="31"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true" speed40G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="40000" count="4" bitmap="0xf"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0003" rx="0x000C"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="125" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="98" serdes_type="warpcore" port_group="31"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x2"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0001" rx="0x0000"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="126" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="99" serdes_type="warpcore" port_group="31"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x4"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+        <!-- Inactive port -->
+        <PORT instance="127" active="false">
+            <ID valid="false" logical_port="invalid" hw_port="100" serdes_type="warpcore" port_group="31"/>
+            <SUPPORTED_SPEED speed1G="true" speed10G="true"/>
+            <BREAKOUT support="false" lane_1="true"/>
+            <LANE speed="10000" count="1" bitmap="0x8"/>
+            <LANESWAP tx="0x2031" rx="0x0213"/>
+            <POLARITY tx="0x0000" rx="0x0001"/>
+            <PRE_EMPHASIS type="default" preemp="0xcad0" idriver="0x5" predriver="0x5"/>
+        </PORT>
+
+
+        <!--=======================================================-->
+        <!--               LED Processor Program                   -->
+        <!--=======================================================-->
+
+        <LED_PROGRAM processors="2">
+
+            <LED instance="0" program="led 0 prog  02 31 60 F7 02 01 28 60 F6 D6 F7 70 28 67 44 06 F6 06 F6 80 D2 35 74 06 86 F8 3A 40 67 80 67 44 06 F6 67 80 67 80 67 3C D2 32 70 1C D2 34 70 1C 67 44 06 F6 67 80 67 80 67 80 67 3C 06 F7 F2 01 60 F7 77 11 32 08 97 71 4C 77 80 57 67 61 32 00 32 01 B7 97 71 5C 95 75 74 85 77 7C 02 0A 50 77 56 06 F6 D2 17 75 6C 12 88 FE F6 57 06 F6 E2 17 12 D4 F8 57 16 F8 CA 05 74 80 77 7C 22 0E 87 57 22 0F 87 57" port_order_remap_count="16">
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_0_3 REMAP_PORT_3=0x31 REMAP_PORT_2=0 REMAP_PORT_1=0 REMAP_PORT_0=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_4_7 REMAP_PORT_7=0x32 REMAP_PORT_6=0 REMAP_PORT_5=0 REMAP_PORT_4=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_8_11 REMAP_PORT_9=0 REMAP_PORT_8=0 REMAP_PORT_11=0x34 REMAP_PORT_10=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_12_15 REMAP_PORT_15=0x33 REMAP_PORT_14=0 REMAP_PORT_13=0 REMAP_PORT_12=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_16_19 REMAP_PORT_19=0x16 REMAP_PORT_18=0x15 REMAP_PORT_17=0x18 REMAP_PORT_16=0x17"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_20_23 REMAP_PORT_23=0x11 REMAP_PORT_22=0x12 REMAP_PORT_21=0x13 REMAP_PORT_20=0x14"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_24_27 REMAP_PORT_27=9 REMAP_PORT_26=0xa REMAP_PORT_25=0xb REMAP_PORT_24=0xc"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_28_31 REMAP_PORT_31=0xe REMAP_PORT_30=0xd REMAP_PORT_29=0x10 REMAP_PORT_28=0xf"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_32_35 REMAP_PORT_35=0x2e REMAP_PORT_34=0x2d REMAP_PORT_33=0x30 REMAP_PORT_32=0x2f"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_36_39 REMAP_PORT_39=0x29 REMAP_PORT_38=0x2a REMAP_PORT_37=0x2b REMAP_PORT_36=0x2c"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_40_43 REMAP_PORT_43=6 REMAP_PORT_42=5 REMAP_PORT_41=8 REMAP_PORT_40=7"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_44_47 REMAP_PORT_47=1 REMAP_PORT_46=2 REMAP_PORT_45=3 REMAP_PORT_44=4"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_48_51 REMAP_PORT_51=0x26 REMAP_PORT_50=0x25 REMAP_PORT_49=0x28 REMAP_PORT_48=0x27"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_52_55 REMAP_PORT_55=0x21 REMAP_PORT_54=0x22 REMAP_PORT_53=0x23 REMAP_PORT_52=0x24"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_56_59 REMAP_PORT_59=0x19 REMAP_PORT_58=0x1a REMAP_PORT_57=0x1b REMAP_PORT_56=0x1c"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP0_PORT_ORDER_REMAP_60_63 REMAP_PORT_63=0x1e REMAP_PORT_62=0x1d REMAP_PORT_61=0x20 REMAP_PORT_60=0x1f"/>
+            </LED>
+
+            <LED instance="1" program="led 1 prog  02 31 60 F7 02 01 28 60 F6 D6 F7 70 28 67 44 06 F6 06 F6 80 D2 35 74 06 86 F8 3A 40 67 80 67 44 06 F6 67 80 67 80 67 3C D2 32 70 1C D2 34 70 1C 67 44 06 F6 67 80 67 80 67 80 67 3C 06 F7 F2 01 60 F7 77 11 32 08 97 71 4C 77 80 57 67 61 32 00 32 01 B7 97 71 5C 95 75 74 85 77 7C 02 0A 50 77 56 06 F6 D2 17 75 6C 12 88 FE F6 57 06 F6 E2 17 12 D4 F8 57 16 F8 CA 05 74 80 77 7C 22 0E 87 57 22 0F 87 57" port_order_remap_count="16">
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_0_3 REMAP_PORT_3=0x1e REMAP_PORT_2=0x1d REMAP_PORT_1=0x20 REMAP_PORT_0=0x1f"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_4_7 REMAP_PORT_7=0x19 REMAP_PORT_6=0x1a REMAP_PORT_5=0x1b REMAP_PORT_4=0x1c"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_8_11 REMAP_PORT_9=0x23 REMAP_PORT_8=0x24 REMAP_PORT_11=0x21 REMAP_PORT_10=0x22"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_12_15 REMAP_PORT_15=0x26 REMAP_PORT_14=0x25 REMAP_PORT_13=0x28 REMAP_PORT_12=0x27"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_16_19 REMAP_PORT_19=0x16 REMAP_PORT_18=0x15 REMAP_PORT_17=0x18 REMAP_PORT_16=0x17"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_20_23 REMAP_PORT_23=0x11 REMAP_PORT_22=0x12 REMAP_PORT_21=0x13 REMAP_PORT_20=0x14"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_24_27 REMAP_PORT_27=0x34 REMAP_PORT_26=0 REMAP_PORT_25=0 REMAP_PORT_24=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_28_31 REMAP_PORT_31=0x33 REMAP_PORT_30=0 REMAP_PORT_29=0 REMAP_PORT_28=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_32_35 REMAP_PORT_35=0x2e REMAP_PORT_34=0x2d REMAP_PORT_33=0x30 REMAP_PORT_32=0x2f"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_36_39 REMAP_PORT_39=0x29 REMAP_PORT_38=0x2a REMAP_PORT_37=0x2b REMAP_PORT_36=0x2c"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_40_43 REMAP_PORT_43=0x31 REMAP_PORT_42=0 REMAP_PORT_41=0 REMAP_PORT_40=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_44_47 REMAP_PORT_47=0x32 REMAP_PORT_46=0 REMAP_PORT_45=0 REMAP_PORT_44=0"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_48_51 REMAP_PORT_51=9 REMAP_PORT_50=0xa REMAP_PORT_49=0xb REMAP_PORT_48=0xc"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_52_55 REMAP_PORT_55=0xe REMAP_PORT_54=0xd REMAP_PORT_53=0x10 REMAP_PORT_52=0xf"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_56_59 REMAP_PORT_59=6 REMAP_PORT_58=5 REMAP_PORT_57=8 REMAP_PORT_56=7"/>
+                <LED_PORT_ORDER_REMAP command="modreg CMIC_LEDUP1_PORT_ORDER_REMAP_60_63 REMAP_PORT_63=1 REMAP_PORT_62=2 REMAP_PORT_61=3 REMAP_PORT_60=4"/>
+            </LED>
+
+        </LED_PROGRAM>
+
+    </PLATFORM_INFO>
+
+</SAI>
