@@ -2,9 +2,9 @@ Source: sonic-platform-s6000-config
 Section: net
 Priority: optional
 Maintainer: Dell <support@dell.com>
-
 Build-Depends: debhelper (>= 9), autotools-dev, dh-exec
 Standards-Version: 3.9.3
+
 Package: sonic-platform-s6000-config
 Provides: sonic-platform-config
 Architecture: any
