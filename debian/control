@@ -9,6 +9,8 @@ Vcs-Git: https://github.com/Azure/sonic-pas-config-s6000.git
 
 Package: sonic-platform-s6000-config
 Provides: sonic-platform-config
+Conflicts: sonic-platform-config
+Replaces: sonic-platform-config
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
 Description: Platform specific files and packages for  Dell Networking S6000-ON
