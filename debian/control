@@ -1,4 +1,4 @@
-Source: sonic-pas-config-s6000
+Source: sonic-platform-s6000-config
 Section: net
 Priority: optional
 Maintainer: Dell <support@dell.com>
