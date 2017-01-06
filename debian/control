@@ -12,6 +12,6 @@ Provides: sonic-platform-config
 Conflicts: sonic-platform-config
 Replaces: sonic-platform-config
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends},
+Depends: ${shlibs:Depends}, ${misc:Depends},sonic-bcm-lkm
 Description: Platform specific files and packages for  Dell Networking S6000-ON
 
