@@ -28,11 +28,18 @@ type pathTransFunc struct {
 var (
 	v2rTrie *Trie
 
-	// Port name to oid map in COUNTERS table of COUNTERS_DB
-	countersPortNameMap = make(map[string]string)
+	supportedCounterFields = map[string][]string{}
 
-	// Queue name to oid map in COUNTERS table of COUNTERS_DB
-	countersQueueNameMap = make(map[string]string)
+	countersNameOidTbls = map[string]map[string]string{
+		// Port name to oid map in COUNTERS table of COUNTERS_DB
+		"COUNTERS_PORT_NAME_MAP": make(map[string]string),
+		// Queue name to oid map in COUNTERS table of COUNTERS_DB
+		"COUNTERS_QUEUE_NAME_MAP": make(map[string]string),
+		// PG name to oid map in COUNTERS table of COUNTERS_DB
+		"COUNTERS_INGRESS_PRIORITY_GROUP_NAME_MAP": make(map[string]string),
+		// Buffer pool name to oid map in COUNTERS table of COUNTERS_DB
+		"COUNTERS_BUFFER_POOL_NAME_MAP": make(map[string]string),
+	}
 
 	// path2TFuncTbl is used to populate trie tree which is reponsible
 	// for virtual path to real data path translation
@@ -42,9 +49,12 @@ var (
 			transFunc: v2rTranslate(v2rEthPortStats),
 		}, { // specific field stats for one or all Ethernet ports
 			path:      []string{"COUNTERS_DB", "COUNTERS", "Ethernet*", "*"},
-			transFunc: v2rTranslate(v2rEthPortFieldStats),
-		}, { // Queue stats for one or all Ethernet ports
+			transFunc: v2rTranslate(v2rEthPortStats),
+		}, { // queue stats for one or all Ethernet ports
 			path:      []string{"COUNTERS_DB", "COUNTERS", "Ethernet*", "Queues"},
+			transFunc: v2rTranslate(v2rEthPortQueStats),
+		}, { // specific queue stats for one or all Ethernet ports
+			path:      []string{"COUNTERS_DB", "COUNTERS", "Ethernet*", "Queues", "*"},
 			transFunc: v2rTranslate(v2rEthPortQueStats),
 		},
 	}
@@ -62,23 +72,18 @@ func (t *Trie) v2rTriePopulate() {
 	}
 }
 
-func initCountersQueueNameMap() error {
+func initCountersNameMap() error {
 	var err error
-	if len(countersQueueNameMap) == 0 {
-		countersQueueNameMap, err = getCountersMap("COUNTERS_QUEUE_NAME_MAP")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func initCountersPortNameMap() error {
-	var err error
-	if len(countersPortNameMap) == 0 {
-		countersPortNameMap, err = getCountersMap("COUNTERS_PORT_NAME_MAP")
-		if err != nil {
-			return err
+	for name, tbl := range countersNameOidTbls {
+		if len(tbl) == 0 {
+			countersNameOidTbls[name], err = getCountersMap(name)
+			if err != nil {
+				return err
+			}
+			supportedCounterFields[name], err = getSupportedFields(name)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -97,113 +102,167 @@ func getCountersMap(tableName string) (map[string]string, error) {
 	return fv, nil
 }
 
-// Populate real data paths from paths like
-// [COUNTER_DB COUNTERS Ethernet*] or [COUNTER_DB COUNTERS Ethernet68]
-func v2rEthPortStats(paths []string) ([]tablePath, error) {
-	separator, _ := GetTableKeySeparator(paths[DbIdx])
-	var tblPaths []tablePath
-	if strings.HasSuffix(paths[KeyIdx], "*") { // All Ethernet ports
-		for port, oid := range countersPortNameMap {
-			tblPath := tablePath{
-				dbName:       paths[DbIdx],
-				tableName:    paths[TblIdx],
-				tableKey:     oid,
-				delimitor:    separator,
-				jsonTableKey: port,
-			}
-			tblPaths = append(tblPaths, tblPath)
+// Get suppored fields for counters
+func getSupportedFields(tableName string) ([]string, error) {
+	redisDb, _ := Target2RedisDb["COUNTERS_DB"]
+	for _, oid := range countersNameOidTbls[tableName] {
+		statKey := "COUNTERS:" + oid
+		keys, err := redisDb.HKeys(statKey).Result()
+		if err != nil {
+			log.V(2).Infof("redis HKeys failed for COUNTERS_DB, tableName: %s", tableName)
+			return nil, err
 		}
-	} else { //single port
-		oid, ok := countersPortNameMap[paths[KeyIdx]]
-		if !ok {
-			return nil, fmt.Errorf(" %v not a valid port ", paths[KeyIdx])
+		if len(keys) <= 0 {
+			log.V(2).Infof("supported fields empty, tableName: %s", tableName)
 		}
-		tblPaths = []tablePath{{
-			dbName:    paths[DbIdx],
-			tableName: paths[TblIdx],
-			tableKey:  oid,
-			delimitor: separator,
-		}}
+		log.V(6).Infof("supported fields: %v", keys)
+		return keys, nil
 	}
-	log.V(6).Infof("v2rEthPortStats: %v", tblPaths)
-	return tblPaths, nil
+	return nil, nil
+}
+
+// Get match fields from supported fields
+func getMatchFields(field string, name string) (string, error) {
+	// the field is prefixed with "SAI"
+	if !strings.HasPrefix(field, "SAI") {
+		return "", nil
+	}
+	// don't lookup field without wildcard
+	if !strings.HasSuffix(field, "*") {
+		return field, nil
+	}
+
+	var fs string
+	matchFields := []string{}
+	supportedFields := supportedCounterFields[name]
+
+	if supportedFields != nil {
+		fieldPrefix := strings.TrimSuffix(field, "*")
+		for _, v := range supportedFields {
+			if strings.HasPrefix(v, fieldPrefix) {
+				matchFields = append(matchFields, v)
+			}
+		}
+
+		if len(matchFields) <= 0 {
+			return "", fmt.Errorf("%v has no match fields", field)
+		}
+		// multiple fields are separated with ","
+		for _, f := range matchFields {
+			if fs != "" {
+				fs = fs + "," + f
+			} else {
+				fs = f
+			}
+		}
+	}
+
+	return fs, nil
 }
 
 // Supported cases:
-// <1> port name having suffix of "*" with specific field;
+// <1> port name paths without field
+//     Ex. [COUNTER_DB COUNTERS Ethernet*]
+//         [COUNTER_DB COUNTERS Ethernet68]
+// <2> port name having suffix of "*" with specific field;
 //     Ex. [COUNTER_DB COUNTERS Ethernet* SAI_PORT_STAT_PFC_0_RX_PKTS]
-// <2> exact port name with specific field.
+//         [COUNTER_DB COUNTERS Ethernet* SAI_PORT_STAT_PFC_*]
+// <3> exact port name with specific field.
 //     Ex. [COUNTER_DB COUNTERS Ethernet68 SAI_PORT_STAT_PFC_0_RX_PKTS]
-// case of "*" field could be covered in v2rEthPortStats()
-func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
+//         [COUNTER_DB COUNTERS Ethernet68 SAI_PORT_STAT_PFC_*]
+func v2rEthPortStats(paths []string) ([]tablePath, error) {
 	separator, _ := GetTableKeySeparator(paths[DbIdx])
+	countersNameMap := countersNameOidTbls["COUNTERS_PORT_NAME_MAP"]
 	var tblPaths []tablePath
-	if strings.HasSuffix(paths[KeyIdx], "*") {
-		for port, oid := range countersPortNameMap {
+	var fields string
+
+	fields, err := getMatchFields(paths[len(paths)-1], "COUNTERS_PORT_NAME_MAP")
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.HasSuffix(paths[KeyIdx], "*") { //all ports
+		for port, oid := range countersNameMap {
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
 				tableKey:     oid,
-				field:        paths[FieldIdx],
+				fields:       fields,
 				delimitor:    separator,
 				jsonTableKey: port,
-				jsonField:    paths[FieldIdx],
+				jsonFields:   fields,
 			}
 			tblPaths = append(tblPaths, tblPath)
 		}
 	} else { //single port
-		oid, ok := countersPortNameMap[paths[KeyIdx]]
+		oid, ok := countersNameMap[paths[KeyIdx]]
 		if !ok {
 			return nil, fmt.Errorf(" %v not a valid port ", paths[KeyIdx])
 		}
+
 		tblPaths = []tablePath{{
 			dbName:    paths[DbIdx],
 			tableName: paths[TblIdx],
 			tableKey:  oid,
-			field:     paths[FieldIdx],
+			fields:    fields,
 			delimitor: separator,
 		}}
 	}
-	log.V(6).Infof("v2rEthPortFieldStats: %+v", tblPaths)
+	log.V(6).Infof("v2rEthPortStats: tblPaths %+v", tblPaths)
 	return tblPaths, nil
 }
 
-// Populate real data paths from paths like
-// [COUNTER_DB COUNTERS Ethernet* Queues] or [COUNTER_DB COUNTERS Ethernet68 Queues]
-func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
+func v2rQStatsGeneric(paths []string, mapTblName string) ([]tablePath, error) {
 	separator, _ := GetTableKeySeparator(paths[DbIdx])
+	countersNameMap := countersNameOidTbls[mapTblName]
 	var tblPaths []tablePath
-	if strings.HasSuffix(paths[KeyIdx], "*") { // queues on all Ethernet ports
-		for que, oid := range countersQueueNameMap {
+	var fields string
+
+	fields, err := getMatchFields(paths[len(paths)-1], mapTblName)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.HasSuffix(paths[KeyIdx], "*") { //all ports
+		for q, oid := range countersNameMap {
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
 				tableKey:     oid,
+				fields:       fields,
 				delimitor:    separator,
-				jsonTableKey: que,
+				jsonTableKey: q,
+				jsonFields:   fields,
 			}
 			tblPaths = append(tblPaths, tblPath)
 		}
-	} else { //queues on single port
+	} else { //single port
 		portName := paths[KeyIdx]
-		for que, oid := range countersQueueNameMap {
+		for q, oid := range countersNameMap {
 			//que is in formate of "Ethernet64:12"
-			names := strings.Split(que, separator)
+			names := strings.Split(q, separator)
 			if portName != names[0] {
 				continue
 			}
+
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
 				tableKey:     oid,
+				fields:       fields,
 				delimitor:    separator,
-				jsonTableKey: que,
+				jsonTableKey: q,
 			}
 			tblPaths = append(tblPaths, tblPath)
 		}
 	}
-	log.V(6).Infof("v2rEthPortQueStats: %v", tblPaths)
+	log.V(6).Infof("v2rGenericStats: mapTblName %s tblPaths %+v", mapTblName, tblPaths)
 	return tblPaths, nil
+}
+
+func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
+	tblPaths, err := v2rQStatsGeneric(paths, "COUNTERS_QUEUE_NAME_MAP")
+	return tblPaths, err
 }
 
 func lookupV2R(paths []string) ([]tablePath, error) {

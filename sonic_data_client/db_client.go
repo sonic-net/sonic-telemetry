@@ -64,7 +64,7 @@ type tablePath struct {
 	tableName string
 	tableKey  string
 	delimitor string
-	field     string
+	fields    string
 	// path name to be used in json data which may be different
 	// from the real data path. Ex. in Counters table, real tableKey
 	// is oid:0x####, while key name like Ethernet## may be put
@@ -72,7 +72,7 @@ type tablePath struct {
 	jsonTableName string
 	jsonTableKey  string
 	jsonDelimitor string
-	jsonField     string
+	jsonFields    string
 }
 
 type Value struct {
@@ -113,11 +113,7 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 		useRedisTcpClient()
 	}
 	if prefix.GetTarget() == "COUNTERS_DB" {
-		err = initCountersPortNameMap()
-		if err != nil {
-			return nil, err
-		}
-		err = initCountersQueueNameMap()
+		err = initCountersNameMap()
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +144,7 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	c.channel = stop
 
 	for gnmiPath, tblPaths := range c.pathG2S {
-		if tblPaths[0].field != "" {
+		if tblPaths[0].fields != "" {
 			c.w.Add(1)
 			c.synced.Add(1)
 			if len(tblPaths) > 1 {
@@ -445,7 +441,7 @@ func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]
 		if n == 1 {
 			tblPath.tableKey = mappedKey
 		} else {
-			tblPath.field = mappedKey
+			tblPath.fields = mappedKey
 		}
 	case 4: // Fourth element could part of the table key or field name
 		tblPath.tableKey = mappedKey + tblPath.delimitor + stringSlice[3]
@@ -457,11 +453,11 @@ func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]
 		}
 		if n != 1 { // Looks like the Fourth slice is not part of the key
 			tblPath.tableKey = mappedKey
-			tblPath.field = stringSlice[3]
+			tblPath.fields = stringSlice[3]
 		}
 	case 5: // both third and fourth element are part of table key, fourth element must be field name
 		tblPath.tableKey = mappedKey + tblPath.delimitor + stringSlice[3]
-		tblPath.field = stringSlice[4]
+		tblPath.fields = stringSlice[4]
 	default:
 		log.V(2).Infof("Invalid db table Path %v", dbPath)
 		return fmt.Errorf("Invalid db table Path %v", dbPath)
@@ -531,7 +527,7 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 	var pattern string
 	var dbkeys []string
 	var err error
-	var fv map[string]string
+	fv := map[string]string{}
 
 	//Only table name provided
 	if tblPath.tableKey == "" {
@@ -552,20 +548,23 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 	}
 
 	// Asked to use jsonField and jsonTableKey in the final json value
-	if tblPath.jsonField != "" && tblPath.jsonTableKey != "" {
-		val, err := redisDb.HGet(dbkeys[0], tblPath.field).Result()
-		if err != nil {
-			log.V(3).Infof("redis HGet failed for %v %v", tblPath, err)
-			// ignore non-existing field which was derived from virtual path
-			return nil
+	if tblPath.jsonFields != "" && tblPath.jsonTableKey != "" {
+		fs := strings.Split(tblPath.fields, ",")
+		for _, f := range fs {
+			val, err := redisDb.HGet(dbkeys[0], f).Result()
+			if err != nil {
+				log.V(3).Infof("redis HGet failed for %v %v", tblPath, err)
+				// ignore non-existing field which was derived from virtual path
+				return nil
+			}
+			fv[f] = val
 		}
-		fv = map[string]string{tblPath.jsonField: val}
-		makeJSON_redis(msi, &tblPath.jsonTableKey, op, fv)
 		log.V(6).Infof("Added json key %v fv %v ", tblPath.jsonTableKey, fv)
+		makeJSON_redis(msi, &tblPath.jsonTableKey, op, fv)
 		return nil
 	}
 
-	for idx, dbkey := range dbkeys {
+	for _, dbkey := range dbkeys {
 		fv, err = redisDb.HGetAll(dbkey).Result()
 		if err != nil {
 			log.V(2).Infof("redis HGetAll failed for  %v, dbkey %s", tblPath, dbkey)
@@ -587,7 +586,7 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 			log.V(2).Infof("makeJSON err %s for fv %v", err, fv)
 			return err
 		}
-		log.V(6).Infof("Added idex %v fv %v ", idx, fv)
+		log.V(6).Infof("Added dbkey %v fv %v ", dbkey, fv)
 	}
 	return nil
 }
@@ -610,9 +609,9 @@ func tableData2TypedValue(tblPaths []tablePath, op *string) (*gnmipb.TypedValue,
 	for _, tblPath := range tblPaths {
 		redisDb := Target2RedisDb[tblPath.dbName]
 
-		if tblPath.jsonField == "" { // Not asked to include field in json value, which means not wildcard query
+		if tblPath.jsonFields == "" { // Not asked to include field in json value, which means not wildcard query
 			// table path includes table, key and field
-			if tblPath.field != "" {
+			if tblPath.fields != "" {
 				if len(tblPaths) != 1 {
 					log.V(2).Infof("WARNING: more than one path exists for field granularity query: %v", tblPaths)
 				}
@@ -623,7 +622,7 @@ func tableData2TypedValue(tblPaths []tablePath, op *string) (*gnmipb.TypedValue,
 					key = tblPath.tableName
 				}
 
-				val, err := redisDb.HGet(key, tblPath.field).Result()
+				val, err := redisDb.HGet(key, tblPath.fields).Result()
 				if err != nil {
 					log.V(2).Infof("redis HGet failed for %v", tblPath)
 					return nil, err
@@ -683,26 +682,26 @@ func dbFieldMultiSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 				}
 				// run redis get directly for field value
 				redisDb := Target2RedisDb[tblPath.dbName]
-				val, err := redisDb.HGet(key, tblPath.field).Result()
+				val, err := redisDb.HGet(key, tblPath.fields).Result()
 				if err == redis.Nil {
-					if tblPath.jsonField != "" {
+					if tblPath.jsonFields != "" {
 						// ignore non-existing field which was derived from virtual path
 						continue
 					}
-					log.V(2).Infof("%v doesn't exist with key %v in db", tblPath.field, key)
-					enqueFatalMsg(c, fmt.Sprintf("%v doesn't exist with key %v in db", tblPath.field, key))
+					log.V(2).Infof("%v doesn't exist with key %v in db", tblPath.fields, key)
+					enqueFatalMsg(c, fmt.Sprintf("%v doesn't exist with key %v in db", tblPath.fields, key))
 					return
 				}
 				if err != nil {
-					log.V(1).Infof(" redis HGet error on %v with key %v", tblPath.field, key)
-					enqueFatalMsg(c, fmt.Sprintf(" redis HGet error on %v with key %v", tblPath.field, key))
+					log.V(1).Infof(" redis HGet error on %v with key %v", tblPath.fields, key)
+					enqueFatalMsg(c, fmt.Sprintf(" redis HGet error on %v with key %v", tblPath.fields, key))
 					return
 				}
 				if val == path2ValueMap[tblPath] {
 					continue
 				}
 				path2ValueMap[tblPath] = val
-				fv := map[string]string{tblPath.jsonField: val}
+				fv := map[string]string{tblPath.jsonFields: val}
 				msi[tblPath.jsonTableKey] = fv
 				log.V(6).Infof("new value %v for %v", val, tblPath)
 			}
@@ -761,15 +760,15 @@ func dbFieldSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			log.V(1).Infof("Stopping dbFieldSubscribe routine for Client %s ", c)
 			return
 		default:
-			newVal, err := redisDb.HGet(key, tblPath.field).Result()
+			newVal, err := redisDb.HGet(key, tblPath.fields).Result()
 			if err == redis.Nil {
-				log.V(2).Infof("%v doesn't exist with key %v in db", tblPath.field, key)
-				enqueFatalMsg(c, fmt.Sprintf("%v doesn't exist with key %v in db", tblPath.field, key))
+				log.V(2).Infof("%v doesn't exist with key %v in db", tblPath.fields, key)
+				enqueFatalMsg(c, fmt.Sprintf("%v doesn't exist with key %v in db", tblPath.fields, key))
 				return
 			}
 			if err != nil {
-				log.V(1).Infof(" redis HGet error on %v with key %v", tblPath.field, key)
-				enqueFatalMsg(c, fmt.Sprintf(" redis HGet error on %v with key %v", tblPath.field, key))
+				log.V(1).Infof(" redis HGet error on %v with key %v", tblPath.fields, key)
+				enqueFatalMsg(c, fmt.Sprintf(" redis HGet error on %v with key %v", tblPath.fields, key))
 				return
 			}
 			if newVal != val {
