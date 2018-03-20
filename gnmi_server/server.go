@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
@@ -202,9 +204,99 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	return &gnmipb.GetResponse{Notification: notifications}, nil
 }
 
-// Set method is not implemented. Refer to gnxi for examples with openconfig integration
-func (srv *Server) Set(context.Context, *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "Set() is not implemented")
+// Get string value from TypedValue in gnmipb
+func getUpdateVal(typedVal *gnmipb.TypedValue) (string, error) {
+	intVal := typedVal.GetIntVal()
+	stringVal := typedVal.GetStringVal()
+	bytesVal := typedVal.GetBytesVal()
+	if stringVal != "" {
+		return stringVal, nil
+	}
+	if intVal != 0 {
+		return strconv.FormatInt(intVal, 10), nil
+	}
+	if bytesVal != nil {
+		return string(bytesVal[:]), nil
+	}
+	return "", fmt.Errorf("typedVal: %v not supported", typedVal)
+}
+
+// Set implements the Get RPC in gNMI spec.
+func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
+	var target string
+	prefix := req.GetPrefix()
+	if prefix == nil {
+		return nil, status.Error(codes.Unimplemented, "No target specified in prefix")
+	}
+
+	target = prefix.GetTarget()
+	if target == "" {
+		return nil, status.Error(codes.Unimplemented, "Empty target data not supported yet")
+	}
+
+	// only support set config_db
+	if target != "CONFIG_DB" {
+		return nil, status.Errorf(codes.Unimplemented, "unsupported request target")
+	}
+
+	var results []*gnmipb.UpdateResult
+	dc, err := sdc.NewDbClient(nil, prefix)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	for _, path := range req.GetDelete() {
+		log.V(5).Infof("Delete path: %v", path)
+		err := dc.Set(path, "")
+		if err != nil {
+			return nil, err
+		}
+		res := gnmipb.UpdateResult{
+			Path: path,
+			Op:   gnmipb.UpdateResult_DELETE,
+		}
+		results = append(results, &res)
+	}
+
+	for _, path := range req.GetReplace() {
+		valString, err := getUpdateVal(path.GetVal())
+		if err != nil {
+			return nil, err
+		}
+		log.V(5).Infof("Replace path: %v valString: %v", path, valString)
+		err = dc.Set(path.GetPath(), valString)
+		if err != nil {
+			return nil, err
+		}
+		res := gnmipb.UpdateResult{
+			Path: path.GetPath(),
+			Op:   gnmipb.UpdateResult_REPLACE,
+		}
+		results = append(results, &res)
+	}
+
+	for _, path := range req.GetUpdate() {
+		valString, err := getUpdateVal(path.GetVal())
+		if err != nil {
+			return nil, err
+		}
+		log.V(5).Infof("Update path: %v valString: %v", path, valString)
+		err = dc.Set(path.GetPath(), valString)
+		if err != nil {
+			return nil, err
+		}
+		res := gnmipb.UpdateResult{
+			Path: path.GetPath(),
+			Op:   gnmipb.UpdateResult_UPDATE,
+		}
+		results = append(results, &res)
+	}
+
+	return &gnmipb.SetResponse{
+		Timestamp: time.Now().UnixNano(),
+		Prefix:    req.GetPrefix(),
+		Response:  results,
+	}, nil
 }
 
 // Capabilities method is not implemented. Refer to gnxi for examples with openconfig integration

@@ -44,6 +44,8 @@ type Client interface {
 	PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup)
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
+	// Set table field from pb path and val
+	Set(path *gnmipb.Path, val string) error
 	// Close provides implemenation for explicit cleanup of Client
 	Close() error
 }
@@ -245,6 +247,46 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	log.V(6).Infof("Getting #%v", values)
 	log.V(4).Infof("Get done, total time taken: %v ms", int64(time.Since(ts)/time.Millisecond))
 	return values, nil
+}
+
+func (c *DbClient) Set(path *gnmipb.Path, val string) error {
+	updatePath := make(map[*gnmipb.Path][]tablePath)
+
+	err := populateDbtablePath(c.prefix, path, &updatePath)
+	if err != nil {
+		return err
+	}
+
+	log.V(6).Infof("Set: updatePath %v", updatePath)
+	for _, tblPaths := range updatePath {
+		for _, tblPath := range tblPaths {
+			redisDb := Target2RedisDb[tblPath.dbName]
+			if tblPath.fields != "" {
+				var key string
+				if tblPath.tableKey != "" {
+					key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
+				} else {
+					key = tblPath.tableName
+				}
+
+				log.V(6).Infof("Set: key %v fields %v val %v", key, tblPath.fields, val)
+				if len(val) <= 0 {
+					_, err := redisDb.HDel(key, tblPath.fields).Result()
+					if err != nil {
+						log.V(2).Infof("redis HDel failed for %v", tblPath)
+						return err
+					}
+				} else {
+					_, err := redisDb.HSet(key, tblPath.fields, val).Result()
+					if err != nil {
+						log.V(2).Infof("redis HDel failed for %v", tblPath)
+						return err
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // TODO: Log data related to this session
