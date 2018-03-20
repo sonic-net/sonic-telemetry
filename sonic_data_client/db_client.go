@@ -279,7 +279,7 @@ func (c *DbClient) Set(path *gnmipb.Path, val string) error {
 				} else {
 					_, err := redisDb.HSet(key, tblPath.fields, val).Result()
 					if err != nil {
-						log.V(2).Infof("redis HDel failed for %v", tblPath)
+						log.V(2).Infof("redis HSet failed for %v", tblPath)
 						return err
 					}
 				}
@@ -589,8 +589,8 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 		dbkeys = []string{tblPath.tableName + tblPath.delimitor + tblPath.tableKey}
 	}
 
-	// Asked to use jsonField and jsonTableKey in the final json value
-	if tblPath.jsonFields != "" && tblPath.jsonTableKey != "" {
+	// Asked to use jsonFields and fields in the final json value
+	if tblPath.fields != "" && tblPath.jsonFields != "" {
 		fs := strings.Split(tblPath.fields, ",")
 		for _, f := range fs {
 			val, err := redisDb.HGet(dbkeys[0], f).Result()
@@ -602,7 +602,11 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 			fv[f] = val
 		}
 		log.V(6).Infof("Added json key %v fv %v ", tblPath.jsonTableKey, fv)
-		makeJSON_redis(msi, &tblPath.jsonTableKey, op, fv)
+		if tblPath.jsonTableKey != "" {
+			makeJSON_redis(msi, &tblPath.jsonTableKey, op, fv)
+		} else {
+			makeJSON_redis(msi, nil, op, fv)
+		}
 		return nil
 	}
 

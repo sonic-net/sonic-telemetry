@@ -201,11 +201,12 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 		}
 
 		tblPaths = []tablePath{{
-			dbName:    paths[DbIdx],
-			tableName: paths[TblIdx],
-			tableKey:  oid,
-			fields:    fields,
-			delimitor: separator,
+			dbName:     paths[DbIdx],
+			tableName:  paths[TblIdx],
+			tableKey:   oid,
+			fields:     fields,
+			delimitor:  separator,
+			jsonFields: fields,
 		}}
 	}
 	log.V(6).Infof("v2rEthPortStats: tblPaths %+v", tblPaths)
@@ -252,6 +253,7 @@ func v2rQStatsGeneric(paths []string, mapTblName string) ([]tablePath, error) {
 				fields:       fields,
 				delimitor:    separator,
 				jsonTableKey: q,
+				jsonFields:   fields,
 			}
 			tblPaths = append(tblPaths, tblPath)
 		}
