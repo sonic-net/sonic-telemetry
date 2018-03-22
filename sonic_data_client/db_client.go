@@ -440,6 +440,9 @@ func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]
 			stringSlice = append(stringSlice, elem.GetName())
 		}
 		dbPath = buffer.String()
+	} else {
+		log.V(2).Infof("Empty path: %v", elems)
+		return nil
 	}
 
 	// First lookup the Virtual path to Real path mapping tree

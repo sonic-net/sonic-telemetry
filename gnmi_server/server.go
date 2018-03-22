@@ -239,6 +239,7 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 		return nil, status.Errorf(codes.Unimplemented, "unsupported request target")
 	}
 
+	log.V(6).Infof("SetRequest: %v", req)
 	var results []*gnmipb.UpdateResult
 	dc, err := sdc.NewDbClient(nil, prefix)
 	if err != nil {
@@ -246,7 +247,7 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 	}
 
 	for _, path := range req.GetDelete() {
-		log.V(5).Infof("Delete path: %v", path)
+		log.V(6).Infof("Delete path: %v", path)
 		err := dc.Set(path, "")
 		if err != nil {
 			return nil, err

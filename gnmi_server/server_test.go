@@ -10,6 +10,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
 
+	//"flag"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/openconfig/gnmi/client"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -907,6 +908,267 @@ func TestGnmiSubscribe(t *testing.T) {
 
 	runTestSubscribe(t)
 
+	s.s.Stop()
+}
+
+type SimpleSRequest struct {
+	target      string
+	deletePath  []string
+	replacePath []string
+	replaceVal  pb.TypedValue
+	updatePath  []string
+	updateVal   pb.TypedValue
+}
+
+// Construct SetRequest
+func newSetRequest(sr *SimpleSRequest) *pb.SetRequest {
+	pf := pb.Path{
+		Target: sr.target,
+	}
+
+	var dPath []*pb.Path
+	if len(sr.deletePath) >= 1 {
+		p := pb.Path{
+			Elem: []*pb.PathElem{},
+		}
+		for _, e := range sr.deletePath {
+			pe := pb.PathElem{Name: e}
+			p.Elem = append(p.Elem, &pe)
+		}
+		dPath = append(dPath, &p)
+	}
+
+	var rUpdate []*pb.Update
+	if len(sr.replacePath) >= 1 {
+		p := pb.Path{
+			Elem: []*pb.PathElem{},
+		}
+		for _, e := range sr.replacePath {
+			pe := pb.PathElem{Name: e}
+			p.Elem = append(p.Elem, &pe)
+		}
+		u := pb.Update{
+			Path: &p,
+			Val:  &sr.replaceVal,
+		}
+		rUpdate = append(rUpdate, &u)
+	}
+
+	var uUpdate []*pb.Update
+	if len(sr.updatePath) >= 1 {
+		p := pb.Path{
+			Elem: []*pb.PathElem{},
+		}
+		for _, e := range sr.updatePath {
+			pe := pb.PathElem{Name: e}
+			p.Elem = append(p.Elem, &pe)
+		}
+		u := pb.Update{
+			Path: &p,
+			Val:  &sr.updateVal,
+		}
+		uUpdate = append(uUpdate, &u)
+	}
+
+	srq := &pb.SetRequest{
+		Prefix:  &pf,
+		Delete:  dPath,
+		Replace: rUpdate,
+		Update:  uUpdate,
+	}
+	return srq
+}
+
+type SimpleSResponse struct {
+	target string
+	path   []string
+	op     int32
+}
+
+// Check setResponse
+func compareSetResponse(sr *pb.SetResponse, simple *SimpleSResponse) bool {
+	pf := sr.GetPrefix()
+	if pf.GetTarget() != simple.target {
+		return false
+	}
+	r := sr.GetResponse()
+	if len(r) != 1 {
+		return false
+	}
+	for _, ur := range r {
+		if int32(ur.GetOp()) != simple.op {
+			return false
+		}
+
+		p := ur.GetPath()
+		if len(p.GetElem()) != len(simple.path) {
+			return false
+		}
+		for i, e := range p.GetElem() {
+			if e.Name != simple.path[i] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func TestGnmiSet(t *testing.T) {
+	//flag.Set("alsologtostderr", "true")
+	//flag.Set("v", "6")
+	//flag.Parse()
+	s := createServer(t)
+	go runServer(t, s)
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
+
+	targetAddr := "127.0.0.1:8080"
+	conn, err := grpc.Dial(targetAddr, opts...)
+	if err != nil {
+		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
+	}
+	defer conn.Close()
+
+	gClient := pb.NewGNMIClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Only support CONFIG_DB
+	dbn := spb.Target_value["CONFIG_DB"]
+	rclient := redis.NewClient(&redis.Options{
+		Network:     "tcp",
+		Addr:        "localhost:6379",
+		Password:    "", // no password set
+		DB:          int(dbn),
+		DialTimeout: 0,
+	})
+	_, err = rclient.Ping().Result()
+	if err != nil {
+		t.Fatalf("failed to connect to redis server %v", err)
+	}
+	defer rclient.Close()
+
+	tests := []struct {
+		desc   string
+		in     SimpleSRequest
+		want   SimpleSResponse
+		wantFV []string
+	}{
+		{
+			desc: "Delete path",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				deletePath: []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				op:     int32(pb.UpdateResult_DELETE),
+			},
+			wantFV: []string{"TELEMETRY_CLIENT|Global", "retry_interval", ""},
+		},
+		{
+			desc: "Update path value int",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_IntVal{5},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: []string{"TELEMETRY_CLIENT|Global", "retry_interval", "5"},
+		},
+		{
+			desc: "Update path value string",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_StringVal{"20.20.20.20:8081"},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: []string{"TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "20.20.20.20:8081"},
+		},
+		{
+			desc: "Replace path value int",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_IntVal{5},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: []string{"TELEMETRY_CLIENT|Global", "retry_interval", "5"},
+		},
+		{
+			desc: "Replace path value string",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_StringVal{"20.20.20.20:8081"},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: []string{"TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "20.20.20.20:8081"},
+		},
+	}
+
+	wantRetCode := codes.OK
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			rclient.FlushDb()
+			rclient.HSet("TELEMETRY_CLIENT|Global", "retry_interval", "30")
+			rclient.HSet("TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "10.10.10.10:8081")
+
+			request := newSetRequest(&test.in)
+			//t.Log("SetRequest: ", request)
+			resp, err := gClient.Set(ctx, request)
+			// Check return code
+			gotRetStatus, ok := status.FromError(err)
+			if !ok {
+				t.Fatal("got a non-grpc error from grpc call")
+			}
+			if gotRetStatus.Code() != wantRetCode {
+				t.Log("err: ", err)
+				t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
+			}
+
+			if resp == nil {
+				t.Fatal("got SetResponse nil")
+			}
+			if !compareSetResponse(resp, &test.want) {
+				t.Errorf("SetResponse is not expected: %v", resp)
+				t.Logf("want: %v", test.want)
+			}
+
+			// Check field value in DB
+			val, _ := rclient.HGet(test.wantFV[0], test.wantFV[1]).Result()
+			if val != test.wantFV[2] {
+				t.Errorf("got (%v) != wantFV (%v)", val, test.wantFV[2])
+			}
+		})
+	}
 	s.s.Stop()
 }
 
