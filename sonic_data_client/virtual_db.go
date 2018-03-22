@@ -200,13 +200,18 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 			return nil, fmt.Errorf(" %v not a valid port ", paths[KeyIdx])
 		}
 
+		// When fields is a single field, jsonFields isn't filled up
+		jf := ""
+		if strings.Contains(fields, ",") {
+			jf = fields
+		}
 		tblPaths = []tablePath{{
 			dbName:     paths[DbIdx],
 			tableName:  paths[TblIdx],
 			tableKey:   oid,
 			fields:     fields,
 			delimitor:  separator,
-			jsonFields: fields,
+			jsonFields: jf,
 		}}
 	}
 	log.V(6).Infof("v2rEthPortStats: tblPaths %+v", tblPaths)

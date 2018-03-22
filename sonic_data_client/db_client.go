@@ -661,6 +661,11 @@ func tableData2TypedValue(tblPaths []tablePath, op *string) (*gnmipb.TypedValue,
 				if len(tblPaths) != 1 {
 					log.V(2).Infof("WARNING: more than one path exists for field granularity query: %v", tblPaths)
 				}
+				if strings.Contains(tblPath.fields, ",") {
+					log.V(2).Infof("multiple fields need jsonFields not empty: %v", tblPath.fields)
+					return nil, fmt.Errorf("Invalid field %v", tblPath.fields)
+				}
+
 				var key string
 				if tblPath.tableKey != "" {
 					key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
@@ -721,6 +726,12 @@ func dbFieldMultiSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			msi := make(map[string]interface{})
 			for _, tblPath := range tblPaths {
 				var key string
+
+				// TODO: support multiple fields for stream mode
+				if strings.Contains(tblPath.fields, ",") {
+					log.V(2).Infof("multiple fields not support here: %v", tblPath.fields)
+					continue
+				}
 				if tblPath.tableKey != "" {
 					key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
 				} else {
@@ -797,6 +808,12 @@ func dbFieldSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 		key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
 	} else {
 		key = tblPath.tableName
+	}
+
+	// TODO: support multiple fields for stream mode
+	if strings.Contains(tblPath.fields, ",") {
+		log.V(2).Infof("multiple fields not support here: %v", tblPath.fields)
+		return
 	}
 
 	var val string

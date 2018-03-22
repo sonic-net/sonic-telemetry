@@ -172,12 +172,11 @@ func TestLookupV2R(t *testing.T) {
 			input: []string{"COUNTERS_DB", "COUNTERS", "Ethernet2", "SAI_PORT_STAT_IF_IN_OCTETS"},
 			want: []tablePath{
 				{
-					dbName:     "COUNTERS_DB",
-					tableName:  "COUNTERS",
-					tableKey:   "oid:0x1000000000002",
-					delimitor:  ":",
-					fields:     "SAI_PORT_STAT_IF_IN_OCTETS",
-					jsonFields: "SAI_PORT_STAT_IF_IN_OCTETS",
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000002",
+					delimitor: ":",
+					fields:    "SAI_PORT_STAT_IF_IN_OCTETS",
 				},
 			},
 		},
