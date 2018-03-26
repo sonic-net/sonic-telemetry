@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -228,6 +229,13 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	// wait sync for Get, not used for now
 	c.w = w
+
+	deviceName, err := os.Hostname()
+	if err != nil {
+		log.V(2).Infof("Get hostname error: %v", err)
+	} else {
+		c.prefix.Origin = deviceName
+	}
 
 	var values []*spb.Value
 	ts := time.Now()
