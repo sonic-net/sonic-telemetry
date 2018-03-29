@@ -405,7 +405,7 @@ func (c *NonDbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	return values, nil
 }
 
-func (c *NonDbClient) Set(path *gnmipb.Path, val string) error {
+func (c *NonDbClient) Set(path *gnmipb.Path, val interface{}) error {
 	return nil
 }
 

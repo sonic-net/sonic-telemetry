@@ -1,6 +1,7 @@
 package gnmi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -205,20 +206,38 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 }
 
 // Get string value from TypedValue in gnmipb
-func getUpdateVal(typedVal *gnmipb.TypedValue) (string, error) {
-	intVal := typedVal.GetIntVal()
-	stringVal := typedVal.GetStringVal()
-	bytesVal := typedVal.GetBytesVal()
-	if stringVal != "" {
-		return stringVal, nil
+func getUpdateVal(t *gnmipb.TypedValue) (interface{}, error) {
+	switch t.Value.(type) {
+	case *gnmipb.TypedValue_IntVal:
+		return strconv.FormatInt(t.GetIntVal(), 10), nil
+	case *gnmipb.TypedValue_StringVal:
+		return t.GetStringVal(), nil
+	case *gnmipb.TypedValue_JsonIetfVal:
+		var f interface{}
+		err := json.Unmarshal(t.GetJsonIetfVal(), &f)
+		if err != nil {
+			return "", fmt.Errorf("typedValue: %v not json", t)
+		}
+		m := f.(map[string]interface{})
+		fv := make(map[string]string)
+		for k, v := range m {
+			switch v.(type) {
+			case string:
+				fv[k] = v.(string)
+			case int:
+				fv[k] = strconv.FormatInt(int64(v.(int)), 10)
+			case float64:
+				fv[k] = strconv.FormatFloat(v.(float64), 'E', -1, 64)
+			case bool:
+				fv[k] = strconv.FormatBool(v.(bool))
+			default:
+				return "", fmt.Errorf("typedValue: %v field %v type not supported", t, k)
+			}
+		}
+		return fv, nil
+	default:
+		return "", fmt.Errorf("typedValue: %v type not supported", t)
 	}
-	if intVal != 0 {
-		return strconv.FormatInt(intVal, 10), nil
-	}
-	if bytesVal != nil {
-		return string(bytesVal[:]), nil
-	}
-	return "", fmt.Errorf("typedVal: %v not supported", typedVal)
 }
 
 // Set implements the Get RPC in gNMI spec.
@@ -260,12 +279,12 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 	}
 
 	for _, path := range req.GetReplace() {
-		valString, err := getUpdateVal(path.GetVal())
+		val, err := getUpdateVal(path.GetVal())
 		if err != nil {
 			return nil, err
 		}
-		log.V(5).Infof("Replace path: %v valString: %v", path, valString)
-		err = dc.Set(path.GetPath(), valString)
+		log.V(5).Infof("Replace path: %v val: %v", path, val)
+		err = dc.Set(path.GetPath(), val)
 		if err != nil {
 			return nil, err
 		}
@@ -277,12 +296,12 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 	}
 
 	for _, path := range req.GetUpdate() {
-		valString, err := getUpdateVal(path.GetVal())
+		val, err := getUpdateVal(path.GetVal())
 		if err != nil {
 			return nil, err
 		}
-		log.V(5).Infof("Update path: %v valString: %v", path, valString)
-		err = dc.Set(path.GetPath(), valString)
+		log.V(5).Infof("Update path: %v val: %v", path, val)
+		err = dc.Set(path.GetPath(), val)
 		if err != nil {
 			return nil, err
 		}

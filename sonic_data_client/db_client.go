@@ -46,7 +46,7 @@ type Client interface {
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
 	// Set table field from pb path and val
-	Set(path *gnmipb.Path, val string) error
+	Set(path *gnmipb.Path, val interface{}) error
 	// Close provides implemenation for explicit cleanup of Client
 	Close() error
 }
@@ -257,7 +257,7 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	return values, nil
 }
 
-func (c *DbClient) Set(path *gnmipb.Path, val string) error {
+func (c *DbClient) Set(path *gnmipb.Path, val interface{}) error {
 	updatePath := make(map[*gnmipb.Path][]tablePath)
 
 	err := populateDbtablePath(c.prefix, path, &updatePath)
@@ -269,27 +269,68 @@ func (c *DbClient) Set(path *gnmipb.Path, val string) error {
 	for _, tblPaths := range updatePath {
 		for _, tblPath := range tblPaths {
 			redisDb := Target2RedisDb[tblPath.dbName]
-			if tblPath.fields != "" {
-				var key string
-				if tblPath.tableKey != "" {
-					key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
-				} else {
-					key = tblPath.tableName
-				}
+			var key string
+			if tblPath.tableKey != "" {
+				key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
+			} else {
+				key = tblPath.tableName
+			}
 
-				log.V(6).Infof("Set: key %v fields %v val %v", key, tblPath.fields, val)
-				if len(val) <= 0 {
-					_, err := redisDb.HDel(key, tblPath.fields).Result()
-					if err != nil {
-						log.V(2).Infof("redis HDel failed for %v", tblPath)
-						return err
+			log.V(6).Infof("Set: key %v fields %v val %v", key, tblPath.fields, val)
+			if tblPath.fields != "" {
+				switch val.(type) {
+				case string:
+					if val == "" {
+						_, err := redisDb.HDel(key, tblPath.fields).Result()
+						if err != nil {
+							log.V(2).Infof("redis HDel failed for %v", tblPath)
+							return err
+						}
+					} else {
+						_, err := redisDb.HSet(key, tblPath.fields, val).Result()
+						if err != nil {
+							log.V(2).Infof("redis HSet failed for %v", tblPath)
+							return err
+						}
 					}
-				} else {
-					_, err := redisDb.HSet(key, tblPath.fields, val).Result()
+				default:
+					return fmt.Errorf("Set key %v fields %v val %v : type isn't string", key, tblPath.fields, val)
+				}
+			} else {
+				switch val.(type) {
+				case map[string]string:
+					newfv := val.(map[string]string)
+					oldfv, err := redisDb.HGetAll(key).Result()
 					if err != nil {
-						log.V(2).Infof("redis HSet failed for %v", tblPath)
-						return err
+						log.V(2).Infof("redis HGetALL failed for %v", tblPath)
 					}
+					for f, v := range oldfv {
+						vv, ok := newfv[f]
+						if ok {
+							if vv != v {
+								_, err := redisDb.HSet(key, f, vv).Result()
+								if err != nil {
+									log.V(2).Infof("redis HSet failed for %v %v", key, f)
+								}
+							}
+							delete(newfv, f)
+						} else {
+							_, err := redisDb.HDel(key, f).Result()
+							if err != nil {
+								log.V(2).Infof("redis HDel failed for %v %v", key, f)
+								return err
+							}
+						}
+					}
+
+					for f, v := range newfv {
+						_, err := redisDb.HSet(key, f, v).Result()
+						if err != nil {
+							log.V(2).Infof("redis HSet failed for %v %v", key, f)
+						}
+					}
+				default:
+					return fmt.Errorf("Set key %v val %v type isn't map[string]string", key, val)
 				}
 			}
 		}

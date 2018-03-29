@@ -1013,6 +1013,12 @@ func compareSetResponse(sr *pb.SetResponse, simple *SimpleSResponse) bool {
 	return true
 }
 
+type tblFV struct {
+	tbl string
+	f   string
+	v   interface{}
+}
+
 func TestGnmiSet(t *testing.T) {
 	//flag.Set("alsologtostderr", "true")
 	//flag.Set("v", "6")
@@ -1048,12 +1054,14 @@ func TestGnmiSet(t *testing.T) {
 		t.Fatalf("failed to connect to redis server %v", err)
 	}
 	defer rclient.Close()
+	jVal := `{"retry_interval":"60", "encoding":"JSON_IETF", "unidirectional":true}`
+	jByte := []byte(jVal)
 
 	tests := []struct {
-		desc   string
-		in     SimpleSRequest
-		want   SimpleSResponse
-		wantFV []string
+		desc string
+		in   SimpleSRequest
+		want SimpleSResponse
+		wFV  tblFV
 	}{
 		{
 			desc: "Delete path",
@@ -1066,7 +1074,11 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
 				op:     int32(pb.UpdateResult_DELETE),
 			},
-			wantFV: []string{"TELEMETRY_CLIENT|Global", "retry_interval", ""},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "retry_interval",
+				v:   "",
+			},
 		},
 		{
 			desc: "Update path value int",
@@ -1082,7 +1094,11 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
 				op:     int32(pb.UpdateResult_UPDATE),
 			},
-			wantFV: []string{"TELEMETRY_CLIENT|Global", "retry_interval", "5"},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "retry_interval",
+				v:   "5",
+			},
 		},
 		{
 			desc: "Update path value string",
@@ -1098,7 +1114,35 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
 				op:     int32(pb.UpdateResult_UPDATE),
 			},
-			wantFV: []string{"TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "20.20.20.20:8081"},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
+				f:   "dst_addr",
+				v:   "20.20.20.20:8081",
+			},
+		},
+		{
+			desc: "Update path value json",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"TELEMETRY_CLIENT", "Global"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "",
+				v: map[string]string{
+					"retry_interval": "60",
+					"encoding":       "JSON_IETF",
+					"unidirectional": "true",
+				},
+			},
 		},
 		{
 			desc: "Replace path value int",
@@ -1114,7 +1158,11 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
 				op:     int32(pb.UpdateResult_REPLACE),
 			},
-			wantFV: []string{"TELEMETRY_CLIENT|Global", "retry_interval", "5"},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "retry_interval",
+				v:   "5",
+			},
 		},
 		{
 			desc: "Replace path value string",
@@ -1130,7 +1178,35 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
 				op:     int32(pb.UpdateResult_REPLACE),
 			},
-			wantFV: []string{"TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "20.20.20.20:8081"},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
+				f:   "dst_addr",
+				v:   "20.20.20.20:8081",
+			},
+		},
+		{
+			desc: "Replace path value json",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"TELEMETRY_CLIENT", "Global"},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global"},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "",
+				v: map[string]string{
+					"retry_interval": "60",
+					"encoding":       "JSON_IETF",
+					"unidirectional": "true",
+				},
+			},
 		},
 	}
 
@@ -1163,9 +1239,16 @@ func TestGnmiSet(t *testing.T) {
 			}
 
 			// Check field value in DB
-			val, _ := rclient.HGet(test.wantFV[0], test.wantFV[1]).Result()
-			if val != test.wantFV[2] {
-				t.Errorf("got (%v) != wantFV (%v)", val, test.wantFV[2])
+			if test.wFV.f != "" {
+				val, _ := rclient.HGet(test.wFV.tbl, test.wFV.f).Result()
+				if val != test.wFV.v {
+					t.Errorf("got (%v) != wFV.v (%v)", val, test.wFV.v)
+				}
+			} else {
+				val, _ := rclient.HGetAll(test.wFV.tbl).Result()
+				if !reflect.DeepEqual(val, test.wFV.v) {
+					t.Errorf("got (%v) != wFV.v (%v)", val, test.wFV.v)
+				}
 			}
 		})
 	}
