@@ -289,7 +289,6 @@ func TestGNMIDialOutPublish(t *testing.T) {
 	_ = countersEthernetWildcardPfcByte
 
 	clientCfg := ClientConfig{
-		SrcIp:          "",
 		RetryInterval:  5 * time.Second,
 		Encoding:       pb.Encoding_JSON_IETF,
 		Unidirectional: true,

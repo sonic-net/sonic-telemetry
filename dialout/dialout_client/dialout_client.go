@@ -94,7 +94,6 @@ func (d Destination) Validate() error {
 
 // Global config for all clients
 type ClientConfig struct {
-	SrcIp          string
 	RetryInterval  time.Duration
 	Encoding       gpb.Encoding
 	Unidirectional bool        // by default, no reponse from remote server
@@ -263,9 +262,14 @@ func newClient(ctx context.Context, dest Destination) (*Client, error) {
 	opts := []grpc.DialOption{
 		grpc.WithBlock(),
 	}
+
 	if clientCfg.TLS != nil {
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(clientCfg.TLS)))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+		log.V(2).Infof("gRPC without TLS")
 	}
+
 	conn, err := grpc.DialContext(ctx, dest.Addrs, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("Dial to (%s, timeout %v): %v", dest, timeout, err)
@@ -482,8 +486,6 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 		} else {
 			for field, value := range fv {
 				switch field {
-				case "src_ip":
-					clientCfg.SrcIp = value
 				case "retry_interval":
 					//TODO: check validity of the interval
 					itvl, err := strconv.ParseUint(value, 10, 64)
