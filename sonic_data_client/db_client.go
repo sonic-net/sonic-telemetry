@@ -2,7 +2,6 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -62,22 +61,6 @@ var UseRedisLocalTcpPort bool = false
 // redis client connected to each DB
 var Target2RedisDb = make(map[string]*redis.Client)
 
-type tablePath struct {
-	dbName    string
-	tableName string
-	tableKey  string
-	delimitor string
-	fields    string
-	// path name to be used in json data which may be different
-	// from the real data path. Ex. in Counters table, real tableKey
-	// is oid:0x####, while key name like Ethernet## may be put
-	// in json data. They are to be filled in populateDbtablePath()
-	jsonTableName string
-	jsonTableKey  string
-	jsonDelimitor string
-	jsonFields    string
-}
-
 type Value struct {
 	*spb.Value
 }
@@ -124,7 +107,7 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 
 	client.prefix = prefix
 	client.pathG2S = make(map[*gnmipb.Path][]tablePath)
-	err = populateAllDbtablePath(prefix, paths, &client.pathG2S)
+	err = populateAllDbtablePath(prefix, paths, client.pathG2S)
 
 	if err != nil {
 		return nil, err
@@ -258,80 +241,82 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 }
 
 func (c *DbClient) Set(path *gnmipb.Path, val interface{}) error {
-	updatePath := make(map[*gnmipb.Path][]tablePath)
-
-	err := populateDbtablePath(c.prefix, path, &updatePath)
+	fp := gnmiFullPath(c.prefix, path)
+	gsp, err := newGSPath(fp)
+	if err != nil {
+		return err
+	}
+	err = gsp.GetCfgPath()
 	if err != nil {
 		return err
 	}
 
-	log.V(6).Infof("Set: updatePath %v", updatePath)
-	for _, tblPaths := range updatePath {
-		for _, tblPath := range tblPaths {
-			redisDb := Target2RedisDb[tblPath.dbName]
-			var key string
-			if tblPath.tableKey != "" {
-				key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
-			} else {
-				key = tblPath.tableName
-			}
+	tblPaths := gsp.tpath
+	log.V(6).Infof("Set: path %v", tblPaths)
+	for _, tp := range tblPaths {
+		redisDb := Target2RedisDb[tp.dbName]
+		var key string
+		if tp.tableKey != "" {
+			key = tp.tableName + tp.delimitor + tp.tableKey
+		} else {
+			key = tp.tableName
+		}
 
-			log.V(6).Infof("Set: key %v fields %v val %v", key, tblPath.fields, val)
-			if tblPath.fields != "" {
-				switch val.(type) {
-				case string:
-					if val == "" {
-						_, err := redisDb.HDel(key, tblPath.fields).Result()
-						if err != nil {
-							log.V(2).Infof("redis HDel failed for %v", tblPath)
-							return err
-						}
-					} else {
-						_, err := redisDb.HSet(key, tblPath.fields, val).Result()
-						if err != nil {
-							log.V(2).Infof("redis HSet failed for %v", tblPath)
-							return err
-						}
-					}
-				default:
-					return fmt.Errorf("Set key %v fields %v val %v : type isn't string", key, tblPath.fields, val)
-				}
-			} else {
-				switch val.(type) {
-				case map[string]string:
-					newfv := val.(map[string]string)
-					oldfv, err := redisDb.HGetAll(key).Result()
+		log.V(6).Infof("Set: key %v fields %v val %v", key, tp.fields, val)
+		if tp.fields != "" {
+			switch val.(type) {
+			case string:
+				if val == "" {
+					_, err := redisDb.HDel(key, tp.fields).Result()
 					if err != nil {
-						log.V(2).Infof("redis HGetALL failed for %v", tblPath)
+						log.V(2).Infof("redis HDel failed for %v", tp)
+						return err
 					}
-					for f, v := range oldfv {
-						vv, ok := newfv[f]
-						if ok {
-							if vv != v {
-								_, err := redisDb.HSet(key, f, vv).Result()
-								if err != nil {
-									log.V(2).Infof("redis HSet failed for %v %v", key, f)
-								}
-							}
-							delete(newfv, f)
-						} else {
-							_, err := redisDb.HDel(key, f).Result()
-							if err != nil {
-								log.V(2).Infof("redis HDel failed for %v %v", key, f)
-								return err
-							}
-						}
+				} else {
+					_, err := redisDb.HSet(key, tp.fields, val).Result()
+					if err != nil {
+						log.V(2).Infof("redis HSet failed for %v", tp)
+						return err
 					}
-
-					for f, v := range newfv {
-						_, err := redisDb.HSet(key, f, v).Result()
-						if err != nil {
-							log.V(2).Infof("redis HSet failed for %v %v", key, f)
-						}
-					}
-				default:
-					return fmt.Errorf("Set key %v val %v type isn't map[string]string", key, val)
 				}
+			default:
+				return fmt.Errorf("Set key %v fields %v val %v : type isn't string", key, tp.fields, val)
+			}
+		} else {
+			switch val.(type) {
+			case map[string]string:
+				newfv := val.(map[string]string)
+				oldfv, err := redisDb.HGetAll(key).Result()
+				if err != nil {
+					log.V(2).Infof("redis HGetALL failed for %v", tp)
+				}
+				for f, v := range oldfv {
+					vv, ok := newfv[f]
+					if ok {
+						if vv != v {
+							_, err := redisDb.HSet(key, f, vv).Result()
+							if err != nil {
+								log.V(2).Infof("redis HSet failed for %v %v", key, f)
+							}
+						}
+						delete(newfv, f)
+					} else {
+						_, err := redisDb.HDel(key, f).Result()
+						if err != nil {
+							log.V(2).Infof("redis HDel failed for %v %v", key, f)
+							return err
+						}
+					}
+				}
+
+				for f, v := range newfv {
+					_, err := redisDb.HSet(key, f, v).Result()
+					if err != nil {
+						log.V(2).Infof("redis HSet failed for %v %v", key, f)
+					}
+				}
+			default:
+				return fmt.Errorf("Set key %v val %v type isn't map[string]string", key, val)
 			}
 		}
 	}
@@ -436,8 +421,9 @@ func init() {
 
 // gnmiFullPath builds the full path from the prefix and path.
 func gnmiFullPath(prefix, path *gnmipb.Path) *gnmipb.Path {
-
-	fullPath := &gnmipb.Path{Origin: path.Origin}
+	fullPath := &gnmipb.Path{
+		Origin: path.Origin,
+		Target: prefix.GetTarget()}
 	if path.GetElement() != nil {
 		fullPath.Element = append(prefix.GetElement(), path.GetElement()...)
 	}
@@ -447,128 +433,19 @@ func gnmiFullPath(prefix, path *gnmipb.Path) *gnmipb.Path {
 	return fullPath
 }
 
-func populateAllDbtablePath(prefix *gnmipb.Path, paths []*gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
+func populateAllDbtablePath(prefix *gnmipb.Path, paths []*gnmipb.Path, pathG2S map[*gnmipb.Path][]tablePath) error {
 	for _, path := range paths {
-		err := populateDbtablePath(prefix, path, pathG2S)
+		fp := gnmiFullPath(prefix, path)
+		gsp, err := newGSPath(fp)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// Populate table path in DB from gnmi path
-func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
-	var buffer bytes.Buffer
-	var dbPath string
-	var tblPath tablePath
-
-	target := prefix.GetTarget()
-	// Verify it is a valid db name
-	redisDb, ok := Target2RedisDb[target]
-	if !ok {
-		return fmt.Errorf("Invalid target name %v", target)
-	}
-
-	fullPath := path
-	if prefix != nil {
-		fullPath = gnmiFullPath(prefix, path)
-	}
-
-	stringSlice := []string{target}
-	separator, _ := GetTableKeySeparator(target)
-	elems := fullPath.GetElem()
-	if elems != nil {
-		for i, elem := range elems {
-			// TODO: Usage of key field
-			log.V(6).Infof("index %d elem : %#v %#v", i, elem.GetName(), elem.GetKey())
-			if i != 0 {
-				buffer.WriteString(separator)
-			}
-			buffer.WriteString(elem.GetName())
-			stringSlice = append(stringSlice, elem.GetName())
-		}
-		dbPath = buffer.String()
-	} else {
-		log.V(2).Infof("Empty path: %v", elems)
-		return nil
-	}
-
-	// First lookup the Virtual path to Real path mapping tree
-	// The path from gNMI might not be real db path
-	if tblPaths, err := lookupV2R(stringSlice); err == nil {
-		(*pathG2S)[path] = tblPaths
-		log.V(5).Infof("v2r from %v to %+v ", stringSlice, tblPaths)
-		return nil
-	} else {
-		log.V(5).Infof("v2r lookup failed for %v %v", stringSlice, err)
-	}
-
-	tblPath.dbName = target
-	tblPath.tableName = stringSlice[1]
-	tblPath.delimitor = separator
-
-	var mappedKey string
-	if len(stringSlice) > 2 { // tmp, to remove mappedKey
-		mappedKey = stringSlice[2]
-	}
-
-	// The expect real db path could be in one of the formats:
-	// <1> DB Table
-	// <2> DB Table Key
-	// <3> DB Table Field
-	// <4> DB Table Key Field
-	// <5> DB Table Key Key Field
-	switch len(stringSlice) {
-	case 2: // only table name provided
-		res, err := redisDb.Keys(tblPath.tableName + "*").Result()
-		if err != nil || len(res) < 1 {
-			log.V(2).Infof("Invalid db table Path %v %v", target, dbPath)
-			return fmt.Errorf("Failed to find %v %v %v %v", target, dbPath, err, res)
-		}
-		tblPath.tableKey = ""
-	case 3: // Third element could be table key; or field name in which case table name itself is the key too
-		n, err := redisDb.Exists(tblPath.tableName + tblPath.delimitor + mappedKey).Result()
+		err = gsp.GetDbPath()
 		if err != nil {
-			return fmt.Errorf("redis Exists op failed for %v", dbPath)
+			return err
 		}
-		if n == 1 {
-			tblPath.tableKey = mappedKey
-		} else {
-			tblPath.fields = mappedKey
-		}
-	case 4: // Fourth element could part of the table key or field name
-		tblPath.tableKey = mappedKey + tblPath.delimitor + stringSlice[3]
-		// verify whether this key exists
-		key := tblPath.tableName + tblPath.delimitor + tblPath.tableKey
-		n, err := redisDb.Exists(key).Result()
-		if err != nil {
-			return fmt.Errorf("redis Exists op failed for %v", dbPath)
-		}
-		if n != 1 { // Looks like the Fourth slice is not part of the key
-			tblPath.tableKey = mappedKey
-			tblPath.fields = stringSlice[3]
-		}
-	case 5: // both third and fourth element are part of table key, fourth element must be field name
-		tblPath.tableKey = mappedKey + tblPath.delimitor + stringSlice[3]
-		tblPath.fields = stringSlice[4]
-	default:
-		log.V(2).Infof("Invalid db table Path %v", dbPath)
-		return fmt.Errorf("Invalid db table Path %v", dbPath)
+		pathG2S[fp] = gsp.tpath
 	}
-
-	var key string
-	if tblPath.tableKey != "" {
-		key = tblPath.tableName + tblPath.delimitor + tblPath.tableKey
-		n, _ := redisDb.Exists(key).Result()
-		if n != 1 {
-			log.V(2).Infof("No valid entry found on %v with key %v", dbPath, key)
-			return fmt.Errorf("No valid entry found on %v with key %v", dbPath, key)
-		}
-	}
-
-	(*pathG2S)[path] = []tablePath{tblPath}
-	log.V(5).Infof("tablePath %+v", tblPath)
 	return nil
 }
 

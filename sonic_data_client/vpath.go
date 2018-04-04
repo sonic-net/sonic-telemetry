@@ -272,7 +272,7 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 	return tblPaths, err
 }
 
-func lookupV2R(paths []string) ([]tablePath, error) {
+func getv2rPath(paths []string) ([]tablePath, error) {
 	n, ok := v2rTrie.Find(paths)
 	if ok {
 		v2rTrans := n.meta.(v2rTranslate)

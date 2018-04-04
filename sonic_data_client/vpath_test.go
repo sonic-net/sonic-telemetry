@@ -76,7 +76,7 @@ func mock_initCountersNameMap() {
 	}
 }
 
-func TestLookupV2R(t *testing.T) {
+func TestGetV2RPath(t *testing.T) {
 	mock_initCountersNameMap()
 
 	var tests = []struct {
@@ -392,39 +392,15 @@ func TestLookupV2R(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc:  "COUNTERS_DB/COUNTERS/BufferPool",
-			input: []string{"COUNTERS_DB", "COUNTERS", "BufferPool"},
-			want: []tablePath{
-				{
-					dbName:       "COUNTERS_DB",
-					tableName:    "COUNTERS",
-					tableKey:     "oid:0x18000000000000",
-					delimitor:    ":",
-					fields:       "",
-					jsonTableKey: "BUFFER_POOL_0",
-					jsonFields:   "",
-				},
-				{
-					dbName:       "COUNTERS_DB",
-					tableName:    "COUNTERS",
-					tableKey:     "oid:0x18000000000001",
-					delimitor:    ":",
-					fields:       "",
-					jsonTableKey: "BUFFER_POOL_1",
-					jsonFields:   "",
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {
-		//got, err := lookupV2R(test.input)
+		//got, err := getv2rPath(test.input)
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := lookupV2R(test.input)
+			got, err := getv2rPath(test.input)
 
 			if len(got) != len(test.want) {
-				t.Errorf("lookupV2R err: %v  input: %q got != want", err, test.input)
+				t.Errorf("getv2rPath err: %v  input: %q got != want", err, test.input)
 				t.Logf("got : %v", got)
 				t.Logf("want: %v", test.want)
 			} else {
@@ -432,7 +408,7 @@ func TestLookupV2R(t *testing.T) {
 				sort.Sort(tblPathSlice(test.want))
 				for i, g := range got {
 					if g != test.want[i] {
-						t.Errorf("lookupV2R err: %v  input: (%q) element[%v] isn't wanted %v", err, test.input, i, g)
+						t.Errorf("getv2rPath err: %v  input: (%q) element[%v] isn't wanted %v", err, test.input, i, g)
 						t.Logf("got  = %v", got)
 						t.Logf("want = %v", test.want)
 					}

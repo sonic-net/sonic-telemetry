@@ -10,7 +10,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
 
-	//"flag"
+	"flag"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/openconfig/gnmi/client"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -237,6 +237,9 @@ func prepareDb(t *testing.T) {
 }
 
 func TestGnmiGet(t *testing.T) {
+	flag.Set("alsologtostderr", "true")
+	//flag.Set("v", "6")
+	flag.Parse()
 	//t.Log("Start server")
 	s := createServer(t)
 	go runServer(t, s)
@@ -1058,10 +1061,11 @@ func TestGnmiSet(t *testing.T) {
 	jByte := []byte(jVal)
 
 	tests := []struct {
-		desc string
-		in   SimpleSRequest
-		want SimpleSResponse
-		wFV  tblFV
+		desc    string
+		in      SimpleSRequest
+		want    SimpleSResponse
+		wantFV  tblFV
+		wantErr string
 	}{
 		{
 			desc: "Delete path",
@@ -1074,7 +1078,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
 				op:     int32(pb.UpdateResult_DELETE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|Global",
 				f:   "retry_interval",
 				v:   "",
@@ -1094,7 +1098,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
 				op:     int32(pb.UpdateResult_UPDATE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|Global",
 				f:   "retry_interval",
 				v:   "5",
@@ -1114,7 +1118,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
 				op:     int32(pb.UpdateResult_UPDATE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
 				f:   "dst_addr",
 				v:   "20.20.20.20:8081",
@@ -1134,7 +1138,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global"},
 				op:     int32(pb.UpdateResult_UPDATE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|Global",
 				f:   "",
 				v: map[string]string{
@@ -1158,7 +1162,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
 				op:     int32(pb.UpdateResult_REPLACE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|Global",
 				f:   "retry_interval",
 				v:   "5",
@@ -1178,7 +1182,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
 				op:     int32(pb.UpdateResult_REPLACE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
 				f:   "dst_addr",
 				v:   "20.20.20.20:8081",
@@ -1198,7 +1202,7 @@ func TestGnmiSet(t *testing.T) {
 				path:   []string{"TELEMETRY_CLIENT", "Global"},
 				op:     int32(pb.UpdateResult_REPLACE),
 			},
-			wFV: tblFV{
+			wantFV: tblFV{
 				tbl: "TELEMETRY_CLIENT|Global",
 				f:   "",
 				v: map[string]string{
@@ -1208,9 +1212,29 @@ func TestGnmiSet(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Update path not supported",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"PORT", "Ethernet1", "alias"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_StringVal{"1"},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
+				f:   "dst_addr",
+				v:   "20.20.20.20:8081",
+			},
+			wantErr: "config [CONFIG_DB PORT Ethernet1 alias] not supported",
+		},
 	}
 
-	wantRetCode := codes.OK
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			rclient.FlushDb()
@@ -1225,29 +1249,32 @@ func TestGnmiSet(t *testing.T) {
 			if !ok {
 				t.Fatal("got a non-grpc error from grpc call")
 			}
-			if gotRetStatus.Code() != wantRetCode {
+			if (len(test.wantErr) == 0 && gotRetStatus.Code() != codes.OK) ||
+				(len(test.wantErr) != 0 && gotRetStatus.Message() != test.wantErr) {
 				t.Log("err: ", err)
-				t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
+				t.Fatalf("got return code %v, want %v", gotRetStatus.Message(), test.wantErr)
 			}
 
-			if resp == nil {
-				t.Fatal("got SetResponse nil")
-			}
-			if !compareSetResponse(resp, &test.want) {
-				t.Errorf("SetResponse is not expected: %v", resp)
-				t.Logf("want: %v", test.want)
-			}
-
-			// Check field value in DB
-			if test.wFV.f != "" {
-				val, _ := rclient.HGet(test.wFV.tbl, test.wFV.f).Result()
-				if val != test.wFV.v {
-					t.Errorf("got (%v) != wFV.v (%v)", val, test.wFV.v)
+			if len(test.wantErr) == 0 {
+				if resp == nil {
+					t.Fatal("got SetResponse nil")
 				}
-			} else {
-				val, _ := rclient.HGetAll(test.wFV.tbl).Result()
-				if !reflect.DeepEqual(val, test.wFV.v) {
-					t.Errorf("got (%v) != wFV.v (%v)", val, test.wFV.v)
+				if !compareSetResponse(resp, &test.want) {
+					t.Errorf("SetResponse is not expected: %v", resp)
+					t.Logf("want: %v", test.want)
+				}
+
+				// Check field value in DB
+				if test.wantFV.f != "" {
+					val, _ := rclient.HGet(test.wantFV.tbl, test.wantFV.f).Result()
+					if val != test.wantFV.v {
+						t.Errorf("got (%v) != wantFV.v (%v)", val, test.wantFV.v)
+					}
+				} else {
+					val, _ := rclient.HGetAll(test.wantFV.tbl).Result()
+					if !reflect.DeepEqual(val, test.wantFV.v) {
+						t.Errorf("got (%v) != wantFV.v (%v)", val, test.wantFV.v)
+					}
 				}
 			}
 		})
