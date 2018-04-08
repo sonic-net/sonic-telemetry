@@ -1,0 +1,115 @@
+hash: 960e27903931bcd8e408352acc045160cf60f178d2c1ffb09f31e7b392187603
+updated: 2018-04-08T00:17:47.271779553-07:00
+imports:
+- name: github.com/c9s/goprocinfo
+  version: 0010a05ce49fde7f50669bc7ecda7d41dd6ab824
+  subpackages:
+  - linux
+- name: github.com/go-redis/redis
+  version: 877867d2845fbaf86798befe410b6ceb6f5c29a3
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
+  - internal/singleflight
+  - internal/util
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+- name: github.com/golang/protobuf
+  version: 925541529c1fa6821df4e44ce2723319eb2be768
+  subpackages:
+  - proto
+  - protoc-gen-go/descriptor
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
+- name: github.com/google/gnxi
+  version: 4cc9f27e4d5fee0a952a7490906d2493f0bd6c79
+  subpackages:
+  - utils
+- name: github.com/kylelemons/godebug
+  version: d65d576e9348f5982d7f6d83682b694e731a45c6
+  subpackages:
+  - diff
+  - pretty
+- name: github.com/openconfig/gnmi
+  version: a0e319ea17b69501b2b287db91149ed93e5e3ebc
+  subpackages:
+  - client
+  - client/gnmi
+  - client/grpcutil
+  - ctree
+  - errlist
+  - proto/gnmi
+  - proto/gnmi_ext
+  - value
+- name: github.com/openconfig/goyang
+  version: b6e1e28273ad274f9240361b3a1ae65d27c045ac
+  subpackages:
+  - pkg/indent
+  - pkg/yang
+- name: github.com/openconfig/ygot
+  version: b71b4131ec632fdb387e35dfe635182ad2368c1f
+  subpackages:
+  - util
+  - ygot
+- name: github.com/workiva/go-datastructures
+  version: 900cfe0fd2681ca34fa97071e8fcf4f623679104
+  subpackages:
+  - queue
+- name: golang.org/x/net
+  version: 61147c48b25b599e5b561d2e9c4f3e1ef489ca41
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/text
+  version: 2cb43934f0eece38629746959acc633cba083fe4
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/genproto
+  version: ce84044298496ef4b54b4a0a0909ba593cc60e30
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: d89cded64628466c4ab532d1f0ba5c220459ebe8
+  subpackages:
+  - balancer
+  - balancer/base
+  - balancer/roundrobin
+  - codes
+  - connectivity
+  - credentials
+  - encoding
+  - encoding/proto
+  - grpclb/grpc_lb_v1/messages
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - reflection
+  - reflection/grpc_reflection_v1alpha
+  - resolver
+  - resolver/dns
+  - resolver/passthrough
+  - stats
+  - status
+  - tap
+  - transport
+testImports:
+- name: github.com/jipanyang/gnmi
+  version: 5b77edac66351372f83487e7cc9ac29ff718ea74
+  subpackages:
+  - client/gnmi
