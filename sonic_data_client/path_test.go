@@ -34,7 +34,13 @@ func TestGetDbPath(t *testing.T) {
 		{
 			desc:     "Invalid DB",
 			input:    []string{"TEST_DB", "COUNTERS"},
-			wantErr:  "invaild target: TEST_DB",
+			wantErr:  "invaild db target: TEST_DB",
+			wantPath: nil,
+		},
+		{
+			desc:     "Others target",
+			input:    []string{"OTHERS", "proc", "meminfo"},
+			wantErr:  "invaild db target: OTHERS",
 			wantPath: nil,
 		},
 		{
@@ -197,7 +203,7 @@ func TestGetCfgPath(t *testing.T) {
 		{
 			desc:     "Invalid DB",
 			input:    []string{"TEST_DB", "COUNTERS"},
-			wantErr:  "invaild target: TEST_DB",
+			wantErr:  "invaild db target: TEST_DB",
 			wantPath: nil,
 		},
 		{

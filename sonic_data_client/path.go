@@ -57,8 +57,8 @@ func newGSPath(path *gnmipb.Path) (*GSPath, error) {
 // GetDbPath return tablePath to get DB data
 func (p *GSPath) GetDbPath() error {
 	target := p.gpath[0]
-	if !isValidTarget(target) {
-		return fmt.Errorf("invaild target: %v", target)
+	if !isValidDbTarget(target) {
+		return fmt.Errorf("invaild db target: %v", target)
 	}
 
 	if target == "COUNTERS_DB" {
@@ -80,8 +80,8 @@ func (p *GSPath) GetDbPath() error {
 // GetCfgpath check if path permit, return DB path to set value
 func (p *GSPath) GetCfgPath() error {
 	target := p.gpath[0]
-	if !isValidTarget(target) {
-		return fmt.Errorf("invaild target: %v", target)
+	if !isValidDbTarget(target) {
+		return fmt.Errorf("invaild db target: %v", target)
 	}
 
 	if target != "CONFIG_DB" {
@@ -103,8 +103,11 @@ func (p *GSPath) GetCfgPath() error {
 	return fmt.Errorf("config %s not supported", p.gpath)
 }
 
-func isValidTarget(t string) bool {
+func isValidDbTarget(t string) bool {
 	_, ok := spb.Target_value[t]
+	if t == "OTHERS" {
+		return false
+	}
 	return ok
 }
 
