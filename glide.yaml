@@ -36,6 +36,8 @@ import:
   - peer
   - reflection
   - status
+- package: github.com/shirou/gopsutil
+  version: ~2.18.4
 testImport:
 - package: github.com/jipanyang/gnmi
   subpackages:

@@ -1,10 +1,8 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	spb "github.com/Azure/sonic-telemetry/proto"
-	linuxproc "github.com/c9s/goprocinfo/linux"
 	log "github.com/golang/glog"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/workiva/go-datastructures/queue"
@@ -15,10 +13,6 @@ import (
 // Non db client is to Handle
 // <1> data not in SONiC redis db
 
-const (
-	statsRingCap uint64 = 3000 // capacity of statsRing.
-)
-
 type dataGetFunc func() ([]byte, error)
 
 type path2DataFunc struct {
@@ -26,42 +20,23 @@ type path2DataFunc struct {
 	getFunc dataGetFunc
 }
 
-type statsRing struct {
-	writeIdx uint64 // slot index to write next
-	buff     []*linuxproc.Stat
-	mu       sync.RWMutex // Mutex for data protection
-}
-
 var (
 	clientTrie *Trie
-	statsR     statsRing
 
 	// path2DataFuncTbl is used to populate trie tree which is reponsible
 	// for getting data at the path specified
 	path2DataFuncTbl = []path2DataFunc{
-		{ // Get cpu utilizaation
-			path:    []string{"OTHERS", "platform", "cpu"},
-			getFunc: dataGetFunc(getCpuUtil),
+		{ // Get system cpu usage
+			path:    []string{"OTHERS", "system", "cpu"},
+			getFunc: dataGetFunc(GetCpuUtil),
 		},
-		{ // Get proc meminfo
-			path:    []string{"OTHERS", "proc", "meminfo"},
-			getFunc: dataGetFunc(getProcMeminfo),
+		{ // Get system vmstat
+			path:    []string{"OTHERS", "system", "memory"},
+			getFunc: dataGetFunc(GetMemInfo),
 		},
-		{ // Get proc diskstats
-			path:    []string{"OTHERS", "proc", "diskstats"},
-			getFunc: dataGetFunc(getProcDiskstats),
-		},
-		{ // Get proc loadavg
-			path:    []string{"OTHERS", "proc", "loadavg"},
-			getFunc: dataGetFunc(getProcLoadavg),
-		},
-		{ // Get proc vmstat
-			path:    []string{"OTHERS", "proc", "vmstat"},
-			getFunc: dataGetFunc(getProcVmstat),
-		},
-		{ // Get proc stat
-			path:    []string{"OTHERS", "proc", "stat"},
-			getFunc: dataGetFunc(getProcStat),
+		{ // Get system disk stat
+			path:    []string{"OTHERS", "system", "disk"},
+			getFunc: dataGetFunc(GetDiskUsage),
 		},
 	}
 )
@@ -74,202 +49,12 @@ func (t *Trie) clientTriePopulate() {
 		} else {
 			log.V(2).Infof("Add trie node for %v with %v", pt.path, pt.getFunc)
 		}
-
 	}
-}
-
-type cpuStat struct {
-	CpuUsageAll cpuUtil   `json:"cpu_all"`
-	CpuUsage    []cpuUtil `json:"cpus"`
-}
-
-// Cpu utilization rate
-type cpuUtil struct {
-	Id            string `json:"id"`
-	CpuUtil_100ms uint64 `json:"100ms"`
-	CpuUtil_1s    uint64 `json:"1s"`
-	CpuUtil_5s    uint64 `json:"5s"`
-	CpuUtil_1min  uint64 `json:"1min"`
-	CpuUtil_5min  uint64 `json:"5min"`
-}
-
-func getCpuUtilPercents(cur, last *linuxproc.CPUStat) uint64 {
-	curTotal := (cur.User + cur.Nice + cur.System + cur.Idle + cur.IOWait + cur.IRQ + cur.SoftIRQ + cur.Steal + cur.Guest + cur.GuestNice)
-	lastTotal := (last.User + last.Nice + last.System + last.Idle + last.IOWait + last.IRQ + last.SoftIRQ + last.Steal + last.Guest + last.GuestNice)
-	idleTicks := cur.Idle - last.Idle
-	totalTicks := curTotal - lastTotal
-	return 100 * (totalTicks - idleTicks) / totalTicks
-}
-
-func getCpuUtilStat() *cpuStat {
-
-	stat := cpuStat{}
-	statsR.mu.RLock()
-	defer statsR.mu.RUnlock()
-
-	current := (statsR.writeIdx + statsRingCap - 1) % statsRingCap
-	// Get cpu utilization rate within last 100ms
-	last := (statsR.writeIdx + statsRingCap - 2) % statsRingCap
-	if statsR.buff[last] == nil {
-		return &stat
-	}
-
-	curCpuStat := statsR.buff[current].CPUStatAll
-	lastCpuStat := statsR.buff[last].CPUStatAll
-
-	CpuUtil_100ms := getCpuUtilPercents(&curCpuStat, &lastCpuStat)
-	stat.CpuUsageAll.Id = curCpuStat.Id
-	stat.CpuUsageAll.CpuUtil_100ms = CpuUtil_100ms
-	for i, cStat := range statsR.buff[last].CPUStats {
-		CpuUtil_100ms = getCpuUtilPercents(&statsR.buff[current].CPUStats[i], &cStat)
-		stat.CpuUsage = append(stat.CpuUsage, cpuUtil{Id: cStat.Id, CpuUtil_100ms: CpuUtil_100ms})
-	}
-
-	// Get cpu utilization rate within last 1s (10*100ms)
-	last = (statsR.writeIdx + statsRingCap - 10) % statsRingCap
-	if statsR.buff[last] == nil {
-		return &stat
-	}
-	lastCpuStat = statsR.buff[last].CPUStatAll
-	CpuUtil_1s := getCpuUtilPercents(&curCpuStat, &lastCpuStat)
-	stat.CpuUsageAll.CpuUtil_1s = CpuUtil_1s
-	for i, cStat := range statsR.buff[last].CPUStats {
-		CpuUtil_1s = getCpuUtilPercents(&statsR.buff[current].CPUStats[i], &cStat)
-		stat.CpuUsage[i].CpuUtil_1s = CpuUtil_1s
-	}
-
-	// Get cpu utilization rate within last 5s (50*100ms)
-	last = (statsR.writeIdx + statsRingCap - 50) % statsRingCap
-	if statsR.buff[last] == nil {
-		return &stat
-	}
-	lastCpuStat = statsR.buff[last].CPUStatAll
-	CpuUtil_5s := getCpuUtilPercents(&curCpuStat, &lastCpuStat)
-	stat.CpuUsageAll.CpuUtil_5s = CpuUtil_5s
-	for i, cStat := range statsR.buff[last].CPUStats {
-		CpuUtil_5s = getCpuUtilPercents(&statsR.buff[current].CPUStats[i], &cStat)
-		stat.CpuUsage[i].CpuUtil_5s = CpuUtil_5s
-	}
-
-	// Get cpu utilization rate within last 1m (600*100ms)
-	last = (statsR.writeIdx + statsRingCap - 600) % statsRingCap
-	if statsR.buff[last] == nil {
-		return &stat
-	}
-	lastCpuStat = statsR.buff[last].CPUStatAll
-	CpuUtil_1min := getCpuUtilPercents(&curCpuStat, &lastCpuStat)
-	stat.CpuUsageAll.CpuUtil_1min = CpuUtil_1min
-	for i, cStat := range statsR.buff[last].CPUStats {
-		CpuUtil_1min = getCpuUtilPercents(&statsR.buff[current].CPUStats[i], &cStat)
-		stat.CpuUsage[i].CpuUtil_1min = CpuUtil_1min
-	}
-
-	// Get cpu utilization rate within last 5m (5*600*100ms)
-	last = (statsR.writeIdx + statsRingCap - 30000) % statsRingCap
-	if statsR.buff[last] == nil {
-		return &stat
-	}
-	lastCpuStat = statsR.buff[last].CPUStatAll
-	CpuUtil_5min := getCpuUtilPercents(&curCpuStat, &lastCpuStat)
-	stat.CpuUsageAll.CpuUtil_5min = CpuUtil_5min
-	for i, cStat := range statsR.buff[last].CPUStats {
-		CpuUtil_5min = getCpuUtilPercents(&statsR.buff[current].CPUStats[i], &cStat)
-		stat.CpuUsage[i].CpuUtil_5min = CpuUtil_5min
-	}
-	return &stat
-}
-
-func getCpuUtil() ([]byte, error) {
-	cpuStat := getCpuUtilStat()
-	log.V(4).Infof("getCpuUtil, cpuStat %v", cpuStat)
-	b, err := json.Marshal(cpuStat)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getCpuUtil, output %v", string(b))
-	return b, nil
-}
-
-func getProcMeminfo() ([]byte, error) {
-	memInfo, _ := linuxproc.ReadMemInfo("/proc/meminfo")
-	b, err := json.Marshal(memInfo)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getProcMeminfo, output %v", string(b))
-	return b, nil
-}
-
-func getProcDiskstats() ([]byte, error) {
-	diskStats, _ := linuxproc.ReadDiskStats("/proc/diskstats")
-	b, err := json.Marshal(diskStats)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getProcDiskstats, output %v", string(b))
-	return b, nil
-}
-
-func getProcLoadavg() ([]byte, error) {
-	loadAvg, _ := linuxproc.ReadLoadAvg("/proc/loadavg")
-	b, err := json.Marshal(loadAvg)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getProcLoadavg, output %v", string(b))
-	return b, nil
-}
-
-func getProcVmstat() ([]byte, error) {
-	vmStat, _ := linuxproc.ReadVMStat("/proc/vmstat")
-	b, err := json.Marshal(vmStat)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getProcVmstat, output %v", string(b))
-	return b, nil
-}
-
-func getProcStat() ([]byte, error) {
-	stat, _ := linuxproc.ReadStat("/proc/stat")
-	b, err := json.Marshal(stat)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getProcStat, output %v", string(b))
-	return b, nil
-}
-
-func pollStats() {
-	for {
-		stat, err := linuxproc.ReadStat("/proc/stat")
-		if err != nil {
-			log.V(2).Infof("stat read fail")
-			continue
-		}
-
-		statsR.mu.Lock()
-
-		statsR.buff[statsR.writeIdx] = stat
-		statsR.writeIdx++
-		statsR.writeIdx %= statsRingCap
-		statsR.mu.Unlock()
-		time.Sleep(time.Millisecond * 100)
-	}
-
 }
 
 func init() {
 	clientTrie = NewTrie()
 	clientTrie.clientTriePopulate()
-	statsR.buff = make([]*linuxproc.Stat, statsRingCap)
-	go pollStats()
 }
 
 type NonDbClient struct {

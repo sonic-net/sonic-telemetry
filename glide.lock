@@ -1,10 +1,14 @@
-hash: 960e27903931bcd8e408352acc045160cf60f178d2c1ffb09f31e7b392187603
-updated: 2018-04-08T00:17:47.271779553-07:00
+hash: b4720b7739e36c14d43fe780d37215a0458f8984acab2d82cf1a08de9ab7e97f
+updated: 2018-05-15T19:50:10.464384239-07:00
 imports:
 - name: github.com/c9s/goprocinfo
   version: 0010a05ce49fde7f50669bc7ecda7d41dd6ab824
   subpackages:
   - linux
+- name: github.com/go-ole/go-ole
+  version: a1ec82a652ebc7e784d7df887cfb31061aeabbcc
+  subpackages:
+  - oleutil
 - name: github.com/go-redis/redis
   version: 877867d2845fbaf86798befe410b6ceb6f5c29a3
   subpackages:
@@ -18,7 +22,7 @@ imports:
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/protobuf
-  version: 925541529c1fa6821df4e44ce2723319eb2be768
+  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
   subpackages:
   - proto
   - protoc-gen-go/descriptor
@@ -56,8 +60,16 @@ imports:
   subpackages:
   - util
   - ygot
+- name: github.com/shirou/gopsutil
+  version: c95755e4bcd7a62bb8bd33f3a597a7c7f35e2cf3
+  subpackages:
+  - disk
+  - internal/common
+  - mem
+- name: github.com/StackExchange/wmi
+  version: cdffdb33acae0e14efff2628f9bae377b597840e
 - name: github.com/workiva/go-datastructures
-  version: 900cfe0fd2681ca34fa97071e8fcf4f623679104
+  version: 01f52d4880ca171ab1033bb0ee03cda8e0a31cc3
   subpackages:
   - queue
 - name: golang.org/x/net
@@ -70,6 +82,11 @@ imports:
   - internal/timeseries
   - lex/httplex
   - trace
+- name: golang.org/x/sys
+  version: 7c87d13f8e835d2fb3a70a2912c811ed0c1d241b
+  subpackages:
+  - unix
+  - windows
 - name: golang.org/x/text
   version: 2cb43934f0eece38629746959acc633cba083fe4
   subpackages:
@@ -82,11 +99,12 @@ imports:
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: d89cded64628466c4ab532d1f0ba5c220459ebe8
+  version: 41344da2231b913fa3d983840a57a6b1b7b631a1
   subpackages:
   - balancer
   - balancer/base
   - balancer/roundrobin
+  - channelz
   - codes
   - connectivity
   - credentials
