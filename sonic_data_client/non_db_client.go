@@ -38,6 +38,10 @@ var (
 			path:    []string{"OTHERS", "system", "disk"},
 			getFunc: dataGetFunc(GetDiskUsage),
 		},
+		{ // Get system version
+			path:    []string{"OTHERS", "system", "version"},
+			getFunc: dataGetFunc(GetVersion),
+		},
 	}
 )
 

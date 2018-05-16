@@ -1,5 +1,5 @@
-hash: b4720b7739e36c14d43fe780d37215a0458f8984acab2d82cf1a08de9ab7e97f
-updated: 2018-05-15T19:50:10.464384239-07:00
+hash: 772c1deaf69068d627ca711e1514d0c12e43134c32a5a95cf975afbcb3dba6af
+updated: 2018-05-16T02:27:45.106673837-07:00
 imports:
 - name: github.com/c9s/goprocinfo
   version: 0010a05ce49fde7f50669bc7ecda7d41dd6ab824
@@ -19,6 +19,8 @@ imports:
   - internal/proto
   - internal/singleflight
   - internal/util
+- name: github.com/go-yaml/yaml
+  version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/protobuf

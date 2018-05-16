@@ -2,14 +2,17 @@ package client
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"strconv"
 	"sync"
 	"time"
 
-	linuxproc "github.com/c9s/goprocinfo/linux"
-	log "github.com/golang/glog"
+	"github.com/go-yaml/yaml"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
+
+	linuxproc "github.com/c9s/goprocinfo/linux"
+	log "github.com/golang/glog"
 )
 
 type statsRing struct {
@@ -152,36 +155,59 @@ func pollStats() {
 	}
 }
 
+func marshal(data interface{}) ([]byte, error) {
+	j, err := json.Marshal(data)
+	if err != nil {
+		log.V(2).Infof("json marshal error %v", err)
+		return nil, err
+	}
+	log.V(6).Infof("marshal json: %v", string(j))
+	return j, nil
+}
+
 func GetMemInfo() ([]byte, error) {
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
 		log.V(2).Infof("get memory stat error %v", err)
 		return nil, err
 	}
-	j, err := json.Marshal(vmStat)
-	if err != nil {
-		log.V(2).Infof("json marshal error %v", err)
-		return nil, err
-	}
-	log.V(6).Infof("mem info: %v", string(j))
-	return j, nil
+	return marshal(vmStat)
 }
 
 func GetDiskUsage() ([]byte, error) {
 	diskStat, err := disk.Usage("/")
 	if err != nil {
 		log.V(2).Infof("get disk stat error %v", err)
+		return nil, err
 	}
 	data := map[string]string{
 		"UsedPercent": strconv.FormatFloat(diskStat.UsedPercent, 'f', 2, 64),
 	}
-	j, err := json.Marshal(data)
+	return marshal(data)
+}
+
+func GetVersion() ([]byte, error) {
+	ver, err := ioutil.ReadFile("/etc/sonic/sonic_version.yml")
 	if err != nil {
-		log.V(2).Infof("json marshal error %v", err)
+		log.V(2).Infof("read version file error %v", err)
 		return nil, err
 	}
-	log.V(6).Infof("disk usage: %v", string(j))
-	return j, nil
+
+	m := make(map[string]string)
+	err = yaml.Unmarshal([]byte(ver), &m)
+	if err != nil {
+		log.V(2).Infof("unmarshal version yaml error %v", err)
+		return nil, err
+	}
+
+	data := map[string]string{}
+	if val, ok := m["build_version"]; ok {
+		data["Software Version"] = val
+	}
+	if val, ok := m["build_date"]; ok {
+		data["Build Date"] = val
+	}
+	return marshal(data)
 }
 
 func init() {

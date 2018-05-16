@@ -38,6 +38,8 @@ import:
   - status
 - package: github.com/shirou/gopsutil
   version: ~2.18.4
+- package: github.com/go-yaml/yaml
+  version: ~2.2.1
 testImport:
 - package: github.com/jipanyang/gnmi
   subpackages:
