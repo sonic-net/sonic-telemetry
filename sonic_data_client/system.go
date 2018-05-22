@@ -1,9 +1,13 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -128,13 +132,7 @@ func getCpuUtilStat() *cpuStat {
 func GetCpuUtil() ([]byte, error) {
 	cpuStat := getCpuUtilStat()
 	log.V(4).Infof("getCpuUtil, cpuStat %v", cpuStat)
-	b, err := json.Marshal(cpuStat)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
-	log.V(4).Infof("getCpuUtil, output %v", string(b))
-	return b, nil
+	return marshal(cpuStat)
 }
 
 func pollStats() {
@@ -161,7 +159,7 @@ func marshal(data interface{}) ([]byte, error) {
 		log.V(2).Infof("json marshal error %v", err)
 		return nil, err
 	}
-	log.V(6).Infof("marshal json: %v", string(j))
+	log.V(6).Infof("marshal json:\n %v", string(j))
 	return j, nil
 }
 
@@ -186,6 +184,7 @@ func GetDiskUsage() ([]byte, error) {
 	return marshal(data)
 }
 
+// Get version and build date from sonic_version.yml
 func GetVersion() ([]byte, error) {
 	ver, err := ioutil.ReadFile("/etc/sonic/sonic_version.yml")
 	if err != nil {
@@ -206,6 +205,93 @@ func GetVersion() ([]byte, error) {
 	}
 	if val, ok := m["build_date"]; ok {
 		data["Build Date"] = val
+	}
+	return marshal(data)
+}
+
+// Get linux command output
+func getCommandOut(cmd string) (string, error) {
+	c := exec.Command("bash", "-c", cmd)
+	var stdout, stderr bytes.Buffer
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	err := c.Run()
+	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	if errStr != "" {
+		log.V(2).Infof("exec command %v err: %v", cmd, errStr)
+		return "", err
+	}
+	return outStr, nil
+}
+
+// Get ntp stat by linux command.
+// Command output have two type:
+// (1)
+// unsynchronised
+//   time server re-starting
+//   polling server every 8 s
+// (2)
+// synchronised to NTP server (10.65.254.222) at stratum 4
+//   time correct to within 880 ms
+//    polling server every 64 s
+// Return json format:
+// {
+//     "stat":"unsynchronised"
+// }
+func GetNtpStat() ([]byte, error) {
+	// If ntpstat is unsynchronised, command exist status is not 0.
+	outStr, err := getCommandOut("ntpstat || true")
+	if err != nil {
+		return nil, err
+	}
+
+	data := map[string]string{}
+	if strings.HasPrefix(outStr, "unsynchronised") {
+		data["stat"] = "unsynchronised"
+	} else if strings.HasPrefix(outStr, "synchronised") {
+		data["stat"] = "synchronised"
+	} else {
+		return nil, fmt.Errorf("invalid result: %v", outStr)
+	}
+	return marshal(data)
+}
+
+// Get last shutdown reason.
+// Get the two most recent shutdowns or reboots by "last" command.
+// Reboot denotes the system booting up; whereas, shutdown denotes the system going down.
+// So a graceful shutdown would show up as reboot preceded by shutdown.
+// In contrast, an ungraceful shutdown can be inferred by the omission of shutdown.
+func GetShutdownReason() ([]byte, error) {
+	outStr, err := getCommandOut("last -n2 -x shutdown reboot")
+	if err != nil {
+		return nil, err
+	}
+
+	log.V(6).Infof("out: %v", outStr)
+	lines := strings.Split(outStr, "\n")
+	rebootCnt := 0
+	shutdownCnt := 0
+	shutdownLine := ""
+	for _, line := range lines {
+		if strings.HasPrefix(line, "reboot ") {
+			rebootCnt += 1
+		} else if strings.HasPrefix(line, "shutdown ") {
+			shutdownCnt += 1
+			shutdownLine = strings.TrimPrefix(line, "shutdown ")
+		}
+	}
+
+	last := "Unknown"
+	date := ""
+	if shutdownCnt == 1 && rebootCnt == 1 {
+		d := strings.Split(shutdownLine, "  ")
+		last = d[0]
+		date = d[2]
+	}
+
+	data := map[string]string{
+		"last": last,
+		"date": date,
 	}
 	return marshal(data)
 }

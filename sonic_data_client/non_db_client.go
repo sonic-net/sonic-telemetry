@@ -42,6 +42,14 @@ var (
 			path:    []string{"OTHERS", "system", "version"},
 			getFunc: dataGetFunc(GetVersion),
 		},
+		{ // Get system ntpstat
+			path:    []string{"OTHERS", "system", "ntp"},
+			getFunc: dataGetFunc(GetNtpStat),
+		},
+		{ // Get system shutdown reason
+			path:    []string{"OTHERS", "system", "shutdown"},
+			getFunc: dataGetFunc(GetShutdownReason),
+		},
 	}
 )
 
