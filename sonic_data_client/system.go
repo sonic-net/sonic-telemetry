@@ -169,7 +169,10 @@ func GetMemInfo() ([]byte, error) {
 		log.V(2).Infof("get memory stat error %v", err)
 		return nil, err
 	}
-	return marshal(vmStat)
+	data := map[string]string{
+		"UsedPercent": strconv.FormatFloat(vmStat.UsedPercent, 'f', 2, 64),
+	}
+	return marshal(data)
 }
 
 func GetDiskUsage() ([]byte, error) {
@@ -256,12 +259,12 @@ func GetNtpStat() ([]byte, error) {
 	return marshal(data)
 }
 
-// Get last shutdown reason.
+// Get last down reason.
 // Get the two most recent shutdowns or reboots by "last" command.
 // Reboot denotes the system booting up; whereas, shutdown denotes the system going down.
 // So a graceful shutdown would show up as reboot preceded by shutdown.
 // In contrast, an ungraceful shutdown can be inferred by the omission of shutdown.
-func GetShutdownReason() ([]byte, error) {
+func GetDownReason() ([]byte, error) {
 	outStr, err := getCommandOut("last -n2 -x shutdown reboot")
 	if err != nil {
 		return nil, err
