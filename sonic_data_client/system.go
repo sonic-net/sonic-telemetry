@@ -201,11 +201,11 @@ func GetRxTxRateTimer() {
 	interval := 10
 	oldcounters := make(map[string]RXTX)
 	newcounters := make(map[string]RXTX)
-	ratecountersNameOidTbls, err := initRateCountersNameMap()
-	if err != nil {
-		return
-	}
 	for {
+		ratecountersNameOidTbls, err := initRateCountersNameMap()
+		if err != nil {
+			continue
+		}
 		countersNameMap := ratecountersNameOidTbls["COUNTERS_PORT_NAME_MAP"]
 		for port, oid := range countersNameMap {
 			inputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_IN_OCTETS")
