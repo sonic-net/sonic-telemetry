@@ -39,6 +39,8 @@ var (
 		"COUNTERS_INGRESS_PRIORITY_GROUP_NAME_MAP": make(map[string]string),
 		// Buffer pool name to oid map in COUNTERS table of COUNTERS_DB
 		"COUNTERS_BUFFER_POOL_NAME_MAP": make(map[string]string),
+		// Cput Trap Group to oid map in COUNTERS table of COUNTERS_DB
+		"COUNTERS_TRAPGROUP_POLICER_MAP": make(map[string]string),
 	}
 
 	// path2TFuncTbl is used to populate trie tree which is reponsible
@@ -215,6 +217,35 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 		}}
 	}
 	log.V(6).Infof("v2rEthPortStats: tblPaths %+v", tblPaths)
+	return tblPaths, nil
+}
+
+func v2rCpuStats(paths []string) ([]tablePath, error) {
+	separator, _ := GetTableKeySeparator(paths[DbIdx])
+	countersNameMap := countersNameOidTbls["COUNTERS_TRAPGROUP_POLICER_MAP"]
+	var tblPaths []tablePath
+	var fields string
+
+	fields, err := getMatchFields(paths[len(paths)-1], "COUNTERS_TRAPGROUP_POLICER_MAP")
+
+	if err != nil {
+		return nil, err
+	}
+
+	for trapname, oid := range countersNameMap {
+		tblPath := tablePath{
+			dbName:       paths[DbIdx],
+			tableName:    paths[TblIdx],
+			tableKey:     oid,
+			fields:       fields,
+			delimitor:    separator,
+			jsonTableKey: trapname,
+			jsonFields:   fields,
+		}
+		tblPaths = append(tblPaths, tblPath)
+	}
+
+	log.V(6).Infof("v2rCpuStats: tblPaths %+v", tblPaths)
 	return tblPaths, nil
 }
 

@@ -50,6 +50,26 @@ var (
 			path:    []string{"OTHERS", "system", "down"},
 			getFunc: dataGetFunc(GetDownReason),
 		},
+		{ // Get bgp summary
+			path:    []string{"OTHERS", "bgp", "summary"},
+			getFunc: dataGetFunc(BgpSummary),
+		},
+		{ // Get iproute num
+			path:    []string{"OTHERS", "iproute", "num"},
+			getFunc: dataGetFunc(GetIprouteNum),
+		},
+		{ // Get iproute num
+			path:    []string{"OTHERS", "prefix", "num"},
+			getFunc: dataGetFunc(GetPrefixNum),
+		},
+		{ // Get iproute num
+			path:    []string{"OTHERS", "interface", "rate"},
+			getFunc: dataGetFunc(GetRxTxRate),
+		},
+		{ // Get iproute num
+			path:    []string{"OTHERS", "configdb", "all"},
+			getFunc: dataGetFunc(GetConfigdb),
+		},
 	}
 )
 

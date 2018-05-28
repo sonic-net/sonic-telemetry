@@ -40,6 +40,13 @@ type cpuUtil struct {
 	CpuUtil_5min  uint64 `json:"5min"`
 }
 
+type RXTX struct {
+	InPut  string
+	OutPut string
+}
+
+var rxtxdata = make(map[string]RXTX)
+
 const statsRingCap uint64 = 3000 // capacity of statsRing.
 var statsR statsRing
 
@@ -151,6 +158,119 @@ func pollStats() {
 		statsR.mu.Unlock()
 		time.Sleep(time.Millisecond * 100)
 	}
+}
+
+func getcountersdb(key string, filed string) (string, error) {
+	redisDb := Target2RedisDb["COUNTERS_DB"]
+	val, err := redisDb.HGet(key, filed).Result()
+	if err != nil {
+		log.V(2).Infof("redis HGet failed for %v %v", key, filed)
+		return val, err
+	}
+	return val, err
+}
+func getrate(oldstr string, newstr string, delta int) (rate string) {
+	old, _ := strconv.Atoi(oldstr)
+	new, _ := strconv.Atoi(newstr)
+	rateint := float32((new - old) / delta)
+	if rateint > 1024*1024*10 {
+		rate = fmt.Sprintf("%.2f MB/s", rateint/1024/1024)
+	} else if rateint > 1024*10 {
+		rate = fmt.Sprintf("%.2f KB/s", rateint/1024)
+	} else {
+		rate = fmt.Sprintf("%.2f B/s", rateint)
+	}
+	return rate
+}
+func initRateCountersNameMap() (map[string]map[string]string, error) {
+	var err error
+	var RatecountersNameOidTbls = map[string]map[string]string{
+		// Port name to oid map in COUNTERS table of COUNTERS_DB
+		"COUNTERS_PORT_NAME_MAP": make(map[string]string)}
+	for name, tbl := range RatecountersNameOidTbls {
+		if len(tbl) == 0 {
+			RatecountersNameOidTbls[name], err = getCountersMap(name)
+			if err != nil {
+				return RatecountersNameOidTbls, err
+			}
+		}
+	}
+	return RatecountersNameOidTbls, nil
+}
+func GetRxTxRateTimer() {
+	interval := 10
+	oldcounters := make(map[string]RXTX)
+	newcounters := make(map[string]RXTX)
+	ratecountersNameOidTbls, err := initRateCountersNameMap()
+	if err != nil {
+		return
+	}
+	for {
+		countersNameMap := ratecountersNameOidTbls["COUNTERS_PORT_NAME_MAP"]
+		for port, oid := range countersNameMap {
+			inputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_IN_OCTETS")
+			outputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_OUT_OCTETS")
+			oldcounters[port] = RXTX{inputoctet, outputoctet}
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
+		for port, oid := range countersNameMap {
+			inputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_IN_OCTETS")
+			outputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_OUT_OCTETS")
+			newcounters[port] = RXTX{inputoctet, outputoctet}
+			inputrate := getrate(oldcounters[port].InPut, newcounters[port].InPut, interval)
+			outputrate := getrate(oldcounters[port].OutPut, newcounters[port].OutPut, interval)
+			rxtxdata[port] = RXTX{inputrate, outputrate}
+		}
+	}
+}
+
+func GetRxTxRate() ([]byte, error) {
+	return marshal(rxtxdata)
+}
+
+func GetConfigdb() ([]byte, error) {
+	redisDb := Target2RedisDb["CONFIG_DB"]
+	dbkeys, err := redisDb.Keys("*").Result()
+	data1 := make(map[string]map[string]map[string]interface{})
+	if err != nil {
+		log.V(2).Infof("redis Keys failed with err %v", err)
+		return nil, err
+	}
+	separator, _ := GetTableKeySeparator("CONFIG_DB")
+	for _, dbkey := range dbkeys {
+		data2 := make(map[string]map[string]interface{})
+		log.V(6).Infof("\r\n dbkey= %v \r\n", dbkey)
+		dbkeystr := strings.Split(dbkey, separator)
+		if len(dbkeystr) <= 1 {
+			log.V(2).Infof("not get key %v value", dbkeystr)
+			continue
+		}
+		table := dbkeystr[0]
+		fild := strings.Join(dbkeystr[1:], separator)
+		fv, err := redisDb.HGetAll(dbkey).Result()
+		if err != nil {
+			log.V(2).Infof("redis HGetAll failed dbkey %s", dbkey)
+			return nil, err
+		}
+		data3 := make(map[string]interface{})
+		for f, v := range fv {
+			if strings.HasSuffix(f, "@") {
+				f = strings.Replace(f, "@", "", -1)
+				vlist := strings.Split(v, ",")
+				data3[f] = vlist
+			} else {
+				data3[f] = v
+			}
+		}
+		data2[fild] = data3
+		if _, exist := data1[table]; exist {
+			data1[table][fild] = data3
+		} else {
+			data1[table] = data2
+		}
+	}
+	log.V(6).Infof("\r\n data1= %v \r\n", data1)
+	return marshal(data1)
 }
 
 func marshal(data interface{}) ([]byte, error) {
@@ -302,4 +422,5 @@ func GetDownReason() ([]byte, error) {
 func init() {
 	statsR.buff = make([]*linuxproc.Stat, statsRingCap)
 	go pollStats()
+	go GetRxTxRateTimer()
 }
