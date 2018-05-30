@@ -220,6 +220,9 @@ func getUpdateVal(t *gnmipb.TypedValue) (interface{}, error) {
 		}
 		m := f.(map[string]interface{})
 		fv := make(map[string]string)
+		fv1 := make(map[string]map[string]interface{})
+		fv2 := make(map[string]interface{})
+		mapflag := false
 		for k, v := range m {
 			switch v.(type) {
 			case string:
@@ -230,11 +233,22 @@ func getUpdateVal(t *gnmipb.TypedValue) (interface{}, error) {
 				fv[k] = strconv.FormatFloat(v.(float64), 'E', -1, 64)
 			case bool:
 				fv[k] = strconv.FormatBool(v.(bool))
+			case map[string]interface{}:
+				m1 := v.(map[string]interface{})
+				for k1, v1 := range m1 {
+					fv2[k1] = v1
+				}
+				fv1[k] = fv2
+				mapflag = true
 			default:
 				return "", fmt.Errorf("typedValue: %v field %v type not supported", t, k)
 			}
 		}
-		return fv, nil
+		if mapflag == true {
+			return fv1, nil
+		} else {
+			return fv, nil
+		}
 	default:
 		return "", fmt.Errorf("typedValue: %v type not supported", t)
 	}

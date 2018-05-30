@@ -10,6 +10,11 @@ import (
 var (
 	cfgPermit = [][]string{
 		[]string{"CONFIG_DB", "TELEMETRY_CLIENT"},
+		[]string{"CONFIG_DB", "VLAN"},
+		[]string{"CONFIG_DB", "VLAN_MEMBER"},
+		[]string{"CONFIG_DB", "VLAN_INTERFACE"},
+		[]string{"CONFIG_DB", "BGP_NETWORK"},
+		[]string{"CONFIG_DB", "PORT", "*", "admin_status"},
 	}
 )
 
@@ -195,6 +200,9 @@ func pathPermit(a, permit []string) bool {
 
 	b := a[:len(permit)]
 	for i, v := range b {
+		if permit[i] == "*" {
+			continue
+		}
 		if v != permit[i] {
 			return false
 		}

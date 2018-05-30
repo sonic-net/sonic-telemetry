@@ -1060,6 +1060,9 @@ func TestGnmiSet(t *testing.T) {
 	jVal := `{"retry_interval":"60", "encoding":"JSON_IETF", "unidirectional":true}`
 	jByte := []byte(jVal)
 
+	jVal1 := `{"Vlan10":{"admin_status":"up","description":"vlan_trunk","mtu":"1200"}}`
+	jByte1 := []byte(jVal1)
+
 	tests := []struct {
 		desc    string
 		in      SimpleSRequest
@@ -1146,6 +1149,26 @@ func TestGnmiSet(t *testing.T) {
 					"encoding":       "JSON_IETF",
 					"unidirectional": "true",
 				},
+			},
+		},
+		{
+			desc: "Update path value json mapmap",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"VLAN", ""},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte1},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"VLAN", ""},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "VLAN|Vlan10",
+				f:   "",
+				v:   map[string]string{"admin_status": "up", "description": "vlan_trunk", "mtu": "1200"},
 			},
 		},
 		{
