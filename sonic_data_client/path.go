@@ -145,7 +145,9 @@ func getTblPath(gp []string) (tablePath, error) {
 		res, err := redisDb.Keys(tp.tableName + "*").Result()
 		if err != nil || len(res) < 1 {
 			log.V(2).Infof("Invalid db table Path %v %v", target, gp)
-			return tablePath{}, fmt.Errorf("failed to find %v %v %v %v", target, gp, err, res)
+			// Temporarily remove return to support non-path -> valid path
+			// TODO: refactor the path module
+			//return tablePath{}, fmt.Errorf("failed to find %v %v %v %v", target, gp, err, res)
 		}
 		tp.tableKey = ""
 	case 3: // Third element could be table key
