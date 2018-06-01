@@ -7,15 +7,15 @@ import (
 )
 
 type Bgpinfo struct {
-	Version  string
-	AsNumber string
-	MsgRcvd  string
-	MsgSent  string
-	TblVer   string
-	InQ      string
-	OutQ     string
-	UpDown   string
-	State    string
+	Version      string
+	AsNumber     string
+	MsgRcvd      string
+	MsgSent      string
+	TblVer       string
+	InQ          string
+	OutQ         string
+	UpDown       string
+	State_PfxRcd string
 }
 
 func GetIprouteNum() ([]byte, error) {
