@@ -982,9 +982,6 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 	}
 	// First sync for this key is done
 	c.synced.Done()
-	for k := range msi {
-		delete(msi, k)
-	}
 	for {
 		select {
 		default:
@@ -993,9 +990,6 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			c.mu.Lock()
 			if len(msi) > 0 {
 				val, err = msi2TypedValue(msi)
-				for k := range msi {
-					delete(msi, k)
-				}
 			}
 			c.mu.Unlock()
 			if err != nil {
