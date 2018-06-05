@@ -139,7 +139,7 @@ func TestGetDbPath(t *testing.T) {
 			rclient.HSet("VLAN_MEMBER|Vlan12|PortChannel2", "tagging_mode", "tagged")
 
 			gsPath := &GSPath{gpath: test.input}
-			err := gsPath.GetDbPath()
+			err := gsPath.GetDbPath(false)
 			tp := gsPath.tpath
 
 			if err != nil && test.wantErr != "" {

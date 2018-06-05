@@ -107,7 +107,10 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 
 	client.prefix = prefix
 	client.pathG2S = make(map[*gnmipb.Path][]tablePath)
-	err = populateAllDbtablePath(prefix, paths, client.pathG2S)
+	for _, path := range paths {
+		fp := gnmiFullPath(prefix, path)
+		client.pathG2S[fp] = nil
+	}
 
 	if err != nil {
 		return nil, err
@@ -128,6 +131,12 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	defer c.w.Done()
 	c.q = q
 	c.channel = stop
+
+	err := getAllTablePath(c.pathG2S, true)
+	if err != nil {
+		log.V(1).Infof("get table path fail %v", err)
+		return
+	}
 
 	for gnmiPath, tblPaths := range c.pathG2S {
 		if tblPaths[0].fields != "" {
@@ -181,6 +190,11 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 			return
 		}
 		t1 := time.Now()
+		err := getAllTablePath(c.pathG2S, false)
+		if err != nil {
+			log.V(1).Infof("get table path fail %v", err)
+			return
+		}
 		for gnmiPath, tblPaths := range c.pathG2S {
 			val, err := tableData2TypedValue(tblPaths, nil)
 			if err != nil {
@@ -212,6 +226,12 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	// wait sync for Get, not used for now
 	c.w = w
+
+	err := getAllTablePath(c.pathG2S, false)
+	if err != nil {
+		log.V(2).Infof("get table path fail")
+		return nil, err
+	}
 
 	deviceName, err := os.Hostname()
 	if err != nil {
@@ -464,18 +484,21 @@ func gnmiFullPath(prefix, path *gnmipb.Path) *gnmipb.Path {
 	return fullPath
 }
 
-func populateAllDbtablePath(prefix *gnmipb.Path, paths []*gnmipb.Path, pathG2S map[*gnmipb.Path][]tablePath) error {
-	for _, path := range paths {
-		fp := gnmiFullPath(prefix, path)
-		gsp, err := newGSPath(fp)
-		if err != nil {
-			return err
+func getAllTablePath(pathG2S map[*gnmipb.Path][]tablePath, allowNotFound bool) error {
+	for path, tbPath := range pathG2S {
+		if nil == tbPath {
+			gsp, err := newGSPath(path)
+			if err != nil {
+				return err
+			}
+			err = gsp.GetDbPath(allowNotFound)
+			if err != nil {
+				return err
+			}
+			if gsp.tpath != nil {
+				pathG2S[path] = gsp.tpath
+			}
 		}
-		err = gsp.GetDbPath()
-		if err != nil {
-			return err
-		}
-		pathG2S[fp] = gsp.tpath
 	}
 	return nil
 }

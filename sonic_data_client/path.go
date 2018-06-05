@@ -60,7 +60,7 @@ func newGSPath(path *gnmipb.Path) (*GSPath, error) {
 }
 
 // GetDbPath return tablePath to get DB data
-func (p *GSPath) GetDbPath() error {
+func (p *GSPath) GetDbPath(allowNotFound bool) error {
 	target := p.gpath[0]
 	if !isValidDbTarget(target) {
 		return fmt.Errorf("invaild db target: %v", target)
@@ -74,7 +74,7 @@ func (p *GSPath) GetDbPath() error {
 		}
 	}
 
-	rp, err := getTblPath(p.gpath)
+	rp, err := getTblPath(p.gpath, allowNotFound)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (p *GSPath) GetCfgPath() error {
 	// Check if path permit
 	for _, s := range cfgPermit {
 		if pathPermit(p.gpath, s) {
-			rp, err := getTblPath(p.gpath)
+			rp, err := getTblPath(p.gpath, false)
 			if err != nil {
 				return err
 			}
@@ -117,7 +117,7 @@ func isValidDbTarget(t string) bool {
 }
 
 // getTblPath convert path string slice to real DB table path
-func getTblPath(gp []string) (tablePath, error) {
+func getTblPath(gp []string, allowNotFound bool) (tablePath, error) {
 	// not support only DB
 	if len(gp) < 2 {
 		return tablePath{}, fmt.Errorf("not support")
@@ -140,20 +140,19 @@ func getTblPath(gp []string) (tablePath, error) {
 	//   DB Table Key Key
 	//   DB Table Key Field
 	//   DB Table Key Key Field
+	var retError error
 	switch len(gp) {
 	case 2: // only table name provided
 		res, err := redisDb.Keys(tp.tableName + "*").Result()
 		if err != nil || len(res) < 1 {
 			log.V(2).Infof("Invalid db table Path %v %v", target, gp)
-			// Temporarily remove return to support non-path -> valid path
-			// TODO: refactor the path module
-			//return tablePath{}, fmt.Errorf("failed to find %v %v %v %v", target, gp, err, res)
+			retError = fmt.Errorf("failed to find %v %v %v %v", target, gp, err, res)
 		}
 		tp.tableKey = ""
 	case 3: // Third element could be table key
 		_, err := redisDb.Exists(tp.tableName + tp.delimitor + gp[2]).Result()
 		if err != nil {
-			return tablePath{}, fmt.Errorf("redis Exists op failed for %v", gp)
+			retError = fmt.Errorf("redis Exists op failed for %v", gp)
 		}
 		tp.tableKey = gp[2]
 	case 4: // Fourth element could part of the table key or field name
@@ -162,9 +161,8 @@ func getTblPath(gp []string) (tablePath, error) {
 		key := tp.tableName + tp.delimitor + tp.tableKey
 		n, err := redisDb.Exists(key).Result()
 		if err != nil {
-			return tablePath{}, fmt.Errorf("redis Exists op failed for %v", gp)
-		}
-		if n != 1 { // Looks like the Fourth slice is not part of the key
+			retError = fmt.Errorf("redis Exists op failed for %v", gp)
+		} else if n != 1 { // Looks like the Fourth slice is not part of the key
 			tp.tableKey = gp[2]
 			tp.fields = gp[3]
 		}
@@ -173,16 +171,26 @@ func getTblPath(gp []string) (tablePath, error) {
 		tp.fields = gp[4]
 	default:
 		log.V(2).Infof("Invalid db table Path %v", gp)
-		return tablePath{}, fmt.Errorf("invalid db table Path %v", gp)
+		retError = fmt.Errorf("invalid db table Path %v", gp)
 	}
 
-	var key string
-	if tp.tableKey != "" {
-		key = tp.tableName + tp.delimitor + tp.tableKey
-		n, _ := redisDb.Exists(key).Result()
-		if n != 1 {
-			log.V(2).Infof("No valid entry found on %v with key %v", gp, key)
-			return tablePath{}, fmt.Errorf("no valid entry found on %v with key %v", gp, key)
+	if allowNotFound {
+		if nil != retError {
+			return tp, nil
+		}
+	} else {
+		if nil != retError {
+			return tablePath{}, retError
+		}
+
+		var key string
+		if tp.tableKey != "" {
+			key = tp.tableName + tp.delimitor + tp.tableKey
+			n, _ := redisDb.Exists(key).Result()
+			if n != 1 {
+				log.V(2).Infof("No valid entry found on %v with key %v", gp, key)
+				return tablePath{}, fmt.Errorf("no valid entry found on %v with key %v", gp, key)
+			}
 		}
 	}
 	log.V(6).Infof("get tablePath: %v", tp)
