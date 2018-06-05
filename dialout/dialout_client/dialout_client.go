@@ -341,47 +341,48 @@ restart: //Remote server might go down, in that case we restart with next destin
 
 	switch cs.reportType {
 	case Periodic:
+		ticker := time.NewTicker(cs.interval)
 		for {
 			select {
-			default:
-				spbValues, err := cs.dc.Get(nil)
-				if err != nil {
-					// TODO: need to inform
-					log.V(2).Infof("Data read error %v for %v", err, cs)
-					continue
-					//return nil, status.Error(codes.NotFound, err.Error())
-				}
-				var updates []*gpb.Update
-				var spbValue *spb.Value
-				for _, spbValue = range spbValues {
-					update := &gpb.Update{
-						Path: spbValue.GetPath(),
-						Val:  spbValue.GetVal(),
+			case <-ticker.C:
+				go func() {
+					spbValues, err := cs.dc.Get(nil)
+					if err != nil {
+						// TODO: need to inform
+						log.V(2).Infof("Data read error %v for %v", err, cs)
+						//continue
+						//return nil, status.Error(codes.NotFound, err.Error())
 					}
-					updates = append(updates, update)
-				}
-				rs := &gpb.SubscribeResponse_Update{
-					Update: &gpb.Notification{
-						Timestamp: spbValue.GetTimestamp(),
-						Prefix:    cs.prefix,
-						Update:    updates,
-					},
-				}
-				response := &gpb.SubscribeResponse{Response: rs}
+					var updates []*gpb.Update
+					var spbValue *spb.Value
+					for _, spbValue = range spbValues {
+						update := &gpb.Update{
+							Path: spbValue.GetPath(),
+							Val:  spbValue.GetVal(),
+						}
+						updates = append(updates, update)
+					}
+					rs := &gpb.SubscribeResponse_Update{
+						Update: &gpb.Notification{
+							Timestamp: spbValue.GetTimestamp(),
+							Prefix:    cs.prefix,
+							Update:    updates,
+						},
+					}
+					response := &gpb.SubscribeResponse{Response: rs}
 
-				log.V(6).Infof("cs %s sending \n\t%v \n To %s", cs.name, response, dest)
-				err = pub.Send(response)
-				if err != nil {
-					log.V(1).Infof("Client %v pub Send error:%v, cs.conTryCnt %v", cs.name, err, cs.conTryCnt)
-					cs.Close()
-					// Retry
-					goto restart
-				}
-				log.V(6).Infof("cs %s to  %s done", cs.name, dest)
-				cs.sendMsg++
-				c.sendMsg++
-
-				time.Sleep(cs.interval)
+					log.V(6).Infof("cs %s sending \n\t%v \n To %s", cs.name, response, dest)
+					err = pub.Send(response)
+					if err != nil {
+						log.V(1).Infof("Client %v pub Send error:%v, cs.conTryCnt %v", cs.name, err, cs.conTryCnt)
+						cs.Close()
+						// Retry
+						//goto restart
+					}
+					log.V(6).Infof("cs %s to  %s done", cs.name, dest)
+					cs.sendMsg++
+					c.sendMsg++
+				}()
 			case <-cs.stop:
 				log.V(1).Infof("%v exiting publishRun routine for destination %s", cs, dest)
 				return

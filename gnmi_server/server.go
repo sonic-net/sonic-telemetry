@@ -221,9 +221,9 @@ func getUpdateVal(t *gnmipb.TypedValue) (interface{}, error) {
 		m := f.(map[string]interface{})
 		fv := make(map[string]string)
 		fv1 := make(map[string]map[string]interface{})
-		fv2 := make(map[string]interface{})
 		mapflag := false
 		for k, v := range m {
+			fv2 := make(map[string]interface{})
 			switch v.(type) {
 			case string:
 				fv[k] = v.(string)
