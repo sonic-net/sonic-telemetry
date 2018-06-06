@@ -182,31 +182,22 @@ func getrate(oldstr string, newstr string, delta int) (rate string) {
 	}
 	return rate
 }
-func initRateCountersNameMap() (map[string]map[string]string, error) {
-	var err error
-	var RatecountersNameOidTbls = map[string]map[string]string{
-		// Port name to oid map in COUNTERS table of COUNTERS_DB
-		"COUNTERS_PORT_NAME_MAP": make(map[string]string)}
-	for name, tbl := range RatecountersNameOidTbls {
-		if len(tbl) == 0 {
-			RatecountersNameOidTbls[name], err = getCountersMap(name)
-			if err != nil {
-				return RatecountersNameOidTbls, err
-			}
-		}
-	}
-	return RatecountersNameOidTbls, nil
-}
+
 func GetRxTxRateTimer() {
 	interval := 10
 	oldcounters := make(map[string]RXTX)
 	newcounters := make(map[string]RXTX)
+	countersNameMap := make(map[string]string)
 	for {
-		ratecountersNameOidTbls, err := initRateCountersNameMap()
-		if err != nil {
+		time.Sleep(time.Duration(interval) * time.Second)
+		countersNameMaptemp, err := getCountersMap("COUNTERS_PORT_NAME_MAP")
+		if (err != nil) || (len(countersNameMaptemp) == 0) {
 			continue
 		}
-		countersNameMap := ratecountersNameOidTbls["COUNTERS_PORT_NAME_MAP"]
+		countersNameMap = countersNameMaptemp
+		break
+	}
+	for {
 		for port, oid := range countersNameMap {
 			inputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_IN_OCTETS")
 			outputoctet, _ := getcountersdb("COUNTERS:"+oid, "SAI_PORT_STAT_IF_OUT_OCTETS")
