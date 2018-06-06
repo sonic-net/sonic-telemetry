@@ -904,7 +904,7 @@ func dbSingleTableKeySubscribe(rsd redisSubData, c *DbClient, msiOut *map[string
 						continue
 					}
 					tblPath.tableKey = subscr.Channel[prefixLen:]
-					err = tableData2Msi(&tblPath, false, nil, &newMsi)
+					err = tableData2Msi(&tblPath, true, nil, &newMsi)
 					if err != nil {
 						enqueFatalMsg(c, err.Error())
 						return
@@ -1005,6 +1005,9 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 	}
 	// First sync for this key is done
 	c.synced.Done()
+	for k := range msi {
+		delete(msi, k)
+	}
 	for {
 		select {
 		default:
@@ -1013,6 +1016,9 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			c.mu.Lock()
 			if len(msi) > 0 {
 				val, err = msi2TypedValue(msi)
+				for k := range msi {
+					delete(msi, k)
+				}
 			}
 			c.mu.Unlock()
 			if err != nil {
