@@ -222,7 +222,7 @@ func (c *NonDbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	return values, nil
 }
 
-func (c *NonDbClient) Set(path *gnmipb.Path, val interface{}) error {
+func (c *NonDbClient) Set(path *gnmipb.Path, val interface{}, replaceflag bool) error {
 	return nil
 }
 

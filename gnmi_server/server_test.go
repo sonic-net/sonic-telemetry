@@ -1063,6 +1063,9 @@ func TestGnmiSet(t *testing.T) {
 	jVal1 := `{"Vlan10":{"admin_status":"up","description":"vlan_trunk","mtu":"1200"},"Vlan20":{"admin_status":"down","mtu":"9180"}}`
 	jByte1 := []byte(jVal1)
 
+	jVal2 := `{"Vlan20":{"mtu":"1200"}}`
+	jByte2 := []byte(jVal2)
+
 	tests := []struct {
 		desc    string
 		in      SimpleSRequest
@@ -1152,23 +1155,43 @@ func TestGnmiSet(t *testing.T) {
 			},
 		},
 		{
-			desc: "Update path value json mapmap",
+			desc: "Replace path value json mapmap add",
 			in: SimpleSRequest{
-				target:     "CONFIG_DB",
-				updatePath: []string{"VLAN", ""},
-				updateVal: pb.TypedValue{
+				target:      "CONFIG_DB",
+				replacePath: []string{"VLAN", ""},
+				replaceVal: pb.TypedValue{
 					Value: &pb.TypedValue_JsonIetfVal{jByte1},
 				},
 			},
 			want: SimpleSResponse{
 				target: "CONFIG_DB",
 				path:   []string{"VLAN", ""},
-				op:     int32(pb.UpdateResult_UPDATE),
+				op:     int32(pb.UpdateResult_REPLACE),
 			},
 			wantFV: tblFV{
 				tbl: "VLAN|Vlan10",
 				f:   "",
 				v:   map[string]string{"admin_status": "up", "description": "vlan_trunk", "mtu": "1200"},
+			},
+		},
+		{
+			desc: "Replace path value json mapmap del",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"VLAN", ""},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte2},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"VLAN", ""},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: tblFV{
+				tbl: "VLAN|Vlan20",
+				f:   "",
+				v:   map[string]string{"mtu": "1200"},
 			},
 		},
 		{
@@ -1236,23 +1259,23 @@ func TestGnmiSet(t *testing.T) {
 			},
 		},
 		{
-			desc: "Replace path value json mapmap",
+			desc: "Update path value json mapmap change",
 			in: SimpleSRequest{
-				target:      "CONFIG_DB",
-				replacePath: []string{"VLAN", ""},
-				replaceVal: pb.TypedValue{
-					Value: &pb.TypedValue_JsonIetfVal{jByte1},
+				target:     "CONFIG_DB",
+				updatePath: []string{"VLAN", ""},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte2},
 				},
 			},
 			want: SimpleSResponse{
 				target: "CONFIG_DB",
 				path:   []string{"VLAN", ""},
-				op:     int32(pb.UpdateResult_REPLACE),
+				op:     int32(pb.UpdateResult_UPDATE),
 			},
 			wantFV: tblFV{
 				tbl: "VLAN|Vlan20",
 				f:   "",
-				v:   map[string]string{"admin_status": "down", "mtu": "9180"},
+				v:   map[string]string{"admin_status": "down", "mtu": "1200"},
 			},
 		},
 		{
@@ -1283,6 +1306,8 @@ func TestGnmiSet(t *testing.T) {
 			rclient.FlushDb()
 			rclient.HSet("TELEMETRY_CLIENT|Global", "retry_interval", "30")
 			rclient.HSet("TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "10.10.10.10:8081")
+			rclient.HSet("VLAN|Vlan20", "admin_status", "down")
+			rclient.HSet("VLAN|Vlan20", "mtu", "9180")
 
 			request := newSetRequest(&test.in)
 			//t.Log("SetRequest: ", request)

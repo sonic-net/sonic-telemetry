@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"os"
 )
 
 const (
@@ -482,6 +483,7 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 	}
 
 	log.V(2).Infof("Processing %v %v", tableKey, fv)
+
 	configMu.Lock()
 	defer configMu.Unlock()
 
@@ -604,6 +606,12 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 				case "path_target":
 					cs.prefix = &gpb.Path{
 						Target: value,
+					}
+					deviceName, err := os.Hostname()
+					if err != nil {
+						log.V(2).Infof("Get hostname error: %v", err)
+					} else {
+						cs.prefix.Origin = deviceName
 					}
 				case "paths":
 					ps := strings.Split(value, ",")

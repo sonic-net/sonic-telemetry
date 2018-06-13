@@ -281,7 +281,7 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 
 	for _, path := range req.GetDelete() {
 		log.V(2).Infof("Delete path: %v", path)
-		err := dc.Set(path, "")
+		err := dc.Set(path, "", false)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +298,7 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 			return nil, err
 		}
 		log.V(2).Infof("Replace path: %v val: %v", path, val)
-		err = dc.Set(path.GetPath(), val)
+		err = dc.Set(path.GetPath(), val, true)
 		if err != nil {
 			return nil, err
 		}
@@ -315,7 +315,7 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 			return nil, err
 		}
 		log.V(2).Infof("Update path: %v val: %v", path, val)
-		err = dc.Set(path.GetPath(), val)
+		err = dc.Set(path.GetPath(), val, false)
 		if err != nil {
 			return nil, err
 		}

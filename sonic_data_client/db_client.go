@@ -45,7 +45,7 @@ type Client interface {
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
 	// Set table field from pb path and val
-	Set(path *gnmipb.Path, val interface{}) error
+	Set(path *gnmipb.Path, val interface{}, replaceflag bool) error
 	// Close provides implemenation for explicit cleanup of Client
 	Close() error
 }
@@ -259,40 +259,50 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	log.V(4).Infof("Get done, total time taken: %v ms", int64(time.Since(ts)/time.Millisecond))
 	return values, nil
 }
-func fsetconfigdb(redisDb *redis.Client, key string, val map[string]interface{}) error {
+func fsetconfigdb(redisDb *redis.Client, key string, val map[string]interface{}, replaceflag bool) error {
 	newfv := val
 	oldfv, err := redisDb.HGetAll(key).Result()
 	if err != nil {
 		log.V(2).Infof("redis HGetALL failed for %v", key)
+		return err
 	}
-	for f, v := range oldfv {
-		vv, ok := newfv[f]
-		if ok {
-			if vv != v {
-				_, err := redisDb.HSet(key, f, vv).Result()
+	if replaceflag == true {
+		for f, v := range oldfv {
+			vv, ok := newfv[f]
+			if ok {
+				if vv != v {
+					_, err := redisDb.HSet(key, f, vv).Result()
+					if err != nil {
+						log.V(2).Infof("redis HSet failed for %v %v", key, f)
+					}
+				}
+				delete(newfv, f)
+			} else {
+				_, err := redisDb.HDel(key, f).Result()
 				if err != nil {
-					log.V(2).Infof("redis HSet failed for %v %v", key, f)
+					log.V(2).Infof("redis HDel failed for %v %v", key, f)
+					return err
 				}
 			}
-			delete(newfv, f)
-		} else {
-			_, err := redisDb.HDel(key, f).Result()
+		}
+
+		for f, v := range newfv {
+			_, err := redisDb.HSet(key, f, v).Result()
 			if err != nil {
-				log.V(2).Infof("redis HDel failed for %v %v", key, f)
-				return err
+				log.V(2).Infof("redis HSet failed for %v %v", key, f)
 			}
 		}
-	}
-
-	for f, v := range newfv {
-		_, err := redisDb.HSet(key, f, v).Result()
-		if err != nil {
-			log.V(2).Infof("redis HSet failed for %v %v", key, f)
+	} else {
+		for f, v := range newfv {
+			_, err := redisDb.HSet(key, f, v).Result()
+			if err != nil {
+				log.V(2).Infof("redis HSet failed for %v %v", key, f)
+			}
 		}
 	}
 	return nil
 }
-func (c *DbClient) Set(path *gnmipb.Path, val interface{}) error {
+func (c *DbClient) Set(path *gnmipb.Path, val interface{}, replaceflag bool) error {
 	fp := gnmiFullPath(c.prefix, path)
 	gsp, err := newGSPath(fp)
 	if err != nil {
@@ -342,7 +352,7 @@ func (c *DbClient) Set(path *gnmipb.Path, val interface{}) error {
 				for ktemp, vtemp := range newfvtemp {
 					newfv[ktemp] = interface{}(vtemp)
 				}
-				err := fsetconfigdb(redisDb, key, newfv)
+				err := fsetconfigdb(redisDb, key, newfv, replaceflag)
 				if err != nil {
 					log.V(2).Infof("setconfigdb failed for %v %v", key, newfv)
 					return err
@@ -351,7 +361,7 @@ func (c *DbClient) Set(path *gnmipb.Path, val interface{}) error {
 				newfv := val.(map[string]map[string]interface{})
 				for f1, v1 := range newfv {
 					key = tp.tableName + tp.delimitor + f1
-					err := fsetconfigdb(redisDb, key, v1)
+					err := fsetconfigdb(redisDb, key, v1, replaceflag)
 					if err != nil {
 						log.V(2).Infof("setconfigdb failed for %v %v", key, newfv)
 						return err
@@ -360,7 +370,7 @@ func (c *DbClient) Set(path *gnmipb.Path, val interface{}) error {
 			case string:
 				if val == "" {
 					newfv := map[string]interface{}{}
-					err := fsetconfigdb(redisDb, key, newfv)
+					err := fsetconfigdb(redisDb, key, newfv, replaceflag)
 					if err != nil {
 						log.V(2).Infof("setconfigdb failed for %v %v", key, newfv)
 						return err
@@ -1027,6 +1037,7 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			}
 			if val != nil {
 				spbv = &spb.Value{
+					Prefix:    c.prefix,
 					Path:      gnmiPath,
 					Timestamp: time.Now().UnixNano(),
 					Val:       val,
