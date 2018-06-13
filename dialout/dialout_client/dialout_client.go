@@ -126,6 +126,7 @@ type clientSubscription struct {
 	sendMsg   uint64
 	recvMsg   uint64
 	errors    uint64
+	restart   bool //whether need restart connect to server flag
 }
 
 // Client handles execution of the telemetry publish service.
@@ -301,6 +302,7 @@ restart: //Remote server might go down, in that case we restart with next destin
 	cs.q = queue.NewPriorityQueue(1, false)
 	cs.opened = true
 	cs.client = nil
+	cs.restart = false
 	cs.cMu.Unlock()
 
 	cs.conTryCnt++
@@ -352,6 +354,7 @@ restart: //Remote server might go down, in that case we restart with next destin
 						log.V(2).Infof("Data read error %v for %v", err, cs)
 						//continue
 						//return nil, status.Error(codes.NotFound, err.Error())
+						return
 					}
 					var updates []*gpb.Update
 					var spbValue *spb.Value
@@ -375,6 +378,7 @@ restart: //Remote server might go down, in that case we restart with next destin
 					err = pub.Send(response)
 					if err != nil {
 						log.V(1).Infof("Client %v pub Send error:%v, cs.conTryCnt %v", cs.name, err, cs.conTryCnt)
+						cs.restart = true
 						cs.Close()
 						// Retry
 						//goto restart
@@ -384,6 +388,9 @@ restart: //Remote server might go down, in that case we restart with next destin
 					c.sendMsg++
 				}()
 			case <-cs.stop:
+				if cs.restart == true {
+					goto restart
+				}
 				log.V(1).Infof("%v exiting publishRun routine for destination %s", cs, dest)
 				return
 			}
