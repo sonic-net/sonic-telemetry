@@ -281,7 +281,7 @@ func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.Set
 
 	for _, path := range req.GetDelete() {
 		log.V(2).Infof("Delete path: %v", path)
-		err := dc.Set(path, "", false)
+		err := dc.Set(path, "", true)
 		if err != nil {
 			return nil, err
 		}
