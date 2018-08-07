@@ -96,7 +96,7 @@ func (p *GSPath) GetCfgPath() error {
 	// Check if path permit
 	for _, s := range cfgPermit {
 		if pathPermit(p.gpath, s) {
-			rp, err := getTblPath(p.gpath, false)
+			rp, err := getTblPath(p.gpath, true)
 			if err != nil {
 				return err
 			}
