@@ -232,10 +232,10 @@ func TestGetCfgPath(t *testing.T) {
 			},
 		},
 		{
-            //allow set invalid key for xnet subscribe first time
-            desc:     "CONFIG_DB TELEMETRY_CLIENT invalid key",
-			input:    []string{"CONFIG_DB", "TELEMETRY_CLIENT", "port"},
-			wantErr:  "",
+			//allow set invalid key for xnet subscribe first time
+			desc:    "CONFIG_DB TELEMETRY_CLIENT invalid key",
+			input:   []string{"CONFIG_DB", "TELEMETRY_CLIENT", "port"},
+			wantErr: "",
 			wantPath: []tablePath{
 				tablePath{
 					dbName:    "CONFIG_DB",
