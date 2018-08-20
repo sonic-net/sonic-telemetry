@@ -130,6 +130,6 @@ imports:
   - transport
 testImports:
 - name: github.com/jipanyang/gnmi
-  version: 5b77edac66351372f83487e7cc9ac29ff718ea74
+  version: cb4d464fa018c29eadab98281448000bee4dcc3d
   subpackages:
   - client/gnmi
