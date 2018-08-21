@@ -34,6 +34,11 @@ var (
 	// Queue name to oid map in COUNTERS table of COUNTERS_DB
 	countersQueueNameMap = make(map[string]string)
 
+    // Alias translation: from external name to internal name
+    e2i_aliasMap = make(map[string]string)
+    // Alias translation: from internal name to external name
+    i2e_aliasMap = make(map[string]string)
+
 	// path2TFuncTbl is used to populate trie tree which is reponsible
 	// for virtual path to real data path translation
 	pathTransFuncTbl = []pathTransFunc{
@@ -84,6 +89,50 @@ func initCountersPortNameMap() error {
 	return nil
 }
 
+func initAliasMap() error {
+    var err error
+    if len(e2i_aliasMap) == 0 {
+        e2i_aliasMap, i2e_aliasMap, err = getAliasMap()
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+// Get the mapping external interface name and internal interface name
+func getAliasMap() (map[string]string, map[string]string, error) {
+    var e2i_map= make(map[string]string)
+    var i2e_map = make(map[string]string)
+
+    redisDb, _ := Target2RedisDb["CONFIG_DB"]
+    _, err := redisDb.Ping().Result()
+    if err != nil {
+        log.V(1).Infof("Can not connect to CONFIG_DB, %v", err)
+        return nil, nil, err
+    }
+    resp, err := redisDb.Keys("PORT|*").Result()
+    if err != nil {
+        log.V(1).Infof("redis get keys failed for CONFIG_DB, %v", err)
+        return nil, nil, err
+    }
+    for _, key := range(resp) {
+        ename, err := redisDb.HGet(key, "alias").Result()
+        if err != nil {
+            log.V(1).Infof("redis get field failes for CONFIG_DB, key = %v, %v", key, err)
+            // clear aliasMap
+            e2i_map = make(map[string]string)
+            i2e_map = make(map[string]string)
+            return nil, nil, err
+        }
+        e2i_map[ename] = key[5:]
+        i2e_map[key[5:]] = ename
+    }
+    log.V(6).Infof("e2i_aliasMap: %v", e2i_map)
+    log.V(6).Infof("i2e_aliasMap: %v", i2e_map)
+    return e2i_map, i2e_map, nil
+}
+
 // Get the mapping between objects in counters DB, Ex. port name to oid in "COUNTERS_PORT_NAME_MAP" table.
 // Aussuming static port name to oid map in COUNTERS table
 func getCountersMap(tableName string) (map[string]string, error) {
@@ -104,19 +153,34 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 	var tblPaths []tablePath
 	if strings.HasSuffix(paths[KeyIdx], "*") { // All Ethernet ports
 		for port, oid := range countersPortNameMap {
+            var oport string
+            if eport, ok := i2e_aliasMap[port]; ok {
+                oport = eport
+            } else {
+                log.V(2).Infof("%v does not have external alias", port)
+                oport = port
+            }
+
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
 				tableKey:     oid,
 				delimitor:    separator,
-				jsonTableKey: port,
+				//jsonTableKey: port,
+                jsonTableKey: oport,
 			}
 			tblPaths = append(tblPaths, tblPath)
 		}
 	} else { //single port
-		oid, ok := countersPortNameMap[paths[KeyIdx]]
+        var eport, iport string
+        iport = paths[KeyIdx]
+        if val, ok := e2i_aliasMap[iport]; ok {
+            eport = iport
+            iport = val
+        }
+		oid, ok := countersPortNameMap[iport]
 		if !ok {
-			return nil, fmt.Errorf(" %v not a valid port ", paths[KeyIdx])
+			return nil, fmt.Errorf("%v not a valid internal port, external port is %v", iport, eport)
 		}
 		tblPaths = []tablePath{{
 			dbName:    paths[DbIdx],
@@ -140,21 +204,36 @@ func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
 	var tblPaths []tablePath
 	if strings.HasSuffix(paths[KeyIdx], "*") {
 		for port, oid := range countersPortNameMap {
+            var oport string
+            if eport, ok := i2e_aliasMap[port]; ok {
+                oport = eport
+            } else {
+                log.V(2).Infof("%v dose not have an external alias", port)
+                oport = port
+            }
+
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
 				tableKey:     oid,
 				field:        paths[FieldIdx],
 				delimitor:    separator,
-				jsonTableKey: port,
+				//jsonTableKey: port,
+                jsonTableKey: oport,
 				jsonField:    paths[FieldIdx],
 			}
 			tblPaths = append(tblPaths, tblPath)
 		}
 	} else { //single port
-		oid, ok := countersPortNameMap[paths[KeyIdx]]
+        var iport, eport string
+        iport = paths[KeyIdx]
+        if val, ok := e2i_aliasMap[iport]; ok {
+            eport = iport
+            iport = val
+        }
+		oid, ok := countersPortNameMap[iport]
 		if !ok {
-			return nil, fmt.Errorf(" %v not a valid port ", paths[KeyIdx])
+			return nil, fmt.Errorf(" %v not a valid internal port, external port is %v ", iport, eport)
 		}
 		tblPaths = []tablePath{{
 			dbName:    paths[DbIdx],
@@ -175,6 +254,16 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 	var tblPaths []tablePath
 	if strings.HasSuffix(paths[KeyIdx], "*") { // queues on all Ethernet ports
 		for que, oid := range countersQueueNameMap {
+            // que is in format of "Internal_Ethernet:12"
+            names := strings.Split(que, separator)
+            var oname string
+            if ename, ok := i2e_aliasMap[names[0]]; ok {
+                oname = ename
+            } else {
+                log.V(2).Infof(" %v dose not have a valid external port", names[0])
+                oname = names[0]
+            }
+            que = strings.Join([]string{oname, names[1]}, ":")
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
@@ -186,12 +275,17 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 		}
 	} else { //queues on single port
 		portName := paths[KeyIdx]
+        iport := portName
+        if val, ok := e2i_aliasMap[iport]; ok {
+            iport = val
+        }
 		for que, oid := range countersQueueNameMap {
 			//que is in formate of "Ethernet64:12"
 			names := strings.Split(que, separator)
-			if portName != names[0] {
+			if iport != names[0] {
 				continue
 			}
+            que = strings.Join([]string{portName, names[1]}, ":")
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
