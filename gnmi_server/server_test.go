@@ -170,6 +170,50 @@ func getRedisClient(t *testing.T) *redis.Client {
 	return rclient
 }
 
+func getConfigDbClient(t *testing.T) *redis.Client {
+	dbn := spb.Target_value["CONFIG_DB"]
+	rclient := redis.NewClient(&redis.Options{
+		Network:		"tcp",
+		Addr:			"localhost:6379",
+		Password:		"", // no password set
+		DB:				int(dbn),
+		DialTimeout:	0,
+	})
+	_, err := rclient.Ping().Result()
+	if err != nil {
+		t.Fatalf("failed to connect to redis server %v", err)
+	}
+	return rclient
+}
+
+func loadConfigDB(t *testing.T, rclient *redis.Client, mpi map[string]interface{}) {
+	for key, fv := range mpi {
+		switch fv.(type) {
+		case map[string]interface{}:
+			_, err := rclient.HMSet(key, fv.(map[string]interface{})).Result()
+			if err != nil {
+				t.Errorf("Invalid data for db: %v : %v %v", key, fv, err)
+			}
+		default:
+			t.Errorf("Invalid data for db: %v : %v", key, fv)
+		}
+	}
+}
+
+func prepareConfigDb(t *testing.T) {
+	rclient := getConfigDbClient(t)
+	defer rclient.Close()
+	rclient.FlushDb()
+
+	fileName := "../testdata/COUNTERS_PORT_ALIAS_MAP.txt"
+	countersPortAliasMapByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	mpi_alias_map := loadConfig(t, "", countersPortAliasMapByte)
+	loadConfigDB(t, rclient, mpi_alias_map)
+}
+
 func prepareDb(t *testing.T) {
 	rclient := getRedisClient(t)
 	defer rclient.Close()
@@ -233,6 +277,9 @@ func prepareDb(t *testing.T) {
 	}
 	mpi_counter = loadConfig(t, "COUNTERS:oid:0x1500000000091c", countersEeth68_1Byte)
 	loadDB(t, rclient, mpi_counter)
+
+	// Load CONFIG_DB for alias translation
+	prepareConfigDb(t)
 }
 
 func TestGnmiGet(t *testing.T) {
@@ -270,13 +317,13 @@ func TestGnmiGet(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard.txt"
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
 	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX.txt"
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
 	countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -332,6 +379,25 @@ func TestGnmiGet(t *testing.T) {
 		textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68" >
+					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: "2",
+	}, {
+		desc:		"use vendor alias: get COUNTERS:Ethernet68/1",
+		pathTarget: "COUNTERS_DB",
+		textPbPath:`
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68/1" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68Byte,
+	}, {
+		desc:		"use vendor alias: get COUNTERS:Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
+		pathTarget: "COUNTERS_DB",
+		textPbPath:`
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68/1" >
 					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
 				`,
 		wantRetCode: codes.OK,
