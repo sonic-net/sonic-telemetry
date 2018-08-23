@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"os"
 )
 
 const (
@@ -94,7 +95,6 @@ func (d Destination) Validate() error {
 
 // Global config for all clients
 type ClientConfig struct {
-	SrcIp          string
 	RetryInterval  time.Duration
 	Encoding       gpb.Encoding
 	Unidirectional bool        // by default, no reponse from remote server
@@ -127,6 +127,7 @@ type clientSubscription struct {
 	sendMsg   uint64
 	recvMsg   uint64
 	errors    uint64
+	restart   bool //whether need restart connect to server flag
 }
 
 // Client handles execution of the telemetry publish service.
@@ -263,9 +264,14 @@ func newClient(ctx context.Context, dest Destination) (*Client, error) {
 	opts := []grpc.DialOption{
 		grpc.WithBlock(),
 	}
+
 	if clientCfg.TLS != nil {
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(clientCfg.TLS)))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+		log.V(2).Infof("gRPC without TLS")
 	}
+
 	conn, err := grpc.DialContext(ctx, dest.Addrs, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("Dial to (%s, timeout %v): %v", dest, timeout, err)
@@ -297,6 +303,7 @@ restart: //Remote server might go down, in that case we restart with next destin
 	cs.q = queue.NewPriorityQueue(1, false)
 	cs.opened = true
 	cs.client = nil
+	cs.restart = false
 	cs.cMu.Unlock()
 
 	cs.conTryCnt++
@@ -337,48 +344,54 @@ restart: //Remote server might go down, in that case we restart with next destin
 
 	switch cs.reportType {
 	case Periodic:
+		ticker := time.NewTicker(cs.interval)
 		for {
 			select {
-			default:
-				spbValues, err := cs.dc.Get(nil)
-				if err != nil {
-					// TODO: need to inform
-					log.V(2).Infof("Data read error %v for %v", err, cs)
-					continue
-					//return nil, status.Error(codes.NotFound, err.Error())
-				}
-				var updates []*gpb.Update
-				var spbValue *spb.Value
-				for _, spbValue = range spbValues {
-					update := &gpb.Update{
-						Path: spbValue.GetPath(),
-						Val:  spbValue.GetVal(),
+			case <-ticker.C:
+				go func() {
+					spbValues, err := cs.dc.Get(nil)
+					if err != nil {
+						// TODO: need to inform
+						log.V(2).Infof("Data read error %v for %v", err, cs)
+						//continue
+						//return nil, status.Error(codes.NotFound, err.Error())
+						return
 					}
-					updates = append(updates, update)
-				}
-				rs := &gpb.SubscribeResponse_Update{
-					Update: &gpb.Notification{
-						Timestamp: spbValue.GetTimestamp(),
-						Prefix:    cs.prefix,
-						Update:    updates,
-					},
-				}
-				response := &gpb.SubscribeResponse{Response: rs}
+					var updates []*gpb.Update
+					var spbValue *spb.Value
+					for _, spbValue = range spbValues {
+						update := &gpb.Update{
+							Path: spbValue.GetPath(),
+							Val:  spbValue.GetVal(),
+						}
+						updates = append(updates, update)
+					}
+					rs := &gpb.SubscribeResponse_Update{
+						Update: &gpb.Notification{
+							Timestamp: spbValue.GetTimestamp(),
+							Prefix:    cs.prefix,
+							Update:    updates,
+						},
+					}
+					response := &gpb.SubscribeResponse{Response: rs}
 
-				log.V(6).Infof("cs %s sending \n\t%v \n To %s", cs.name, response, dest)
-				err = pub.Send(response)
-				if err != nil {
-					log.V(1).Infof("Client %v pub Send error:%v, cs.conTryCnt %v", cs.name, err, cs.conTryCnt)
-					cs.Close()
-					// Retry
+					log.V(6).Infof("cs %s sending \n\t%v \n To %s", cs.name, response, dest)
+					err = pub.Send(response)
+					if err != nil {
+						log.V(1).Infof("Client %v pub Send error:%v, cs.conTryCnt %v", cs.name, err, cs.conTryCnt)
+						cs.restart = true
+						cs.Close()
+						// Retry
+						//goto restart
+					}
+					log.V(6).Infof("cs %s to  %s done", cs.name, dest)
+					cs.sendMsg++
+					c.sendMsg++
+				}()
+			case <-cs.stop:
+				if cs.restart == true {
 					goto restart
 				}
-				log.V(6).Infof("cs %s to  %s done", cs.name, dest)
-				cs.sendMsg++
-				c.sendMsg++
-
-				time.Sleep(cs.interval)
-			case <-cs.stop:
 				log.V(1).Infof("%v exiting publishRun routine for destination %s", cs, dest)
 				return
 			}
@@ -470,6 +483,7 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 	}
 
 	log.V(2).Infof("Processing %v %v", tableKey, fv)
+
 	configMu.Lock()
 	defer configMu.Unlock()
 
@@ -482,8 +496,6 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 		} else {
 			for field, value := range fv {
 				switch field {
-				case "src_ip":
-					clientCfg.SrcIp = value
 				case "retry_interval":
 					//TODO: check validity of the interval
 					itvl, err := strconv.ParseUint(value, 10, 64)
@@ -595,17 +607,25 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 					cs.prefix = &gpb.Path{
 						Target: value,
 					}
+					deviceName, err := os.Hostname()
+					if err != nil {
+						log.V(2).Infof("Get hostname error: %v", err)
+					} else {
+						cs.prefix.Origin = deviceName
+					}
 				case "paths":
-					paths := strings.Split(value, ",")
-					for _, path := range paths {
-						pp, err := ygot.StringToPath(path, ygot.StructuredPath)
+					ps := strings.Split(value, ",")
+					newPaths := []*gpb.Path{}
+					for _, p := range ps {
+						pp, err := ygot.StringToPath(p, ygot.StructuredPath)
 						if err != nil {
 							log.V(2).Infof("Invalid paths %v", value)
 							return fmt.Errorf("Invalid paths %v", value)
 						}
 						// append *gpb.Path
-						cs.paths = append(cs.paths, pp)
+						newPaths = append(newPaths, pp)
 					}
+					cs.paths = newPaths
 				default:
 					log.V(2).Infof("Invalid field %v value %v", field, value)
 					return fmt.Errorf("Invalid field %v value %v", field, value)

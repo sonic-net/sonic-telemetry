@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	ds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
-	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 	caCert            = flag.String("ca_crt", "", "CA certificate for client certificate validation. Optional.")
 	serverCert        = flag.String("server_crt", "", "TLS server certificate")
 	serverKey         = flag.String("server_key", "", "TLS server private key")
-	insecure          = flag.Bool("insecure", false, "Skip providing TLS cert and key, for testing only!")
+	insecure          = flag.Bool("insecure", false, "Without TLS, for testing only!")
 	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, telemetry server will request but not require a client certificate.")
 )
 
@@ -35,12 +34,8 @@ func main() {
 	var certificate tls.Certificate
 	var err error
 
-	if *insecure {
-		certificate, err = testcert.NewCert()
-		if err != nil {
-			log.Exitf("could not load server key pair: %s", err)
-		}
-	} else {
+	var opts []grpc.ServerOption
+	if !*insecure {
 		switch {
 		case *serverCert == "":
 			log.Errorf("serverCert must be set.")
@@ -53,32 +48,32 @@ func main() {
 		if err != nil {
 			log.Exitf("could not load server key pair: %s", err)
 		}
-	}
 
-	tlsCfg := &tls.Config{
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		Certificates: []tls.Certificate{certificate},
-	}
-	if *allowNoClientCert {
-		// RequestClientCert will ask client for a certificate but won't
-		// require it to proceed. If certificate is provided, it will be
-		// verified.
-		tlsCfg.ClientAuth = tls.RequestClientCert
-	}
-
-	if *caCert != "" {
-		ca, err := ioutil.ReadFile(*caCert)
-		if err != nil {
-			log.Exitf("could not read CA certificate: %s", err)
+		tlsCfg := &tls.Config{
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			Certificates: []tls.Certificate{certificate},
 		}
-		certPool := x509.NewCertPool()
-		if ok := certPool.AppendCertsFromPEM(ca); !ok {
-			log.Exit("failed to append CA certificate")
+		if *allowNoClientCert {
+			// RequestClientCert will ask client for a certificate but won't
+			// require it to proceed. If certificate is provided, it will be
+			// verified.
+			tlsCfg.ClientAuth = tls.RequestClientCert
 		}
-		tlsCfg.ClientCAs = certPool
+
+		if *caCert != "" {
+			ca, err := ioutil.ReadFile(*caCert)
+			if err != nil {
+				log.Exitf("could not read CA certificate: %s", err)
+			}
+			certPool := x509.NewCertPool()
+			if ok := certPool.AppendCertsFromPEM(ca); !ok {
+				log.Exit("failed to append CA certificate")
+			}
+			tlsCfg.ClientCAs = certPool
+		}
+		opts = []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
 	}
 
-	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
 	cfg := &ds.Config{}
 	cfg.Port = int64(*port)
 	s, err := ds.NewServer(cfg, opts)

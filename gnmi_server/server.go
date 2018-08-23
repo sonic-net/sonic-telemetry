@@ -1,11 +1,14 @@
 package gnmi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
@@ -202,9 +205,132 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	return &gnmipb.GetResponse{Notification: notifications}, nil
 }
 
-// Set method is not implemented. Refer to gnxi for examples with openconfig integration
-func (srv *Server) Set(context.Context, *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "Set() is not implemented")
+// Get string value from TypedValue in gnmipb
+func getUpdateVal(t *gnmipb.TypedValue) (interface{}, error) {
+	switch t.Value.(type) {
+	case *gnmipb.TypedValue_IntVal:
+		return strconv.FormatInt(t.GetIntVal(), 10), nil
+	case *gnmipb.TypedValue_StringVal:
+		return t.GetStringVal(), nil
+	case *gnmipb.TypedValue_JsonIetfVal:
+		var f interface{}
+		err := json.Unmarshal(t.GetJsonIetfVal(), &f)
+		if err != nil {
+			return "", fmt.Errorf("typedValue: %v not json", t)
+		}
+		m := f.(map[string]interface{})
+		fv := make(map[string]string)
+		fv1 := make(map[string]map[string]interface{})
+		mapflag := false
+		for k, v := range m {
+			fv2 := make(map[string]interface{})
+			switch v.(type) {
+			case string:
+				fv[k] = v.(string)
+			case int:
+				fv[k] = strconv.FormatInt(int64(v.(int)), 10)
+			case float64:
+				fv[k] = strconv.FormatFloat(v.(float64), 'E', -1, 64)
+			case bool:
+				fv[k] = strconv.FormatBool(v.(bool))
+			case map[string]interface{}:
+				m1 := v.(map[string]interface{})
+				for k1, v1 := range m1 {
+					fv2[k1] = v1
+				}
+				fv1[k] = fv2
+				mapflag = true
+			default:
+				return "", fmt.Errorf("typedValue: %v field %v type not supported", t, k)
+			}
+		}
+		if mapflag == true {
+			return fv1, nil
+		} else {
+			return fv, nil
+		}
+	default:
+		return "", fmt.Errorf("typedValue: %v type not supported", t)
+	}
+}
+
+// Set implements the Get RPC in gNMI spec.
+func (srv *Server) Set(ctx context.Context, req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
+	var target string
+	prefix := req.GetPrefix()
+	if prefix == nil {
+		return nil, status.Error(codes.Unimplemented, "No target specified in prefix")
+	}
+
+	target = prefix.GetTarget()
+	if target == "" {
+		return nil, status.Error(codes.Unimplemented, "Empty target data not supported yet")
+	}
+
+	// only support set config_db
+	if target != "CONFIG_DB" {
+		return nil, status.Errorf(codes.Unimplemented, "unsupported request target")
+	}
+
+	log.V(6).Infof("SetRequest: %v", req)
+	var results []*gnmipb.UpdateResult
+	dc, err := sdc.NewDbClient(nil, prefix)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	for _, path := range req.GetDelete() {
+		log.V(2).Infof("Delete path: %v", path)
+		err := dc.Set(path, "", true)
+		if err != nil {
+			return nil, err
+		}
+		res := gnmipb.UpdateResult{
+			Path: path,
+			Op:   gnmipb.UpdateResult_DELETE,
+		}
+		results = append(results, &res)
+	}
+
+	for _, path := range req.GetReplace() {
+		val, err := getUpdateVal(path.GetVal())
+		if err != nil {
+			return nil, err
+		}
+		log.V(2).Infof("Replace path: %v val: %v", path, val)
+		err = dc.Set(path.GetPath(), val, true)
+		if err != nil {
+			return nil, err
+		}
+		res := gnmipb.UpdateResult{
+			Path: path.GetPath(),
+			Op:   gnmipb.UpdateResult_REPLACE,
+		}
+		results = append(results, &res)
+	}
+
+	for _, path := range req.GetUpdate() {
+		val, err := getUpdateVal(path.GetVal())
+		if err != nil {
+			return nil, err
+		}
+		log.V(2).Infof("Update path: %v val: %v", path, val)
+		err = dc.Set(path.GetPath(), val, false)
+		if err != nil {
+			return nil, err
+		}
+		res := gnmipb.UpdateResult{
+			Path: path.GetPath(),
+			Op:   gnmipb.UpdateResult_UPDATE,
+		}
+		results = append(results, &res)
+	}
+
+	return &gnmipb.SetResponse{
+		Timestamp: time.Now().UnixNano(),
+		Prefix:    req.GetPrefix(),
+		Response:  results,
+	}, nil
 }
 
 // Capabilities method is not implemented. Refer to gnxi for examples with openconfig integration

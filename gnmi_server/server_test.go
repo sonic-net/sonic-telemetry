@@ -10,6 +10,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
 
+	"flag"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/openconfig/gnmi/client"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -198,7 +199,7 @@ func prepareDb(t *testing.T) {
 	mpi_qname_map := loadConfig(t, "COUNTERS_QUEUE_NAME_MAP", countersQueueNameMapByte)
 	loadDB(t, rclient, mpi_qname_map)
 
-	fileName = "../testdata/COUNTERS:Ethernet68.txt"
+	fileName = "../testdata/COUNTERS-Ethernet68.txt"
 	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -207,7 +208,7 @@ func prepareDb(t *testing.T) {
 	mpi_counter := loadConfig(t, "COUNTERS:oid:0x1000000000039", countersEthernet68Byte)
 	loadDB(t, rclient, mpi_counter)
 
-	fileName = "../testdata/COUNTERS:Ethernet1.txt"
+	fileName = "../testdata/COUNTERS-Ethernet1.txt"
 	countersEthernet1Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -217,7 +218,7 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// "Ethernet64:0": "oid:0x1500000000092a"  : queue counter, to work as data noise
-	fileName = "../testdata/COUNTERS:oid:0x1500000000092a.txt"
+	fileName = "../testdata/COUNTERS-oid-0x1500000000092a.txt"
 	counters92aByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -226,7 +227,7 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// "Ethernet68:1": "oid:0x1500000000091c"  : queue counter, for COUNTERS/Ethernet68/Queue vpath test
-	fileName = "../testdata/COUNTERS:oid:0x1500000000091c.txt"
+	fileName = "../testdata/COUNTERS-oid-0x1500000000091c.txt"
 	countersEeth68_1Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -236,6 +237,9 @@ func prepareDb(t *testing.T) {
 }
 
 func TestGnmiGet(t *testing.T) {
+	flag.Set("alsologtostderr", "true")
+	//flag.Set("v", "6")
+	flag.Parse()
 	//t.Log("Start server")
 	s := createServer(t)
 	go runServer(t, s)
@@ -264,19 +268,19 @@ func TestGnmiGet(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	fileName = "../testdata/COUNTERS:Ethernet68.txt"
+	fileName = "../testdata/COUNTERS-Ethernet68.txt"
 	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard.txt"
+	fileName = "../testdata/COUNTERS-Ethernet_wildcard.txt"
 	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX.txt"
+	fileName = "../testdata/COUNTERS-Ethernet_wildcard_PFC_7_RX.txt"
 	countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -391,7 +395,7 @@ func runTestSubscribe(t *testing.T) {
 	countersPortNameMapJsonUpdate["test_field"] = "test_value"
 
 	// for table key subscription
-	fileName = "../testdata/COUNTERS:Ethernet68.txt"
+	fileName = "../testdata/COUNTERS-Ethernet68.txt"
 	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -410,7 +414,7 @@ func runTestSubscribe(t *testing.T) {
 	// field SAI_PORT_STAT_PFC_7_RX_PKTS has new value of 4
 	countersEthernet68JsonPfcUpdate["SAI_PORT_STAT_PFC_7_RX_PKTS"] = "4"
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard.txt"
+	fileName = "../testdata/COUNTERS-Ethernet_wildcard.txt"
 	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -425,7 +429,7 @@ func runTestSubscribe(t *testing.T) {
 	json.Unmarshal(countersEthernetWildcardByte, &countersFieldUpdate)
 	countersFieldUpdate["Ethernet68"] = countersEthernet68JsonPfcUpdate
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX.txt"
+	fileName = "../testdata/COUNTERS-Ethernet_wildcard_PFC_7_RX.txt"
 	countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -442,7 +446,7 @@ func runTestSubscribe(t *testing.T) {
 	//allPortPfcJsonUpdate := countersEthernetWildcardPfcJson.(map[string]interface{})
 	allPortPfcJsonUpdate["Ethernet68"] = pfc7Map
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Queues.txt"
+	fileName = "../testdata/COUNTERS-Ethernet_wildcard_Queues.txt"
 	countersEthernetWildQueuesByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -450,7 +454,7 @@ func runTestSubscribe(t *testing.T) {
 	var countersEthernetWildQueuesJson interface{}
 	json.Unmarshal(countersEthernetWildQueuesByte, &countersEthernetWildQueuesJson)
 
-	fileName = "../testdata/COUNTERS:Ethernet68:Queues.txt"
+	fileName = "../testdata/COUNTERS-Ethernet68-Queues.txt"
 	countersEthernet68QueuesByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -907,6 +911,442 @@ func TestGnmiSubscribe(t *testing.T) {
 
 	runTestSubscribe(t)
 
+	s.s.Stop()
+}
+
+type SimpleSRequest struct {
+	target      string
+	deletePath  []string
+	replacePath []string
+	replaceVal  pb.TypedValue
+	updatePath  []string
+	updateVal   pb.TypedValue
+}
+
+// Construct SetRequest
+func newSetRequest(sr *SimpleSRequest) *pb.SetRequest {
+	pf := pb.Path{
+		Target: sr.target,
+	}
+
+	var dPath []*pb.Path
+	if len(sr.deletePath) >= 1 {
+		p := pb.Path{
+			Elem: []*pb.PathElem{},
+		}
+		for _, e := range sr.deletePath {
+			pe := pb.PathElem{Name: e}
+			p.Elem = append(p.Elem, &pe)
+		}
+		dPath = append(dPath, &p)
+	}
+
+	var rUpdate []*pb.Update
+	if len(sr.replacePath) >= 1 {
+		p := pb.Path{
+			Elem: []*pb.PathElem{},
+		}
+		for _, e := range sr.replacePath {
+			pe := pb.PathElem{Name: e}
+			p.Elem = append(p.Elem, &pe)
+		}
+		u := pb.Update{
+			Path: &p,
+			Val:  &sr.replaceVal,
+		}
+		rUpdate = append(rUpdate, &u)
+	}
+
+	var uUpdate []*pb.Update
+	if len(sr.updatePath) >= 1 {
+		p := pb.Path{
+			Elem: []*pb.PathElem{},
+		}
+		for _, e := range sr.updatePath {
+			pe := pb.PathElem{Name: e}
+			p.Elem = append(p.Elem, &pe)
+		}
+		u := pb.Update{
+			Path: &p,
+			Val:  &sr.updateVal,
+		}
+		uUpdate = append(uUpdate, &u)
+	}
+
+	srq := &pb.SetRequest{
+		Prefix:  &pf,
+		Delete:  dPath,
+		Replace: rUpdate,
+		Update:  uUpdate,
+	}
+	return srq
+}
+
+type SimpleSResponse struct {
+	target string
+	path   []string
+	op     int32
+}
+
+// Check setResponse
+func compareSetResponse(sr *pb.SetResponse, simple *SimpleSResponse) bool {
+	pf := sr.GetPrefix()
+	if pf.GetTarget() != simple.target {
+		return false
+	}
+	r := sr.GetResponse()
+	if len(r) != 1 {
+		return false
+	}
+	for _, ur := range r {
+		if int32(ur.GetOp()) != simple.op {
+			return false
+		}
+
+		p := ur.GetPath()
+		if len(p.GetElem()) != len(simple.path) {
+			return false
+		}
+		for i, e := range p.GetElem() {
+			if e.Name != simple.path[i] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+type tblFV struct {
+	tbl string
+	f   string
+	v   interface{}
+}
+
+func TestGnmiSet(t *testing.T) {
+	//flag.Set("alsologtostderr", "true")
+	//flag.Set("v", "6")
+	//flag.Parse()
+	s := createServer(t)
+	go runServer(t, s)
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
+
+	targetAddr := "127.0.0.1:8080"
+	conn, err := grpc.Dial(targetAddr, opts...)
+	if err != nil {
+		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
+	}
+	defer conn.Close()
+
+	gClient := pb.NewGNMIClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Only support CONFIG_DB
+	dbn := spb.Target_value["CONFIG_DB"]
+	rclient := redis.NewClient(&redis.Options{
+		Network:     "tcp",
+		Addr:        "localhost:6379",
+		Password:    "", // no password set
+		DB:          int(dbn),
+		DialTimeout: 0,
+	})
+	_, err = rclient.Ping().Result()
+	if err != nil {
+		t.Fatalf("failed to connect to redis server %v", err)
+	}
+	defer rclient.Close()
+	jVal := `{"retry_interval":"60", "encoding":"JSON_IETF", "unidirectional":true}`
+	jByte := []byte(jVal)
+
+	jVal1 := `{"Vlan10":{"admin_status":"up","description":"vlan_trunk","mtu":"1200"},"Vlan20":{"admin_status":"down","mtu":"9180"}}`
+	jByte1 := []byte(jVal1)
+
+	jVal2 := `{"Vlan20":{"mtu":"1200"}}`
+	jByte2 := []byte(jVal2)
+
+	tests := []struct {
+		desc    string
+		in      SimpleSRequest
+		want    SimpleSResponse
+		wantFV  tblFV
+		wantErr string
+	}{
+		{
+			desc: "Delete path",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				deletePath: []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				op:     int32(pb.UpdateResult_DELETE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "retry_interval",
+				v:   "",
+			},
+		},
+		{
+			desc: "Update path value int",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_IntVal{5},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "retry_interval",
+				v:   "5",
+			},
+		},
+		{
+			desc: "Update path value string",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_StringVal{"20.20.20.20:8081"},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
+				f:   "dst_addr",
+				v:   "20.20.20.20:8081",
+			},
+		},
+		{
+			desc: "Update path value json",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"TELEMETRY_CLIENT", "Global"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "",
+				v: map[string]string{
+					"retry_interval": "60",
+					"encoding":       "JSON_IETF",
+					"unidirectional": "true",
+				},
+			},
+		},
+		{
+			desc: "Replace path value json mapmap add",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"VLAN", ""},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte1},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"VLAN", ""},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: tblFV{
+				tbl: "VLAN|Vlan10",
+				f:   "",
+				v:   map[string]string{"admin_status": "up", "description": "vlan_trunk", "mtu": "1200"},
+			},
+		},
+		{
+			desc: "Replace path value json mapmap del",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"VLAN", ""},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte2},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"VLAN", ""},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: tblFV{
+				tbl: "VLAN|Vlan20",
+				f:   "",
+				v:   map[string]string{"mtu": "1200"},
+			},
+		},
+		{
+			desc: "Replace path value int",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_IntVal{5},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global", "retry_interval"},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "retry_interval",
+				v:   "5",
+			},
+		},
+		{
+			desc: "Replace path value string",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_StringVal{"20.20.20.20:8081"},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
+				f:   "dst_addr",
+				v:   "20.20.20.20:8081",
+			},
+		},
+		{
+			desc: "Replace path value json",
+			in: SimpleSRequest{
+				target:      "CONFIG_DB",
+				replacePath: []string{"TELEMETRY_CLIENT", "Global"},
+				replaceVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "Global"},
+				op:     int32(pb.UpdateResult_REPLACE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|Global",
+				f:   "",
+				v: map[string]string{
+					"retry_interval": "60",
+					"encoding":       "JSON_IETF",
+					"unidirectional": "true",
+				},
+			},
+		},
+		{
+			desc: "Update path value json mapmap change",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"VLAN", ""},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_JsonIetfVal{jByte2},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"VLAN", ""},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "VLAN|Vlan20",
+				f:   "",
+				v:   map[string]string{"admin_status": "down", "mtu": "1200"},
+			},
+		},
+		{
+			desc: "Update path not supported",
+			in: SimpleSRequest{
+				target:     "CONFIG_DB",
+				updatePath: []string{"PORT", "Ethernet1", "alias"},
+				updateVal: pb.TypedValue{
+					Value: &pb.TypedValue_StringVal{"1"},
+				},
+			},
+			want: SimpleSResponse{
+				target: "CONFIG_DB",
+				path:   []string{"TELEMETRY_CLIENT", "DestinationGroup_TEST", "dst_addr"},
+				op:     int32(pb.UpdateResult_UPDATE),
+			},
+			wantFV: tblFV{
+				tbl: "TELEMETRY_CLIENT|DestinationGroup_TEST",
+				f:   "dst_addr",
+				v:   "20.20.20.20:8081",
+			},
+			wantErr: "config [CONFIG_DB PORT Ethernet1 alias] not supported",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			rclient.FlushDb()
+			rclient.HSet("TELEMETRY_CLIENT|Global", "retry_interval", "30")
+			rclient.HSet("TELEMETRY_CLIENT|DestinationGroup_TEST", "dst_addr", "10.10.10.10:8081")
+			rclient.HSet("VLAN|Vlan20", "admin_status", "down")
+			rclient.HSet("VLAN|Vlan20", "mtu", "9180")
+
+			request := newSetRequest(&test.in)
+			//t.Log("SetRequest: ", request)
+			resp, err := gClient.Set(ctx, request)
+			// Check return code
+			gotRetStatus, ok := status.FromError(err)
+			if !ok {
+				t.Fatal("got a non-grpc error from grpc call")
+			}
+			if (len(test.wantErr) == 0 && gotRetStatus.Code() != codes.OK) ||
+				(len(test.wantErr) != 0 && gotRetStatus.Message() != test.wantErr) {
+				t.Log("err: ", err)
+				t.Fatalf("got return code %v, want %v", gotRetStatus.Message(), test.wantErr)
+			}
+
+			if len(test.wantErr) == 0 {
+				if resp == nil {
+					t.Fatal("got SetResponse nil")
+				}
+				if !compareSetResponse(resp, &test.want) {
+					t.Errorf("SetResponse is not expected: %v", resp)
+					t.Logf("want: %v", test.want)
+				}
+
+				// Check field value in DB
+				if test.wantFV.f != "" {
+					val, _ := rclient.HGet(test.wantFV.tbl, test.wantFV.f).Result()
+					if val != test.wantFV.v {
+						t.Errorf("got (%v) != wantFV.v (%v)", val, test.wantFV.v)
+					}
+				} else {
+					val, _ := rclient.HGetAll(test.wantFV.tbl).Result()
+					if !reflect.DeepEqual(val, test.wantFV.v) {
+						t.Errorf("got (%v) != wantFV.v (%v)", val, test.wantFV.v)
+					}
+				}
+			}
+		})
+	}
 	s.s.Stop()
 }
 

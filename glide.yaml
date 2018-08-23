@@ -1,0 +1,49 @@
+package: github.com/Azure/sonic-telemetry
+import:
+- package: github.com/c9s/goprocinfo
+  subpackages:
+  - linux
+- package: github.com/go-redis/redis
+  version: ^6.10.2
+- package: github.com/golang/glog
+- package: github.com/golang/protobuf
+  version: ^1.0.0
+  subpackages:
+  - proto
+- package: github.com/google/gnxi
+  subpackages:
+  - utils
+- package: github.com/openconfig/gnmi
+  subpackages:
+  - proto/gnmi
+- package: github.com/openconfig/ygot
+  version: ^0.5.0
+  subpackages:
+  - ygot
+- package: github.com/workiva/go-datastructures
+  version: ^1.0.44
+  subpackages:
+  - queue
+- package: golang.org/x/net
+  subpackages:
+  - context
+  - trace
+- package: google.golang.org/grpc
+  version: ^1.11.2
+  subpackages:
+  - codes
+  - credentials
+  - peer
+  - reflection
+  - status
+- package: github.com/shirou/gopsutil
+  version: ~2.18.4
+- package: github.com/go-yaml/yaml
+  version: ~2.2.1
+testImport:
+- package: github.com/jipanyang/gnmi
+  subpackages:
+  - client/gnmi
+- package: github.com/kylelemons/godebug
+  subpackages:
+  - pretty
