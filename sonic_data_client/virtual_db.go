@@ -34,10 +34,10 @@ var (
 	// Queue name to oid map in COUNTERS table of COUNTERS_DB
 	countersQueueNameMap = make(map[string]string)
 
-	// Alias translation: from external name to internal name
-	e2i_aliasMap = make(map[string]string)
-	// Alias translation: from internal name to external name
-	i2e_aliasMap = make(map[string]string)
+	// Alias translation: from vendor port name to sonic interface name
+	alias2nameMap = make(map[string]string)
+	// Alias translation: from sonic interface name to vendor port name
+	name2aliasMap = make(map[string]string)
 
 	// path2TFuncTbl is used to populate trie tree which is reponsible
 	// for virtual path to real data path translation
@@ -91,8 +91,8 @@ func initCountersPortNameMap() error {
 
 func initAliasMap() error {
 	var err error
-	if len(e2i_aliasMap) == 0 {
-		e2i_aliasMap, i2e_aliasMap, err = getAliasMap()
+	if len(alias2nameMap) == 0 {
+		alias2nameMap, name2aliasMap, err = getAliasMap()
 		if err != nil {
 			return err
 		}
@@ -100,10 +100,10 @@ func initAliasMap() error {
 	return nil
 }
 
-// Get the mapping external interface name and internal interface name
+// Get the mapping between sonic interface name and vendor alias
 func getAliasMap() (map[string]string, map[string]string, error) {
-	var e2i_map = make(map[string]string)
-	var i2e_map = make(map[string]string)
+	var alias2name_map = make(map[string]string)
+	var name2alias_map = make(map[string]string)
 
 	redisDb, _ := Target2RedisDb["CONFIG_DB"]
 	_, err := redisDb.Ping().Result()
@@ -117,20 +117,20 @@ func getAliasMap() (map[string]string, map[string]string, error) {
 		return nil, nil, err
 	}
 	for _, key := range resp {
-		ename, err := redisDb.HGet(key, "alias").Result()
+		alias, err := redisDb.HGet(key, "alias").Result()
 		if err != nil {
 			log.V(1).Infof("redis get field failes for CONFIG_DB, key = %v, %v", key, err)
 			// clear aliasMap
-			e2i_map = make(map[string]string)
-			i2e_map = make(map[string]string)
+			alias2name_map = make(map[string]string)
+			name2alias_map = make(map[string]string)
 			return nil, nil, err
 		}
-		e2i_map[ename] = key[5:]
-		i2e_map[key[5:]] = ename
+		alias2name_map[alias] = key[5:]
+		name2alias_map[key[5:]] = alias
 	}
-	log.V(6).Infof("e2i_aliasMap: %v", e2i_map)
-	log.V(6).Infof("i2e_aliasMap: %v", i2e_map)
-	return e2i_map, i2e_map, nil
+	log.V(6).Infof("alias2nameMap: %v", alias2name_map)
+	log.V(6).Infof("name2aliasMap: %v", name2alias_map)
+	return alias2name_map, name2alias_map, nil
 }
 
 // Get the mapping between objects in counters DB, Ex. port name to oid in "COUNTERS_PORT_NAME_MAP" table.
@@ -154,10 +154,10 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 	if strings.HasSuffix(paths[KeyIdx], "*") { // All Ethernet ports
 		for port, oid := range countersPortNameMap {
 			var oport string
-			if eport, ok := i2e_aliasMap[port]; ok {
-				oport = eport
+			if alias, ok := name2aliasMap[port]; ok {
+				oport = alias
 			} else {
-				log.V(2).Infof("%v does not have external alias", port)
+				log.V(2).Infof("%v does not have a vendor alias", port)
 				oport = port
 			}
 
@@ -172,15 +172,15 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 			tblPaths = append(tblPaths, tblPath)
 		}
 	} else { //single port
-		var eport, iport string
-		iport = paths[KeyIdx]
-		if val, ok := e2i_aliasMap[iport]; ok {
-			eport = iport
-			iport = val
+		var alias, name string
+		alias = paths[KeyIdx]
+		name = alias
+		if val, ok := alias2nameMap[alias]; ok {
+			name = val
 		}
-		oid, ok := countersPortNameMap[iport]
+		oid, ok := countersPortNameMap[name]
 		if !ok {
-			return nil, fmt.Errorf("%v not a valid internal port, external port is %v", iport, eport)
+			return nil, fmt.Errorf("%v not a valid sonic interface port, vendor alias is %v", name, alias)
 		}
 		tblPaths = []tablePath{{
 			dbName:    paths[DbIdx],
@@ -205,10 +205,10 @@ func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
 	if strings.HasSuffix(paths[KeyIdx], "*") {
 		for port, oid := range countersPortNameMap {
 			var oport string
-			if eport, ok := i2e_aliasMap[port]; ok {
-				oport = eport
+			if alias, ok := name2aliasMap[port]; ok {
+				oport = alias
 			} else {
-				log.V(2).Infof("%v dose not have an external alias", port)
+				log.V(2).Infof("%v dose not have a vendor alias", port)
 				oport = port
 			}
 
@@ -225,15 +225,15 @@ func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
 			tblPaths = append(tblPaths, tblPath)
 		}
 	} else { //single port
-		var iport, eport string
-		iport = paths[KeyIdx]
-		if val, ok := e2i_aliasMap[iport]; ok {
-			eport = iport
-			iport = val
+		var alias, name string
+		alias = paths[KeyIdx]
+		name = alias
+		if val, ok := alias2nameMap[alias]; ok {
+			name = val
 		}
-		oid, ok := countersPortNameMap[iport]
+		oid, ok := countersPortNameMap[name]
 		if !ok {
-			return nil, fmt.Errorf(" %v not a valid internal port, external port is %v ", iport, eport)
+			return nil, fmt.Errorf(" %v not a valid sonic interface port, vendor alias is %v ", name, alias)
 		}
 		tblPaths = []tablePath{{
 			dbName:    paths[DbIdx],
@@ -257,10 +257,10 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 			// que is in format of "Internal_Ethernet:12"
 			names := strings.Split(que, separator)
 			var oname string
-			if ename, ok := i2e_aliasMap[names[0]]; ok {
-				oname = ename
+			if alias, ok := name2aliasMap[names[0]]; ok {
+				oname = alias
 			} else {
-				log.V(2).Infof(" %v dose not have a valid external port", names[0])
+				log.V(2).Infof(" %v dose not have a vendor alias", names[0])
 				oname = names[0]
 			}
 			que = strings.Join([]string{oname, names[1]}, ":")
@@ -274,18 +274,18 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 			tblPaths = append(tblPaths, tblPath)
 		}
 	} else { //queues on single port
-		portName := paths[KeyIdx]
-		iport := portName
-		if val, ok := e2i_aliasMap[iport]; ok {
-			iport = val
+		alias := paths[KeyIdx]
+		name := alias
+		if val, ok := alias2nameMap[alias]; ok {
+			name = val
 		}
 		for que, oid := range countersQueueNameMap {
 			//que is in formate of "Ethernet64:12"
 			names := strings.Split(que, separator)
-			if iport != names[0] {
+			if name != names[0] {
 				continue
 			}
-			que = strings.Join([]string{portName, names[1]}, ":")
+			que = strings.Join([]string{alias, names[1]}, ":")
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],

@@ -384,7 +384,7 @@ func TestGnmiGet(t *testing.T) {
 		wantRetCode: codes.OK,
 		wantRespVal: "2",
 	}, {
-		desc:       "use vendor alias: get COUNTERS:Ethernet68/1",
+		desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
 		pathTarget: "COUNTERS_DB",
 		textPbPath: `
 					elem: <name: "COUNTERS" >
@@ -393,7 +393,7 @@ func TestGnmiGet(t *testing.T) {
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68Byte,
 	}, {
-		desc:       "use vendor alias: get COUNTERS:Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
+		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
 		textPbPath: `
 					elem: <name: "COUNTERS" >
@@ -607,7 +607,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
 		},
 	}, {
-		desc: "use vendor alias: stream query for table key Ethernet68/1 with new test_field field",
+		desc: "(use vendor alias) stream query for table key Ethernet68/1 with new test_field field",
 		q: client.Query{
 			Target:  "COUNTERS_DB",
 			Type:    client.Stream,
@@ -665,7 +665,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
 		},
 	}, {
-		desc: "use vendor alias: stream query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with update of filed value",
+		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with update of filed value",
 		q: client.Query{
 			Target:  "COUNTERS_DB",
 			Type:    client.Stream,
@@ -841,7 +841,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Sync{},
 		},
 	}, {
-		desc: "use vendor alias: poll query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with field value change",
+		desc: "(use vendor alias) poll query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with field value change",
 		poll: 3,
 		q: client.Query{
 			Target:  "COUNTERS_DB",
@@ -987,7 +987,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Sync{},
 		},
 	}, {
-		desc: "use vendor alias: poll query for COUNTERS/Ethernet68/Queues with field value change",
+		desc: "(use vendor alias) poll query for COUNTERS/Ethernet68/Queues with field value change",
 		poll: 3,
 		q: client.Query{
 			Target:  "COUNTERS_DB",
