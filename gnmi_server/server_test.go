@@ -173,11 +173,11 @@ func getRedisClient(t *testing.T) *redis.Client {
 func getConfigDbClient(t *testing.T) *redis.Client {
 	dbn := spb.Target_value["CONFIG_DB"]
 	rclient := redis.NewClient(&redis.Options{
-		Network:		"tcp",
-		Addr:			"localhost:6379",
-		Password:		"", // no password set
-		DB:				int(dbn),
-		DialTimeout:	0,
+		Network:     "tcp",
+		Addr:        "localhost:6379",
+		Password:    "", // no password set
+		DB:          int(dbn),
+		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
 	if err != nil {
@@ -384,18 +384,18 @@ func TestGnmiGet(t *testing.T) {
 		wantRetCode: codes.OK,
 		wantRespVal: "2",
 	}, {
-		desc:		"use vendor alias: get COUNTERS:Ethernet68/1",
+		desc:       "use vendor alias: get COUNTERS:Ethernet68/1",
 		pathTarget: "COUNTERS_DB",
-		textPbPath:`
+		textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68/1" >
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68Byte,
 	}, {
-		desc:		"use vendor alias: get COUNTERS:Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
+		desc:       "use vendor alias: get COUNTERS:Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
-		textPbPath:`
+		textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68/1" >
 					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
@@ -609,32 +609,32 @@ func runTestSubscribe(t *testing.T) {
 	}, {
 		desc: "use vendor alias: stream query for table key Ethernet68/1 with new test_field field",
 		q: client.Query{
-			Target:		"COUNTERS_DB",
-			Type:		client.Stream,
-			Queries:	[]client.Path{{"COUNTERS", "Ethernet68/1"}},
-			TLS:		&tls.Config{InsecureSkipVerify: true},
+			Target:  "COUNTERS_DB",
+			Type:    client.Stream,
+			Queries: []client.Path{{"COUNTERS", "Ethernet68/1"}},
+			TLS:     &tls.Config{InsecureSkipVerify: true},
 		},
 		updates: []tablePathValue{{
-			dbName:		"COUNTERS_DB",
-            tableName: "COUNTERS",
-            tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-            delimitor: ":",
-            field:     "test_field",
-            value:     "test_value",
-        }, { //Same value set should not trigger multiple updates
-            dbName:    "COUNTERS_DB",
-            tableName: "COUNTERS",
-            tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-            delimitor: ":",
-            field:     "test_field",
-            value:     "test_value",
-        }},
-        wantNoti: []client.Notification{
-            client.Connected{},
-            client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
-            client.Sync{},
-            client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
-        },
+			dbName:    "COUNTERS_DB",
+			tableName: "COUNTERS",
+			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+			delimitor: ":",
+			field:     "test_field",
+			value:     "test_value",
+		}, { //Same value set should not trigger multiple updates
+			dbName:    "COUNTERS_DB",
+			tableName: "COUNTERS",
+			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+			delimitor: ":",
+			field:     "test_field",
+			value:     "test_value",
+		}},
+		wantNoti: []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
+			client.Sync{},
+			client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+		},
 	}, {
 		desc: "stream query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with update of filed value",
 		q: client.Query{

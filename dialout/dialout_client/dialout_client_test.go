@@ -125,47 +125,47 @@ func exe_cmd(t *testing.T, cmd string) {
 }
 
 func getConfigDbClient(t *testing.T) *redis.Client {
-    dbn := spb.Target_value["CONFIG_DB"]
-    rclient := redis.NewClient(&redis.Options{
-        Network:        "tcp",
-        Addr:           "localhost:6379",
-        Password:       "", // no password set
-        DB:             int(dbn),
-        DialTimeout:    0,
-    })
-    _, err := rclient.Ping().Result()
-    if err != nil {
-        t.Fatalf("failed to connect to redis server %v", err)
-    }
-    return rclient
+	dbn := spb.Target_value["CONFIG_DB"]
+	rclient := redis.NewClient(&redis.Options{
+		Network:     "tcp",
+		Addr:        "localhost:6379",
+		Password:    "", // no password set
+		DB:          int(dbn),
+		DialTimeout: 0,
+	})
+	_, err := rclient.Ping().Result()
+	if err != nil {
+		t.Fatalf("failed to connect to redis server %v", err)
+	}
+	return rclient
 }
 
 func loadConfigDB(t *testing.T, rclient *redis.Client, mpi map[string]interface{}) {
-    for key, fv := range mpi {
-        switch fv.(type) {
-        case map[string]interface{}:
-            _, err := rclient.HMSet(key, fv.(map[string]interface{})).Result()
-            if err != nil {
-                t.Errorf("Invalid data for db: %v : %v %v", key, fv, err)
-            }
-        default:
-            t.Errorf("Invalid data for db: %v : %v", key, fv)
-        }
-    }
+	for key, fv := range mpi {
+		switch fv.(type) {
+		case map[string]interface{}:
+			_, err := rclient.HMSet(key, fv.(map[string]interface{})).Result()
+			if err != nil {
+				t.Errorf("Invalid data for db: %v : %v %v", key, fv, err)
+			}
+		default:
+			t.Errorf("Invalid data for db: %v : %v", key, fv)
+		}
+	}
 }
 
 func prepareConfigDb(t *testing.T) {
-    rclient := getConfigDbClient(t)
-    defer rclient.Close()
-    rclient.FlushDb()
+	rclient := getConfigDbClient(t)
+	defer rclient.Close()
+	rclient.FlushDb()
 
-    fileName := "../../testdata/COUNTERS_PORT_ALIAS_MAP.txt"
-    countersPortAliasMapByte, err := ioutil.ReadFile(fileName)
-    if err != nil {
-        t.Fatalf("read file %v err: %v", fileName, err)
-    }
-    mpi_alias_map := loadConfig(t, "", countersPortAliasMapByte)
-    loadConfigDB(t, rclient, mpi_alias_map)
+	fileName := "../../testdata/COUNTERS_PORT_ALIAS_MAP.txt"
+	countersPortAliasMapByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	mpi_alias_map := loadConfig(t, "", countersPortAliasMapByte)
+	loadConfigDB(t, rclient, mpi_alias_map)
 }
 
 func prepareDb(t *testing.T) {

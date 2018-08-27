@@ -102,7 +102,7 @@ func initAliasMap() error {
 
 // Get the mapping external interface name and internal interface name
 func getAliasMap() (map[string]string, map[string]string, error) {
-	var e2i_map= make(map[string]string)
+	var e2i_map = make(map[string]string)
 	var i2e_map = make(map[string]string)
 
 	redisDb, _ := Target2RedisDb["CONFIG_DB"]
@@ -116,7 +116,7 @@ func getAliasMap() (map[string]string, map[string]string, error) {
 		log.V(1).Infof("redis get keys failed for CONFIG_DB, %v", err)
 		return nil, nil, err
 	}
-	for _, key := range(resp) {
+	for _, key := range resp {
 		ename, err := redisDb.HGet(key, "alias").Result()
 		if err != nil {
 			log.V(1).Infof("redis get field failes for CONFIG_DB, key = %v, %v", key, err)
@@ -162,10 +162,10 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 			}
 
 			tblPath := tablePath{
-				dbName:       paths[DbIdx],
-				tableName:    paths[TblIdx],
-				tableKey:     oid,
-				delimitor:    separator,
+				dbName:    paths[DbIdx],
+				tableName: paths[TblIdx],
+				tableKey:  oid,
+				delimitor: separator,
 				//jsonTableKey: port,
 				jsonTableKey: oport,
 			}
@@ -213,11 +213,11 @@ func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
 			}
 
 			tblPath := tablePath{
-				dbName:       paths[DbIdx],
-				tableName:    paths[TblIdx],
-				tableKey:     oid,
-				field:        paths[FieldIdx],
-				delimitor:    separator,
+				dbName:    paths[DbIdx],
+				tableName: paths[TblIdx],
+				tableKey:  oid,
+				field:     paths[FieldIdx],
+				delimitor: separator,
 				//jsonTableKey: port,
 				jsonTableKey: oport,
 				jsonField:    paths[FieldIdx],
