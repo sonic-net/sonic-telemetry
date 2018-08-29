@@ -166,7 +166,6 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 				tableName: paths[TblIdx],
 				tableKey:  oid,
 				delimitor: separator,
-				//jsonTableKey: port,
 				jsonTableKey: oport,
 			}
 			tblPaths = append(tblPaths, tblPath)
@@ -218,7 +217,6 @@ func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
 				tableKey:  oid,
 				field:     paths[FieldIdx],
 				delimitor: separator,
-				//jsonTableKey: port,
 				jsonTableKey: oport,
 				jsonField:    paths[FieldIdx],
 			}
