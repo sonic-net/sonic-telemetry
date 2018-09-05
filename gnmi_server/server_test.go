@@ -761,7 +761,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
 		},
 	}, {
-		desc: "stream query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with update of filed value",
+		desc: "stream query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with update of field value",
 		q: client.Query{
 			Target:  "COUNTERS_DB",
 			Type:    client.Stream,
@@ -790,7 +790,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
 		},
 	}, {
-		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with update of filed value",
+		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with update of field value",
 		q: client.Query{
 			Target:  "COUNTERS_DB",
 			Type:    client.Stream,
@@ -819,7 +819,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
 		},
 	}, {
-		desc: "stream query for COUNTERS/Ethernet68/Pfcwd with update of filed value",
+		desc: "stream query for COUNTERS/Ethernet68/Pfcwd with update of field value",
 		q: client.Query{
 			Target:  "COUNTERS_DB",
 			Type:    client.Stream,
@@ -848,7 +848,7 @@ func runTestSubscribe(t *testing.T) {
 			client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJsonUpdate},
 		},
 	}, {
-		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/Pfcwd with update of filed value",
+		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/Pfcwd with update of field value",
 		q: client.Query{
 			Target:  "COUNTERS_DB",
 			Type:    client.Stream,
@@ -1200,7 +1200,7 @@ func runTestSubscribe(t *testing.T) {
 				client.Sync{},
 			},
 		}, {
-			desc: "poll query for table key filed Etherenet*/Pfcwd with Ethernet68:3/PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED field value change",
+			desc: "poll query for table key field Etherenet*/Pfcwd with Ethernet68:3/PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED field value change",
 			poll: 3,
 			q: client.Query{
 				Target:  "COUNTERS_DB",

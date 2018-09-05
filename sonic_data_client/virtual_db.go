@@ -121,17 +121,25 @@ func initCountersPfcwdNameMap() error {
 func getPfcwdMap() (map[string]map[string]string, error) {
 	var pfcwdName_map = make(map[string]map[string]string)
 
-	redisDb, _ := Target2RedisDb["CONFIG_DB"]
+	dbName := "CONFIG_DB"
+	redisDb, _ := Target2RedisDb[dbName]
 	_, err := redisDb.Ping().Result()
 	if err != nil {
-		log.V(1).Infof("Can not connect to CONFIG_DB, %v", err)
+		log.V(1).Infof("Can not connect to %v, err: %v", dbName, err)
 		return nil, err
 	}
 
-	resp, err := redisDb.Keys("PFC_WD_TABLE|*").Result()
+	keyName := "PFC_WD_TABLE|*"
+	resp, err := redisDb.Keys(keyName).Result()
 	if err != nil {
-		log.V(1).Infof("redis get keys failed for CONFIG_DB, %v", err)
+		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
 		return nil, err
+	}
+
+	if len(resp) == 0 {
+		// PFC WD service not enabled on device
+		log.V(1).Infof("PFC WD not enabled on device")
+		return nil, nil
 	}
 
 	for _, key := range resp {
@@ -140,28 +148,40 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 	}
 
 	// Get Queue indexes that are enabled with PFC-WD
-	resp, err = redisDb.Keys("PORT_QOS_MAP*").Result()
+	keyName = "PORT_QOS_MAP*"
+	resp, err = redisDb.Keys(keyName).Result()
 	if err != nil {
-		log.V(1).Infof("redis get keys failed for CONFIG_DB, %v", err)
+		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
 		return nil, err
+	}
+	if len(resp) == 0 {
+		log.V(1).Infof("PFC WD not enabled on device")
+		return nil, nil
 	}
 	qos_key := resp[0]
 
-	priorities, err := redisDb.HGet(qos_key, "pfc_enable").Result()
+	fieldName := "pfc_enable"
+	priorities, err := redisDb.HGet(qos_key, fieldName).Result()
 	if err != nil {
-		log.V(1).Infof("redis get field failed for CONFIG_DB, key = %v, field = pfc_enable, %v", qos_key, err)
+		log.V(1).Infof("redis get field failed for %v, key = %v, field = %v, err: %v", dbName, qos_key, fieldName, err)
 		return nil, err
 	}
 
-	pfc_queue_map, err := redisDb.HGetAll("MAP_PFC_PRIORITY_TO_QUEUE|AZURE").Result()
+	keyName = "MAP_PFC_PRIORITY_TO_QUEUE|AZURE"
+	pfc_queue_map, err := redisDb.HGetAll(keyName).Result()
 	if err != nil {
-		log.V(1).Infof("redis get fields failed for CONFIG_DB, key = MAP_PFC_PRIORITY_TO_QUEUE|AZURE")
+		log.V(1).Infof("redis get fields failed for %v, key = %v, err: %v", dbName, keyName, err)
 		return nil, err
 	}
 
 	var indices []string
 	for _, p := range strings.Split(priorities, ",") {
-		indices = append(indices, pfc_queue_map[p])
+		_, ok := pfc_queue_map[p]
+		if !ok {
+			log.V(1).Infof("Missing mapping between PFC priority %v to queue", p)
+		} else {
+			indices = append(indices, pfc_queue_map[p])
+		}
 	}
 
 	if len(countersQueueNameMap) == 0 {
@@ -175,7 +195,7 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 			queue_key = port + ":" + indice
 			oid, ok := countersQueueNameMap[queue_key]
 			if !ok {
-				return nil, fmt.Errorf("key %v not exists in COUNTERS_QUEUE_NAME_MAP")
+				return nil, fmt.Errorf("key %v not exists in COUNTERS_QUEUE_NAME_MAP", queue_key)
 			}
 			pfcwdName_map[port][queue_key] = oid
 		}
@@ -190,21 +210,24 @@ func getAliasMap() (map[string]string, map[string]string, error) {
 	var alias2name_map = make(map[string]string)
 	var name2alias_map = make(map[string]string)
 
-	redisDb, _ := Target2RedisDb["CONFIG_DB"]
+	dbName := "CONFIG_DB"
+	redisDb, _ := Target2RedisDb[dbName]
 	_, err := redisDb.Ping().Result()
 	if err != nil {
-		log.V(1).Infof("Can not connect to CONFIG_DB, %v", err)
+		log.V(1).Infof("Can not connect to %v, err: %v", dbName, err)
 		return nil, nil, err
 	}
-	resp, err := redisDb.Keys("PORT|*").Result()
+
+	keyName := "PORT|*"
+	resp, err := redisDb.Keys(keyName).Result()
 	if err != nil {
-		log.V(1).Infof("redis get keys failed for CONFIG_DB, %v", err)
+		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
 		return nil, nil, err
 	}
 	for _, key := range resp {
 		alias, err := redisDb.HGet(key, "alias").Result()
 		if err != nil {
-			log.V(1).Infof("redis get field failes for CONFIG_DB, key = %v, %v", key, err)
+			log.V(1).Infof("redis get field alias failed for %v, key = %v, err: %v", dbName, key, err)
 			// clear aliasMap
 			alias2name_map = make(map[string]string)
 			name2alias_map = make(map[string]string)
@@ -339,7 +362,7 @@ func v2rEthPortPfcwdStats(paths []string) ([]tablePath, error) {
 		for _, pfcqueues := range countersPfcwdNameMap {
 			for pfcque, oid := range pfcqueues {
 				// pfcque is in format of "Interface:12"
-				names := strings.Split(pfcque, ":")
+				names := strings.Split(pfcque, separator)
 				var oname string
 				if alias, ok := name2aliasMap[names[0]]; ok {
 					oname = alias
@@ -347,7 +370,7 @@ func v2rEthPortPfcwdStats(paths []string) ([]tablePath, error) {
 					log.V(2).Infof(" %v does not have a vendor alias", names[0])
 					oname = names[0]
 				}
-				que := strings.Join([]string{oname, names[1]}, ":")
+				que := strings.Join([]string{oname, names[1]}, separator)
 				tblPath := tablePath{
 					dbName:       paths[DbIdx],
 					tableName:    paths[TblIdx],
@@ -373,8 +396,8 @@ func v2rEthPortPfcwdStats(paths []string) ([]tablePath, error) {
 		if ok {
 			for pfcque, oid := range pfcqueues {
 				// pfcque is in format of Ethernet64:12
-				names := strings.Split(pfcque, ":")
-				que := strings.Join([]string{alias, names[1]}, ":")
+				names := strings.Split(pfcque, separator)
+				que := strings.Join([]string{alias, names[1]}, separator)
 				tblPath := tablePath{
 					dbName:       paths[DbIdx],
 					tableName:    paths[TblIdx],
@@ -398,7 +421,7 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 	if strings.HasSuffix(paths[KeyIdx], "*") { // queues on all Ethernet ports
 		for que, oid := range countersQueueNameMap {
 			// que is in format of "Internal_Ethernet:12"
-			names := strings.Split(que, ":")
+			names := strings.Split(que, separator)
 			var oname string
 			if alias, ok := name2aliasMap[names[0]]; ok {
 				oname = alias
@@ -406,7 +429,7 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 				log.V(2).Infof(" %v dose not have a vendor alias", names[0])
 				oname = names[0]
 			}
-			que = strings.Join([]string{oname, names[1]}, ":")
+			que = strings.Join([]string{oname, names[1]}, separator)
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
@@ -424,11 +447,11 @@ func v2rEthPortQueStats(paths []string) ([]tablePath, error) {
 		}
 		for que, oid := range countersQueueNameMap {
 			//que is in format of "Ethernet64:12"
-			names := strings.Split(que, ":")
+			names := strings.Split(que, separator)
 			if name != names[0] {
 				continue
 			}
-			que = strings.Join([]string{alias, names[1]}, ":")
+			que = strings.Join([]string{alias, names[1]}, separator)
 			tblPath := tablePath{
 				dbName:       paths[DbIdx],
 				tableName:    paths[TblIdx],
