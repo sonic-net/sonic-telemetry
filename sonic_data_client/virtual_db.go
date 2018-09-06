@@ -122,6 +122,7 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 	var pfcwdName_map = make(map[string]map[string]string)
 
 	dbName := "CONFIG_DB"
+	separator, _ := GetTableKeySeparator(dbName)
 	redisDb, _ := Target2RedisDb[dbName]
 	_, err := redisDb.Ping().Result()
 	if err != nil {
@@ -129,7 +130,7 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		return nil, err
 	}
 
-	keyName := "PFC_WD_TABLE|*"
+	keyName := fmt.Sprintf("PFC_WD_TABLE%v*", separator)
 	resp, err := redisDb.Keys(keyName).Result()
 	if err != nil {
 		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
@@ -167,7 +168,7 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		return nil, err
 	}
 
-	keyName = "MAP_PFC_PRIORITY_TO_QUEUE|AZURE"
+	keyName = fmt.Sprintf("MAP_PFC_PRIORITY_TO_QUEUE%vAZURE", separator)
 	pfc_queue_map, err := redisDb.HGetAll(keyName).Result()
 	if err != nil {
 		log.V(1).Infof("redis get fields failed for %v, key = %v, err: %v", dbName, keyName, err)
@@ -190,9 +191,10 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 	}
 
 	var queue_key string
+	queue_separator, _ := GetTableKeySeparator("COUNTERS_DB")
 	for port, _ := range pfcwdName_map {
 		for _, indice := range indices {
-			queue_key = port + ":" + indice
+			queue_key = port + queue_separator + indice
 			oid, ok := countersQueueNameMap[queue_key]
 			if !ok {
 				return nil, fmt.Errorf("key %v not exists in COUNTERS_QUEUE_NAME_MAP", queue_key)
@@ -211,6 +213,7 @@ func getAliasMap() (map[string]string, map[string]string, error) {
 	var name2alias_map = make(map[string]string)
 
 	dbName := "CONFIG_DB"
+	separator, _ := GetTableKeySeparator(dbName)
 	redisDb, _ := Target2RedisDb[dbName]
 	_, err := redisDb.Ping().Result()
 	if err != nil {
@@ -218,7 +221,7 @@ func getAliasMap() (map[string]string, map[string]string, error) {
 		return nil, nil, err
 	}
 
-	keyName := "PORT|*"
+	keyName := fmt.Sprintf("PORT%v*", separator)
 	resp, err := redisDb.Keys(keyName).Result()
 	if err != nil {
 		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
