@@ -10,8 +10,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	ds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
+	//ds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
 	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
+	ds "test/sonic-telemetry-new-pfcwd/dialout/dialout_server"
 )
 
 var (

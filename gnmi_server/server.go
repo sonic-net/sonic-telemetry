@@ -15,8 +15,9 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
+	newdc "test/sonic-telemetry-new-pfcwd/new_sonic_data_client"
 )
 
 var (
@@ -174,6 +175,8 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	var dc sdc.Client
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
+	} else if target == "SONiC_DB" {
+		dc, err = newdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)
 	}
@@ -184,6 +187,10 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	spbValues, err := dc.Get(nil)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	if target == "SONiC_DB" {
+		notifications = make([]*gnmipb.Notification, len(spbValues))
 	}
 
 	for index, spbValue := range spbValues {

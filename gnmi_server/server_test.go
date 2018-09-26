@@ -27,8 +27,9 @@ import (
 	"time"
 	// Register supported client types.
 	spb "github.com/Azure/sonic-telemetry/proto"
-	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	//sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gclient "github.com/jipanyang/gnmi/client/gnmi"
+	sdc "test/sonic-telemetry-pfcwd/sonic_data_client"
 )
 
 var clientTypes = []string{gclient.Type}
