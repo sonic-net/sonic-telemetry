@@ -13,9 +13,10 @@ import (
 
 	//spb "github.com/Azure/sonic-telemetry/proto"
 	//sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
-	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
-	newdc "test/sonic-telemetry-new-pfcwd/new_sonic_data_client"
+	vdc "test/sonic-telemetry-new-pfcwd/virtual_database_client"
+
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 // Client contains information about a subscribe client that has connected to the server.
@@ -123,7 +124,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
 	} else if target == "SONiC_DB" {
-		dc, err = newdc.NewDbClient(paths, prefix)
+		dc, err = vdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)
 	}
@@ -231,8 +232,8 @@ func (c *Client) send(stream gnmipb.GNMI_SubscribeServer) error {
 				c.errors++
 				return err
 			}
-		case newdc.Value:
-			if resp, err = newdc.ValToResp(v); err != nil {
+		case vdc.Value:
+			if resp, err = vdc.ValToResp(v); err != nil {
 				c.errors++
 				return err
 			}

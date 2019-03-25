@@ -18,14 +18,14 @@ func GetTmpl_PortQueueCounterStats(path *gnmipb.Path) {
 
 	name = "Port"
 	path.Elem = append(path.Elem, &gnmipb.PathElem{
-		Name:	name,
-		Key:	map[string]string{"name": "*"},
+		Name: name,
+		Key:  map[string]string{"name": "*"},
 	})
 
 	name = "Queue"
 	path.Elem = append(path.Elem, &gnmipb.PathElem{
-		Name:	name,
-		Key:	map[string]string{"name": "*"},
+		Name: name,
+		Key:  map[string]string{"name": "*"},
 	})
 
 	name = "QueueCounter"
@@ -40,9 +40,9 @@ func v2rPortQueueCounterStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tab
 
 	parentConfig := map[int]string{1: "Port", 2: "Queue"}
 
-	leaf := leafConfig {
-		idx:	3,
-		name:	"QueueCounter",
+	leaf := leafConfig{
+		idx:  3,
+		name: "QueueCounter",
 	}
 
 	target_fields := []string{}
@@ -99,6 +99,7 @@ func pop_PortQueueCounterStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]ta
 
 	_, ok := countersQueueNameMap[_name]
 	if !ok {
+		log.V(1).Infof("RANDY: 4")
 		return fmt.Errorf("%v not a valid sonic interface. Vendor alias is %v", _name, alias)
 	}
 
@@ -141,16 +142,15 @@ func pop_PortQueueCounterStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]ta
 	}
 
 	tblPath_que := tablePath{
-		dbName:		dbName,
-		keyName:	strings.Join([]string{"COUNTERS", oid_que}, separator),
-		delimitor:	separator,
-		fields:		[]string{
-					"SAI_QUEUE_STAT_PACKETS",
-					"SAI_QUEUE_STAT_BYTES",
-					"SAI_QUEUE_STAT_DROPPED_PACKETS",
-					"SAI_QUEUE_STAT_DROPPED_BYTES"},
+		dbName:    dbName,
+		keyName:   strings.Join([]string{"COUNTERS", oid_que}, separator),
+		delimitor: separator,
+		fields: []string{
+			"SAI_QUEUE_STAT_PACKETS",
+			"SAI_QUEUE_STAT_BYTES",
+			"SAI_QUEUE_STAT_DROPPED_PACKETS",
+			"SAI_QUEUE_STAT_DROPPED_BYTES"},
 	}
 	(*pathG2S)[path] = []tablePath{tblPath_que}
 	return nil
 }
-

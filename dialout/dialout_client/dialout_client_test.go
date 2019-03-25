@@ -30,10 +30,10 @@ import (
 
 	//sds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
 	spb "github.com/Azure/sonic-telemetry/proto"
-	sds "test/sonic-telemetry-pfcwd/dialout/dialout_server"
+	sds "test/sonic-telemetry-new-pfcwd/dialout/dialout_server"
 	//sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gclient "github.com/openconfig/gnmi/client/gnmi"
-	sdc "test/sonic-telemetry-pfcwd/sonic_data_client"
+	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
 )
 
 var clientTypes = []string{gclient.Type}

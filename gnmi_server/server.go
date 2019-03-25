@@ -15,9 +15,10 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
-	newdc "test/sonic-telemetry-new-pfcwd/new_sonic_data_client"
+	vdc "test/sonic-telemetry-new-pfcwd/virtual_database_client"
+
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 var (
@@ -76,6 +77,11 @@ func (srv *Server) Serve() error {
 		return fmt.Errorf("Serve() failed: not initialized")
 	}
 	return srv.s.Serve(srv.lis)
+}
+
+func (srv *Server) Stop() {
+	s := srv.s
+	s.Stop()
 }
 
 // Address returns the port the Server is listening to.
@@ -176,7 +182,7 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
 	} else if target == "SONiC_DB" {
-		dc, err = newdc.NewDbClient(paths, prefix)
+		dc, err = vdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)
 	}

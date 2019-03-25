@@ -18,8 +18,8 @@ func GetTmpl_PortPfcCounterStats(path *gnmipb.Path) {
 
 	name = "Port"
 	path.Elem = append(path.Elem, &gnmipb.PathElem{
-		Name:	name,
-		Key:	map[string]string{"name": "*"},
+		Name: name,
+		Key:  map[string]string{"name": "*"},
 	})
 
 	name = "PfcCounter"
@@ -34,9 +34,9 @@ func v2rPortPfcCounterStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]table
 
 	parentConfig := map[int]string{1: "Port"}
 
-	leaf := leafConfig {
-		idx:	2,
-		name:	"PfcCounter",
+	leaf := leafConfig{
+		idx:  2,
+		name: "PfcCounter",
 	}
 
 	target_fields := []string{}
@@ -62,50 +62,51 @@ func pop_PortPfcCounterStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 	portName := elems[idx_port].GetKey()["name"]
 	if portName == "*" {
 		// Wildcard port name
-        for port, _ := range countersPortNameMap {
-            // Alias translation
-            var oport string
-            if alias, ok := name2aliasMap[port]; ok {
-                oport = alias
-            } else {
-                log.V(2).Infof("%v does not have a vendor alias", port)
-                oport = port
-            }
-            // Create a gNMI path for each port
-            var copyPath = gnmipb.Path{}
-            deepcopy(path, &copyPath)
-            copyPath.Elem[idx_port].Key["name"] = oport
-            err := pop_PortPfcCounterStats(&copyPath, pathG2S, target_fields)
+		for port, _ := range countersPortNameMap {
+			// Alias translation
+			var oport string
+			if alias, ok := name2aliasMap[port]; ok {
+				oport = alias
+			} else {
+				log.V(2).Infof("%v does not have a vendor alias", port)
+				oport = port
+			}
+			// Create a gNMI path for each port
+			var copyPath = gnmipb.Path{}
+			deepcopy(path, &copyPath)
+			copyPath.Elem[idx_port].Key["name"] = oport
+			err := pop_PortPfcCounterStats(&copyPath, pathG2S, target_fields)
 			if err != nil {
 				return err
 			}
-        }
-        return nil
-    }
+		}
+		return nil
+	}
 
-    // Alias translation
-    var alias, _name string
-    alias = portName
-    _name = alias
-    if val, ok := alias2nameMap[alias]; ok {
-        _name = val
-    }
+	// Alias translation
+	var alias, _name string
+	alias = portName
+	_name = alias
+	if val, ok := alias2nameMap[alias]; ok {
+		_name = val
+	}
 
 	oid_port, ok := countersPortNameMap[_name]
 	if !ok {
+		log.V(1).Infof("RANDY: 1")
 		return fmt.Errorf("%v not a valid sonic interface. Vendor alias is %v", _name, alias)
 	}
 
-    // TODO: Subscribe to only particular fields
-    if len(target_fields) > 0 {
-        return fmt.Errorf("Subscribe to field of Path: %v not supported", path)
+	// TODO: Subscribe to only particular fields
+	if len(target_fields) > 0 {
+		return fmt.Errorf("Subscribe to field of Path: %v not supported", path)
 	}
 
-	tblPath_port := tablePath {
-		dbName:		dbName,
-		keyName:	strings.Join([]string{"COUNTERS", oid_port}, separator),
-		delimitor:	separator,
-		patterns:	[]string{"SAI_PORT_STAT_PFC_._RX_PKTS$", "SAI_PORT_STAT_PFC_._TX_PKTS$"},
+	tblPath_port := tablePath{
+		dbName:    dbName,
+		keyName:   strings.Join([]string{"COUNTERS", oid_port}, separator),
+		delimitor: separator,
+		patterns:  []string{"SAI_PORT_STAT_PFC_._RX_PKTS$", "SAI_PORT_STAT_PFC_._TX_PKTS$"},
 	}
 
 	(*pathG2S)[path] = []tablePath{tblPath_port}

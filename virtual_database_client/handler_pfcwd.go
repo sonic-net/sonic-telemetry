@@ -2,9 +2,10 @@ package client
 
 import (
 	"fmt"
-	gnmipb	"github.com/openconfig/gnmi/proto/gnmi"
-	log "github.com/golang/glog"
 	"strings"
+
+	log "github.com/golang/glog"
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	//proto "github.com/golang/protobuf/proto"
 )
 
@@ -28,7 +29,7 @@ func deepcopy(path, copyPath *gnmipb.Path) {
 
 // Contains tell whether array contains X
 func contains(a []string, x string) bool {
-	for _, n := range(a) {
+	for _, n := range a {
 		if x == n {
 			return true
 		}
@@ -37,8 +38,8 @@ func contains(a []string, x string) bool {
 }
 
 type leafConfig struct {
-	idx		int
-	name	string
+	idx  int
+	name string
 }
 
 func updatePath(path, tmpl *gnmipb.Path, parentConfig map[int]string, leaf leafConfig, target_fields *[]string) {
@@ -72,14 +73,14 @@ func GetTmpl_PortQueuePfcwdStats(path *gnmipb.Path) {
 
 	name = "Port"
 	path.Elem = append(path.Elem, &gnmipb.PathElem{
-		Name:	name,
-		Key:	map[string]string{"name": "*"},
+		Name: name,
+		Key:  map[string]string{"name": "*"},
 	})
 
 	name = "Queue"
 	path.Elem = append(path.Elem, &gnmipb.PathElem{
-		Name:	name,
-		Key:	map[string]string{"name": "*"},
+		Name: name,
+		Key:  map[string]string{"name": "*"},
 	})
 
 	name = "Pfcwd"
@@ -88,23 +89,23 @@ func GetTmpl_PortQueuePfcwdStats(path *gnmipb.Path) {
 
 // Translate gNMI path into a list of unique root-to-leaf vpaths
 // then map each unique vpath to a list of real DB tablePaths
-// gNMI paths are like 
+// gNMI paths are like
 // [Inerfaces Port[name=<port name>] Queue[name=<queue name>] Pfcwd]
-func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error{
+func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
 	var tmpl = gnmipb.Path{}
 	GetTmpl_PortQueuePfcwdStats(&tmpl)
 	fmt.Printf("tmpl: %v\n", &tmpl)
 
 	parentConfig := map[int]string{1: "Port", 2: "Queue"}
 
-	leaf := leafConfig {
-		idx:	3,
-		name:	"Pfcwd",
+	leaf := leafConfig{
+		idx:  3,
+		name: "Pfcwd",
 	}
-	
+
 	target_fields := []string{}
 	updatePath(path, &tmpl, parentConfig, leaf, &target_fields)
-	
+
 	// Populate tablePaths
 	fmt.Printf("path passed in populate: %v\n", &tmpl)
 	err := pop_PortQueuePfcwdStats(&tmpl, pathG2S, target_fields)
@@ -114,8 +115,8 @@ func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]table
 	return nil
 }
 
-// Populate 
-func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath, target_fields []string) error{
+// Populate
+func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath, target_fields []string) error {
 	dbName := "COUNTERS_DB"
 	separator, _ := GetTableKeySeparator(dbName)
 
@@ -158,9 +159,10 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 
 	oid_port, ok := countersPortNameMap[_name]
 	if !ok {
+		log.V(1).Infof("RANDY: 2")
 		return fmt.Errorf("%v not a valid sonic interface. Vendor alias is %v", _name, alias)
 	}
-	
+
 	// Populate queue level
 	var idx_que = 2
 	queName := elems[idx_que].GetKey()["name"]
@@ -191,25 +193,25 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 	}
 	queNum := strings.TrimPrefix(queName, "Queue")
 	pfcque := strings.Join([]string{_name, queNum}, separator)
-	if _, ok := countersPfcwdNameMap[_name]; ok{
-		if oid_que, ok := countersPfcwdNameMap[_name][pfcque]; ok{
+	if _, ok := countersPfcwdNameMap[_name]; ok {
+		if oid_que, ok := countersPfcwdNameMap[_name][pfcque]; ok {
 			// PFC WD is enabled for port:queue
 			out_tblPaths := []tablePath{}
 			// Fields under the queue oid
-			full_fields := []string {
+			full_fields := []string{
 				"PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-                "PFC_WD_QUEUE_STATS_TX_DROPPED_PACKETS",
-                "PFC_WD_QUEUE_STATS_RX_DROPPED_PACKETS",
-                "PFC_WD_QUEUE_STATS_DEADLOCK_RESTORED",
-                "PFC_wD_QUEUE_STATS_TX_PACKETS",
-                "PFC_WD_QUEUE_STATS_RX_PACKETS",
-                "PFC_WD_STATUS",
+				"PFC_WD_QUEUE_STATS_TX_DROPPED_PACKETS",
+				"PFC_WD_QUEUE_STATS_RX_DROPPED_PACKETS",
+				"PFC_WD_QUEUE_STATS_DEADLOCK_RESTORED",
+				"PFC_wD_QUEUE_STATS_TX_PACKETS",
+				"PFC_WD_QUEUE_STATS_RX_PACKETS",
+				"PFC_WD_STATUS",
 			}
 
 			if len(target_fields) > 0 {
 				// Subscirbe to only particular fields
 				key_target_fields := []string{}
-				for _, targetField := range(target_fields) {
+				for _, targetField := range target_fields {
 					if contains(full_fields, targetField) {
 						key_target_fields = append(key_target_fields, targetField)
 					}
@@ -218,35 +220,35 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 			}
 
 			if len(full_fields) > 0 {
-				tblPath_que := tablePath {
-					dbName:		dbName,
-					keyName:	strings.Join([]string{"COUNTERS", oid_que}, separator),
-					delimitor:	separator,
-					fields:		full_fields,
+				tblPath_que := tablePath{
+					dbName:    dbName,
+					keyName:   strings.Join([]string{"COUNTERS", oid_que}, separator),
+					delimitor: separator,
+					fields:    full_fields,
 				}
 				out_tblPaths = append(out_tblPaths, tblPath_que)
 			}
-			
+
 			// Fields under the port oid
 			full_fields = []string{fmt.Sprintf("SAI_PORT_STAT_PFC_%v_RX_PKTS", queNum)}
 
-            if len(target_fields) > 0 {
-                // Subscirbe to only particular fields
-                key_target_fields := []string{}
-                for _, targetField := range(target_fields) {
-                    if contains(full_fields, targetField) {
-                        key_target_fields = append(key_target_fields, targetField)
-                    }
-                }
-                full_fields = key_target_fields
-            }
+			if len(target_fields) > 0 {
+				// Subscirbe to only particular fields
+				key_target_fields := []string{}
+				for _, targetField := range target_fields {
+					if contains(full_fields, targetField) {
+						key_target_fields = append(key_target_fields, targetField)
+					}
+				}
+				full_fields = key_target_fields
+			}
 
 			if len(full_fields) > 0 {
-				tblPath_port := tablePath {
-					dbName:		dbName,
-					keyName:	strings.Join([]string{"COUNTERS", oid_port}, separator),
-					delimitor:	separator,
-					fields:		full_fields,
+				tblPath_port := tablePath{
+					dbName:    dbName,
+					keyName:   strings.Join([]string{"COUNTERS", oid_port}, separator),
+					delimitor: separator,
+					fields:    full_fields,
 				}
 				out_tblPaths = append(out_tblPaths, tblPath_port)
 			}
