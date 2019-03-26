@@ -5,8 +5,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+
 	spb "github.com/Azure/sonic-telemetry/proto"
+
 	//sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	"net"
+
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	"github.com/go-redis/redis"
 	log "github.com/golang/glog"
 	gpb "github.com/openconfig/gnmi/proto/gnmi"
@@ -15,8 +20,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"net"
-	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
+
 	//"reflect"
 	"strconv"
 	"strings"

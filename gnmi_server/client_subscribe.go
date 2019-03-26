@@ -11,10 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	//spb "github.com/Azure/sonic-telemetry/proto"
-	//sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
-	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
-	vdc "test/sonic-telemetry-new-pfcwd/virtual_database_client"
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	vdc "github.com/Azure/sonic-telemetry/virtual_database_client"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
