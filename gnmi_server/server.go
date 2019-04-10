@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
-	vdc "test/sonic-telemetry-new-pfcwd/virtual_database_client"
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	vdc "github.com/Azure/sonic-telemetry/virtual_database_client"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )

@@ -104,7 +104,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	}
 
 	var target string
-	fmt.Printf("Subscribe Prefix: %v\n", target)
+	//fmt.Printf("Subscribe Prefix: %v\n", target)
 	prefix := c.subscribe.GetPrefix()
 	if prefix == nil {
 		return grpc.Errorf(codes.Unimplemented, "No target specified in prefix")

@@ -23,8 +23,8 @@ import (
 const (
 	// indentString represents the default indentation string used for
 	// JSON. Two spaces are used here.
-	indentString				 string = "  "
-	Default_REDIS_UNIXSOCKET	 string = "/var/run/redis/redis.sock"
+	indentString                 string = "  "
+	Default_REDIS_UNIXSOCKET     string = "/var/run/redis/redis.sock"
 	Default_REDIS_LOCAL_TCP_PORT string = "localhost:6379"
 )
 
@@ -60,11 +60,11 @@ var UseRedisLocalTcpPort bool = false
 var Target2RedisDb = make(map[string]*redis.Client)
 
 type tablePath struct {
-	dbName	  string
+	dbName    string
 	tableName string
 	tableKey  string
 	delimitor string
-	field	  string
+	field     string
 	// path name to be used in json data which may be different
 	// from the real data path. Ex. in Counters table, real tableKey
 	// is oid:0x####, while key name like Ethernet## may be put
@@ -72,7 +72,7 @@ type tablePath struct {
 	jsonTableName string
 	jsonTableKey  string
 	jsonDelimitor string
-	jsonField	  string
+	jsonField     string
 }
 
 type Value struct {
@@ -91,19 +91,19 @@ func (val Value) Compare(other queue.Item) int {
 }
 
 type DbClient struct {
-	prefix	*gnmipb.Path
+	prefix  *gnmipb.Path
 	pathG2S map[*gnmipb.Path][]tablePath
 
-	q		*queue.PriorityQueue
+	q       *queue.PriorityQueue
 	channel chan struct{}
 
 	synced sync.WaitGroup  // Control when to send gNMI sync_response
-	w	   *sync.WaitGroup // wait for all sub go routines to finish
-	mu	   sync.RWMutex    // Mutex for data protection among routines for DbClient
+	w      *sync.WaitGroup // wait for all sub go routines to finish
+	mu     sync.RWMutex    // Mutex for data protection among routines for DbClient
 
 	sendMsg int64
 	recvMsg int64
-	errors	int64
+	errors  int64
 }
 
 func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
@@ -115,11 +115,11 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	}
 
 	// TODO: Remove debug log
-	for _, _path := range paths {
-		fmt.Printf("single path: %v\n", _path)
-	}
-
-	fmt.Printf("prefix: %v\n", prefix)
+	//for _, _path := range paths {
+	//	fmt.Printf("single path: %v\n", _path)
+	//}
+	//
+	//fmt.Printf("prefix: %v\n", prefix)
 
 	if prefix.GetTarget() == "COUNTERS_DB" {
 		err = initCountersPortNameMap()
@@ -187,7 +187,7 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	// Inject sync message
 	c.q.Put(Value{
 		&spb.Value{
-			Timestamp:	  time.Now().UnixNano(),
+			Timestamp:    time.Now().UnixNano(),
 			SyncResponse: true,
 		},
 	})
@@ -223,11 +223,11 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 			}
 
 			spbv := &spb.Value{
-				Prefix:		  c.prefix,
-				Path:		  gnmiPath,
-				Timestamp:	  time.Now().UnixNano(),
+				Prefix:       c.prefix,
+				Path:         gnmiPath,
+				Timestamp:    time.Now().UnixNano(),
 				SyncResponse: false,
-				Val:		  val,
+				Val:          val,
 			}
 
 			c.q.Put(Value{spbv})
@@ -236,7 +236,7 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 
 		c.q.Put(Value{
 			&spb.Value{
-				Timestamp:	  time.Now().UnixNano(),
+				Timestamp:    time.Now().UnixNano(),
 				SyncResponse: true,
 			},
 		})
@@ -259,9 +259,9 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 
 		values = append(values, &spb.Value{
 			Prefix:    c.prefix,
-			Path:	   gnmiPath,
+			Path:      gnmiPath,
 			Timestamp: ts.UnixNano(),
-			Val:	   val,
+			Val:       val,
 		})
 	}
 	log.V(6).Infof("Getting #%v", values)
@@ -334,10 +334,10 @@ func useRedisTcpClient() {
 			var redisDb *redis.Client
 			if UseRedisLocalTcpPort {
 				redisDb = redis.NewClient(&redis.Options{
-					Network:	 "tcp",
-					Addr:		 Default_REDIS_LOCAL_TCP_PORT,
-					Password:	 "", // no password set
-					DB:			 int(dbn),
+					Network:     "tcp",
+					Addr:        Default_REDIS_LOCAL_TCP_PORT,
+					Password:    "", // no password set
+					DB:          int(dbn),
 					DialTimeout: 0,
 				})
 			}
@@ -354,10 +354,10 @@ func init() {
 			var redisDb *redis.Client
 
 			redisDb = redis.NewClient(&redis.Options{
-				Network:	 "unix",
-				Addr:		 Default_REDIS_UNIXSOCKET,
-				Password:	 "", // no password set
-				DB:			 int(dbn),
+				Network:     "unix",
+				Addr:        Default_REDIS_UNIXSOCKET,
+				Password:    "", // no password set
+				DB:          int(dbn),
 				DialTimeout: 0,
 			})
 			Target2RedisDb[dbName] = redisDb
@@ -683,7 +683,7 @@ func enqueFatalMsg(c *DbClient, msg string) {
 	c.q.Put(Value{
 		&spb.Value{
 			Timestamp: time.Now().UnixNano(),
-			Fatal:	   msg,
+			Fatal:     msg,
 		},
 	})
 }
@@ -751,9 +751,9 @@ func dbFieldMultiSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 
 				spbv := &spb.Value{
 					Prefix:    c.prefix,
-					Path:	   gnmiPath,
+					Path:      gnmiPath,
 					Timestamp: time.Now().UnixNano(),
-					Val:	   val,
+					Val:       val,
 				}
 
 				if err = c.q.Put(Value{spbv}); err != nil {
@@ -810,7 +810,7 @@ func dbFieldSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			if newVal != val {
 				spbv := &spb.Value{
 					Prefix:    c.prefix,
-					Path:	   gnmiPath,
+					Path:      gnmiPath,
 					Timestamp: time.Now().UnixNano(),
 					Val: &gnmipb.TypedValue{
 						Value: &gnmipb.TypedValue_StringVal{
@@ -837,7 +837,7 @@ func dbFieldSubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 
 type redisSubData struct {
 	tblPath   tablePath
-	pubsub	  *redis.PubSub
+	pubsub    *redis.PubSub
 	prefixLen int
 }
 
@@ -985,9 +985,9 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 	var spbv *spb.Value
 	spbv = &spb.Value{
 		Prefix:    c.prefix,
-		Path:	   gnmiPath,
+		Path:      gnmiPath,
 		Timestamp: time.Now().UnixNano(),
-		Val:	   val,
+		Val:       val,
 	}
 	if err = c.q.Put(Value{spbv}); err != nil {
 		log.V(1).Infof("Queue error:  %v", err)
@@ -1017,9 +1017,9 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 			}
 			if val != nil {
 				spbv = &spb.Value{
-					Path:	   gnmiPath,
+					Path:      gnmiPath,
 					Timestamp: time.Now().UnixNano(),
-					Val:	   val,
+					Val:       val,
 				}
 
 				log.V(5).Infof("dbTableKeySubscribe enque: %v", spbv)
