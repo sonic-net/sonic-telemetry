@@ -94,7 +94,7 @@ func GetTmpl_PortQueuePfcwdStats(path *gnmipb.Path) {
 func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
 	var tmpl = gnmipb.Path{}
 	GetTmpl_PortQueuePfcwdStats(&tmpl)
-	fmt.Printf("tmpl: %v\n", &tmpl)
+	//fmt.Printf("tmpl: %v\n", &tmpl)
 
 	parentConfig := map[int]string{1: "Port", 2: "Queue"}
 
@@ -103,12 +103,12 @@ func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]table
 		name: "Pfcwd",
 	}
 
-	target_fields := []string{}
-	updatePath(path, &tmpl, parentConfig, leaf, &target_fields)
+	targetFields := []string{}
+	updatePath(path, &tmpl, parentConfig, leaf, &targetFields)
 
 	// Populate tablePaths
-	fmt.Printf("path passed in populate: %v\n", &tmpl)
-	err := pop_PortQueuePfcwdStats(&tmpl, pathG2S, target_fields)
+	//fmt.Printf("path passed in populate: %v\n", &tmpl)
+	err := pop_PortQueuePfcwdStats(&tmpl, pathG2S, targetFields)
 	if err != nil {
 		return err
 	}

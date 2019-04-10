@@ -3,29 +3,30 @@ package client
 import (
 	"fmt"
 	"strconv"
+
 	//"strings"
-	"time"
+	"encoding/json"
 	"net"
 	"regexp"
-	"encoding/json"
+	"time"
 
-	log "github.com/golang/glog"
 	spb "github.com/Azure/sonic-telemetry/proto"
 	"github.com/go-redis/redis"
+	log "github.com/golang/glog"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 // gnmiFullPath builds the full path from the prefix and path.
 func gnmiFullPath(prefix, path *gnmipb.Path) *gnmipb.Path {
 
-    fullPath := &gnmipb.Path{Origin: path.Origin}
-    if path.GetElement() != nil {
-        fullPath.Element = append(prefix.GetElement(), path.GetElement()...)
-    }
-    if path.GetElem() != nil {
-        fullPath.Elem = append(prefix.GetElem(), path.GetElem()...)
-    }
-    return fullPath
+	fullPath := &gnmipb.Path{Origin: path.Origin}
+	if path.GetElement() != nil {
+		fullPath.Element = append(prefix.GetElement(), path.GetElement()...)
+	}
+	if path.GetElem() != nil {
+		fullPath.Elem = append(prefix.GetElem(), path.GetElem()...)
+	}
+	return fullPath
 }
 
 func populateAlltablePaths(prefix *gnmipb.Path, paths []*gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
@@ -42,16 +43,16 @@ func populateAlltablePaths(prefix *gnmipb.Path, paths []*gnmipb.Path, pathG2S *m
 // root-to-leaf virtual paths in the vpath tree.
 // Then map each vpath to a list of redis DB path.
 func populateNewtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
-	fullPath := path
-	if prefix != nil {
-		fullPath = gnmiFullPath(prefix, path)
-	}
-	fmt.Printf("fullPath: %v\n", fullPath)
+	//fullPath := path
+	//if prefix != nil {
+	//	fullPath = gnmiFullPath(prefix, path)
+	//}
+	//fmt.Printf("fullPath: %v\n", fullPath)
 
 	target := prefix.GetTarget()
 	stringSlice := []string{target}
 	elems := path.GetElem()
-	for _, elem := range elems{
+	for _, elem := range elems {
 		stringSlice = append(stringSlice, elem.GetName())
 	}
 
@@ -61,36 +62,36 @@ func populateNewtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][
 	}
 
 	// Debug
-	for k, v := range (*pathG2S) {
-		fmt.Printf("gNMI path: %v\n", k)
-		for _, tblPath := range v{
-			fmt.Printf("new tablePath: %v\n", tblPath)
-		}
-	}
+	//for k, v := range (*pathG2S) {
+	//	fmt.Printf("gNMI path: %v\n", k)
+	//	for _, tblPath := range v{
+	//		fmt.Printf("new tablePath: %v\n", tblPath)
+	//	}
+	//}
 	return nil
 }
 
 func msi2TypedValue(msi map[string]interface{}) (*gnmipb.TypedValue, error) {
-    jv, err := emitJSON(&msi)
-    if err != nil {
-        log.V(2).Infof("emitJSON err %s for  %v", err, msi)
-        return nil, fmt.Errorf("emitJSON err %s for  %v", err, msi)
-    }
-    return &gnmipb.TypedValue{
-        Value: &gnmipb.TypedValue_JsonIetfVal{
-            JsonIetfVal: jv,
-        }}, nil
+	jv, err := emitJSON(&msi)
+	if err != nil {
+		log.V(2).Infof("emitJSON err %s for  %v", err, msi)
+		return nil, fmt.Errorf("emitJSON err %s for  %v", err, msi)
+	}
+	return &gnmipb.TypedValue{
+		Value: &gnmipb.TypedValue_JsonIetfVal{
+			JsonIetfVal: jv,
+		}}, nil
 }
 
 // emitJSON marshalls map[string]interface{} to JSON byte stream.
 func emitJSON(v *map[string]interface{}) ([]byte, error) {
-    //j, err := json.MarshalIndent(*v, "", indentString)
-    j, err := json.Marshal(*v)
-    if err != nil {
-        return nil, fmt.Errorf("JSON marshalling error: %v", err)
-    }
+	//j, err := json.MarshalIndent(*v, "", indentString)
+	j, err := json.Marshal(*v)
+	if err != nil {
+		return nil, fmt.Errorf("JSON marshalling error: %v", err)
+	}
 
-    return j, nil
+	return j, nil
 }
 
 // Render the redis DB data to map[string]interface{}
@@ -135,7 +136,7 @@ func tableData2Msi(tblPath *tablePath, msi *map[string]interface{}) error {
 	for _, field := range fields {
 		if value, ok := val[field]; !ok {
 			log.V(1).Infof("Missing field: %v", field)
-		} else{
+		} else {
 			(*msi)[field] = value
 		}
 	}
@@ -145,15 +146,15 @@ func tableData2Msi(tblPath *tablePath, msi *map[string]interface{}) error {
 func enqueFatalMsg(c *DbClient, msg string) {
 	c.q.Put(Value{
 		&spb.Value{
-			Timestamp:	time.Now().UnixNano(),
-			Fatal:		msg,
+			Timestamp: time.Now().UnixNano(),
+			Fatal:     msg,
 		},
 	})
 }
 
 type redisSubData struct {
-	tblPath		tablePath
-	pubsub		*redis.PubSub
+	tblPath tablePath
+	pubsub  *redis.PubSub
 }
 
 func dbSingleTableKeySubscribe(rsd redisSubData, c *DbClient, msiInit *map[string]interface{}, msiOut *map[string]interface{}) {
@@ -161,7 +162,7 @@ func dbSingleTableKeySubscribe(rsd redisSubData, c *DbClient, msiInit *map[strin
 	pubsub := rsd.pubsub
 	msi := make(map[string]interface{})
 	// Initialize msi
-	for k, v := range (*msiInit) {
+	for k, v := range *msiInit {
 		msi[k] = v
 	}
 
@@ -231,10 +232,10 @@ func dbPathSubscribe(gnmiPath *gnmipb.Path, tblPaths []tablePath, c *DbClient) {
 
 	var spbv *spb.Value
 	spbv = &spb.Value{
-		Prefix:		c.prefix,
-		Path:		gnmiPath,
-		Timestamp:	time.Now().UnixNano(),
-		Val:		val,
+		Prefix:    c.prefix,
+		Path:      gnmiPath,
+		Timestamp: time.Now().UnixNano(),
+		Val:       val,
 	}
 	if err = c.q.Put(Value{spbv}); err != nil {
 		log.V(1).Infof("Queue error: %v", err)
@@ -263,7 +264,7 @@ func dbPathSubscribe(gnmiPath *gnmipb.Path, tblPaths []tablePath, c *DbClient) {
 		pattern += keyName
 		pubsub := redisDb.PSubscribe(pattern)
 		defer pubsub.Close()
-		
+
 		msgi, err := pubsub.ReceiveTimeout(time.Second)
 		if err != nil {
 			log.V(1).Infof("psubscribe to %s failed for %v", pattern, tblPath)
@@ -278,17 +279,17 @@ func dbPathSubscribe(gnmiPath *gnmipb.Path, tblPaths []tablePath, c *DbClient) {
 			return
 		}
 		log.V(2).Infof("Psubscribe succeeded for %v: %v", tblPath, subscr)
-		
-		rsd := redisSubData {
-			tblPath:	tblPath,
-			pubsub:		pubsub,
+
+		rsd := redisSubData{
+			tblPath: tblPath,
+			pubsub:  pubsub,
 		}
 		go dbSingleTableKeySubscribe(rsd, c, &msiInit, &msi)
 	}
 
 	for {
 		select {
-		default :
+		default:
 			val = nil
 			err = nil
 			c.mu.Lock()
@@ -307,9 +308,9 @@ func dbPathSubscribe(gnmiPath *gnmipb.Path, tblPaths []tablePath, c *DbClient) {
 
 			if val != nil {
 				spbv = &spb.Value{
-					Path:		gnmiPath,
-					Timestamp:	time.Now().UnixNano(),
-					Val:		val,
+					Path:      gnmiPath,
+					Timestamp: time.Now().UnixNano(),
+					Val:       val,
 				}
 
 				log.V(5).Infof("dbTableKeySubscribe enque: %v", spbv)
