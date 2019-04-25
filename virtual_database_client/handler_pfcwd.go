@@ -159,7 +159,6 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 
 	oid_port, ok := countersPortNameMap[_name]
 	if !ok {
-		log.V(1).Infof("RANDY: 2")
 		return fmt.Errorf("%v not a valid sonic interface. Vendor alias is %v", _name, alias)
 	}
 

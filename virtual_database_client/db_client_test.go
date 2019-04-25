@@ -6,6 +6,7 @@ import (
 	"context"
 	tls "crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -181,6 +182,7 @@ func assertExpectedValue(t *testing.T, response *gnmipb.GetResponse, expectedRes
 		}
 	}
 
+	fmt.Printf("got: %v (%T),\nwant %v (%T)\n", gotVal, gotVal, expectedResponseValue, expectedResponseValue)
 	if !reflect.DeepEqual(gotVal, expectedResponseValue) {
 		t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, expectedResponseValue, expectedResponseValue)
 	}
