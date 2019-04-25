@@ -291,7 +291,6 @@ func v2rEthPortStats(paths []string) ([]tablePath, error) {
 		}
 		oid, ok := countersPortNameMap[name]
 		if !ok {
-			log.V(1).Infof("RANDY: 5")
 			return nil, fmt.Errorf("%v not a valid sonic interface. Vendor alias is %v", name, alias)
 		}
 		tblPaths = []tablePath{{
@@ -344,7 +343,6 @@ func v2rEthPortFieldStats(paths []string) ([]tablePath, error) {
 		}
 		oid, ok := countersPortNameMap[name]
 		if !ok {
-			log.V(1).Infof("RANDY: 6")
 			return nil, fmt.Errorf(" %v not a valid sonic interface. Vendor alias is %v ", name, alias)
 		}
 		tblPaths = []tablePath{{
@@ -395,7 +393,6 @@ func v2rEthPortPfcwdStats(paths []string) ([]tablePath, error) {
 		}
 		_, ok := countersPortNameMap[name]
 		if !ok {
-			log.V(1).Infof("RANDY: 7")
 			return nil, fmt.Errorf("%v not a valid SONiC interface. Vendor alias is %v", name, alias)
 		}
 

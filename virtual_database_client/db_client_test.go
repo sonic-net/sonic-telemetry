@@ -11,11 +11,12 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
-	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
 	"testing"
 	"time"
 
-	gnmi "test/sonic-telemetry-new-pfcwd/gnmi_server"
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+
+	gnmi "github.com/Azure/sonic-telemetry/gnmi_server"
 
 	xpath "github.com/jipanyang/gnxi/utils/xpath"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"

@@ -5,8 +5,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+
 	spb "github.com/Azure/sonic-telemetry/proto"
+
 	//sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	"net"
+
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	"github.com/go-redis/redis"
 	log "github.com/golang/glog"
 	gpb "github.com/openconfig/gnmi/proto/gnmi"
@@ -15,8 +20,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"net"
-	sdc "test/sonic-telemetry-new-pfcwd/sonic_data_client"
+
 	//"reflect"
 	"strconv"
 	"strings"
@@ -597,16 +601,18 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 						Target: value,
 					}
 				case "paths":
-					paths := strings.Split(value, ",")
-					for _, path := range paths {
-						pp, err := ygot.StringToPath(path, ygot.StructuredPath)
+					ps := strings.Split(value, ",")
+					newPaths := []*gpb.Path{}
+					for _, p := range ps {
+						pp, err := ygot.StringToPath(p, ygot.StructuredPath)
 						if err != nil {
 							log.V(2).Infof("Invalid paths %v", value)
 							return fmt.Errorf("Invalid paths %v", value)
 						}
 						// append *gpb.Path
-						cs.paths = append(cs.paths, pp)
+						newPaths = append(newPaths, pp)
 					}
+					cs.paths = newPaths
 				default:
 					log.V(2).Infof("Invalid field %v value %v", field, value)
 					return fmt.Errorf("Invalid field %v value %v", field, value)
