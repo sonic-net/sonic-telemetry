@@ -153,6 +153,177 @@ func sendGetRequest(t *testing.T, ctx context.Context, gnmiClient gnmipb.GNMICli
 	return response
 }
 
+var expectedValueEthernet68 = map[string]interface{}{
+	"PFC_WD_QUEUE_STATS_DEADLOCK_RESTORED":                "0",
+	"PFC_WD_STATUS":                                       "operational",
+	"SAI_PORT_STAT_PFC_4_RX_PKTS":                         "0",
+	"PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED":                "0",
+	"SAI_PORT_STAT_ETHER_STATS_RX_NO_ERRORS":              "0",
+	"SAI_PORT_STAT_IF_OUT_OCTETS":                         "0",
+	"SAI_PORT_STAT_IPV6_IN_RECEIVES":                      "0",
+	"SAI_PORT_STAT_IPV6_OUT_MCAST_PKTS":                   "0",
+	"SAI_PORT_STAT_IP_IN_UCAST_PKTS":                      "0",
+	"SAI_PORT_STAT_ETHER_STATS_OVERSIZE_PKTS":             "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_128_TO_255_OCTETS":       "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_256_TO_511_OCTETS":      "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_9217_TO_16383_OCTETS":   "0",
+	"SAI_PORT_STAT_ETHER_STATS_UNDERSIZE_PKTS":            "0",
+	"SAI_PORT_STAT_IF_IN_MULTICAST_PKTS":                  "0",
+	"SAI_PORT_STAT_IF_OUT_UCAST_PKTS":                     "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_1024_TO_1518_OCTETS":     "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_64_OCTETS":               "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_2048_TO_4095_OCTETS":    "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_65_TO_127_OCTETS":       "0",
+	"SAI_PORT_STAT_ETHER_RX_OVERSIZE_PKTS":                "0",
+	"SAI_PORT_STAT_ETHER_STATS_JABBERS":                   "0",
+	"SAI_PORT_STAT_IPV6_OUT_NON_UCAST_PKTS":               "0",
+	"SAI_PORT_STAT_IP_IN_DISCARDS":                        "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_2048_TO_4095_OCTETS":     "0",
+	"SAI_PORT_STAT_IF_IN_VLAN_DISCARDS":                   "0",
+	"SAI_PORT_STAT_IP_OUT_OCTETS":                         "0",
+	"SAI_PORT_STAT_IF_IN_UCAST_PKTS":                      "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_256_TO_511_OCTETS":    "0",
+	"SAI_PORT_STAT_IF_IN_OCTETS":                          "0",
+	"SAI_PORT_STAT_IF_OUT_ERRORS":                         "0",
+	"SAI_PORT_STAT_IP_IN_NON_UCAST_PKTS":                  "0",
+	"SAI_PORT_STAT_ETHER_STATS_BROADCAST_PKTS":            "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_128_TO_255_OCTETS":    "0",
+	"SAI_PORT_STAT_IPV6_OUT_DISCARDS":                     "0",
+	"SAI_PORT_STAT_IPV6_OUT_UCAST_PKTS":                   "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_1519_TO_2047_OCTETS":     "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_9217_TO_16383_OCTETS":    "0",
+	"SAI_PORT_STAT_ETHER_STATS_MULTICAST_PKTS":            "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS":                      "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_1519_TO_2047_OCTETS":  "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_512_TO_1023_OCTETS":   "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_64_OCTETS":            "0",
+	"SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS":                 "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_65_TO_127_OCTETS":        "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_65_TO_127_OCTETS":     "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_9217_TO_16383_OCTETS": "0",
+	"SAI_PORT_STAT_ETHER_TX_OVERSIZE_PKTS":                "0",
+	"SAI_PORT_STAT_IF_OUT_DISCARDS":                       "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_4096_TO_9216_OCTETS":  "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_1024_TO_1518_OCTETS":  "0",
+	"SAI_PORT_STAT_IPV6_IN_DISCARDS":                      "0",
+	"SAI_PORT_STAT_IPV6_OUT_OCTETS":                       "0",
+	"SAI_PORT_STAT_IP_IN_OCTETS":                          "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_4096_TO_9216_OCTETS":     "0",
+	"SAI_PORT_STAT_IPV6_IN_OCTETS":                        "0",
+	"SAI_PORT_STAT_ETHER_STATS_COLLISIONS":                "0",
+	"SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS":                 "0",
+	"SAI_PORT_STAT_IP_OUT_NON_UCAST_PKTS":                 "0",
+	"SAI_PORT_STAT_IP_OUT_UCAST_PKTS":                     "0",
+	"SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS":                  "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_512_TO_1023_OCTETS":      "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_1024_TO_1518_OCTETS":    "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_128_TO_255_OCTETS":      "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_512_TO_1023_OCTETS":     "0",
+	"SAI_PORT_STAT_ETHER_STATS_CRC_ALIGN_ERRORS":          "0",
+	"SAI_PORT_STAT_ETHER_STATS_DROP_EVENTS":               "0",
+	"SAI_PORT_STAT_ETHER_STATS_PKTS_2048_TO_4095_OCTETS":  "0",
+	"SAI_PORT_STAT_ETHER_IN_PKTS_256_TO_511_OCTETS":       "0",
+	"SAI_PORT_STAT_IPV6_IN_MCAST_PKTS":                    "0",
+	"SAI_PORT_STAT_IP_IN_RECEIVES":                        "0",
+	"SAI_PORT_STAT_IF_IN_BROADCAST_PKTS":                  "0",
+	"SAI_PORT_STAT_IF_IN_DISCARDS":                        "0",
+	"SAI_PORT_STAT_IF_IN_ERRORS":                          "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_4096_TO_9216_OCTETS":    "0",
+	"SAI_PORT_STAT_ETHER_STATS_FRAGMENTS":                 "0",
+	"SAI_PORT_STAT_ETHER_STATS_TX_NO_ERRORS":              "0",
+	"SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS":                 "0",
+	"SAI_PORT_STAT_IPV6_IN_NON_UCAST_PKTS":                "0",
+	"SAI_PORT_STAT_IP_OUT_DISCARDS":                       "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_1519_TO_2047_OCTETS":    "0",
+	"SAI_PORT_STAT_ETHER_STATS_OCTETS":                    "0",
+	"SAI_PORT_STAT_IF_IN_UNKNOWN_PROTOS":                  "0",
+	"SAI_PORT_STAT_IF_OUT_QLEN":                           "0",
+	"SAI_PORT_STAT_IPV6_IN_UCAST_PKTS":                    "0",
+	"SAI_PORT_STAT_ETHER_OUT_PKTS_64_OCTETS":              "0",
+	"SAI_QUEUE_STAT_DROPPED_PACKETS":                      "0",
+	"SAI_QUEUE_STAT_PACKETS":                              "0",
+	"SAI_QUEUE_STAT_BYTES":                                "0",
+	"SAI_QUEUE_STAT_DROPPED_BYTES":                        "0",
+	"SAI_PORT_STAT_PFC_3_RX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_7_RX_PKTS":                         "2",
+	"SAI_PORT_STAT_PFC_4_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_6_RX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_5_RX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_7_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_1_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_2_RX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_5_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_6_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_0_RX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_2_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_3_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_0_TX_PKTS":                         "0",
+	"SAI_PORT_STAT_PFC_1_RX_PKTS":                         "0",
+}
+
+var expectedValueEthernet68Pfcwd = map[string]interface{}{
+	"PFC_WD_STATUS":                        "operational",
+	"SAI_PORT_STAT_PFC_3_RX_PKTS":          "0",
+	"SAI_PORT_STAT_PFC_4_RX_PKTS":          "0",
+	"PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED": "0",
+	"PFC_WD_QUEUE_STATS_DEADLOCK_RESTORED": "0",
+}
+
+func dumpMapFromResponse(response *gnmipb.GetResponse, name string) {
+	fmt.Printf("\n\n>>>>>\n\n")
+	notifs := response.GetNotification()
+	var gotVal interface{}
+	var gotMap = make(map[string]interface{})
+
+	count := len(notifs)
+	for i := 0; i < count; i++ {
+		val := notifs[i].GetUpdate()[0].GetVal()
+		json.Unmarshal(val.GetJsonIetfVal(), &gotVal)
+		m := gotVal.(map[string]interface{})
+		for k, v := range m {
+			gotMap[k] = v
+		}
+	}
+
+	fmt.Printf("var %s = map[string]interface{}{\n", name)
+	for k, v := range gotMap {
+		fmt.Printf("\t\"%v\": \"%v\",\n", k, v)
+	}
+	fmt.Printf("}\n")
+	fmt.Printf("\n\n>>>>>\n\n")
+}
+
+func assertExpectedValueFromMap(t *testing.T, response *gnmipb.GetResponse, expected map[string]interface{}) {
+	notifs := response.GetNotification()
+	var gotVal interface{}
+	var gotMap = make(map[string]interface{})
+
+	// Load up all k, v pairs out of the JSON value into a go map.
+	count := len(notifs)
+	for i := 0; i < count; i++ {
+		val := notifs[i].GetUpdate()[0].GetVal()
+		json.Unmarshal(val.GetJsonIetfVal(), &gotVal)
+		m := gotVal.(map[string]interface{})
+		for k, v := range m {
+			gotMap[k] = v
+		}
+	}
+
+	// Assert matching k, v pairs from the `expected` map and data from the gnmi response.
+	if len(expected) != len(gotMap) {
+		t.Fatalf("Expected %v entries, got %v.", len(expected), len(gotMap))
+	}
+	for k, v := range gotMap {
+		if val, ok := expected[k]; ok {
+			if val != v {
+				t.Fatalf("Expected key %v with value %v, but got the value %v instead.", k, val, v)
+			}
+		} else {
+			t.Fatalf("Received unexpected key %v from output.", k)
+		}
+	}
+}
+
 func assertExpectedValue(t *testing.T, response *gnmipb.GetResponse, expectedResponseValue interface{}) {
 	var gotVal interface{}
 	if response != nil {
@@ -183,7 +354,6 @@ func assertExpectedValue(t *testing.T, response *gnmipb.GetResponse, expectedRes
 		}
 	}
 
-	fmt.Printf("got: %v (%T),\nwant %v (%T)\n", gotVal, gotVal, expectedResponseValue, expectedResponseValue)
 	if !reflect.DeepEqual(gotVal, expectedResponseValue) {
 		t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, expectedResponseValue, expectedResponseValue)
 	}
@@ -251,7 +421,54 @@ func TestVirtualPathClient(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Perform unit tests.
+	// Perform unit tests that closely resemble Jipan's original gnmi tests.
+	t.Run("Get Interfaces/Port[name=Ethernet70], a valid path (with no corresponding data in the db); expected NotFound", func(t *testing.T) {
+		expectedReturnCode := codes.NotFound
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/Port[name=Ethernet70]"
+		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+	})
+	t.Run("Get Interfaces/Port[name=Ethernet400], invalid valid path; expected NotFound", func(t *testing.T) {
+		expectedReturnCode := codes.NotFound
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/Port[name=Ethernet400]"
+		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+	})
+	t.Run("Get Interfaces/Port[name=Ethernet68]/..., Everything under Ethernet68", func(t *testing.T) {
+		expectedReturnCode := codes.OK
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/Port[name=Ethernet68]/..."
+		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+		assertExpectedValueFromMap(t, response, expectedValueEthernet68)
+	})
+	t.Run("Get Interfaces/Port[name=Ethernet68]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS], valid path for specific leaf, but not implemented.", func(t *testing.T) {
+		expectedReturnCode := codes.NotFound
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/Port[name=Ethernet68]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS]"
+		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+	})
+	t.Run("Get Interfaces/Port[name=Ethernet68]/Queue[name=*]/Pfcwd", func(t *testing.T) {
+		expectedReturnCode := codes.OK
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/Port[name=Ethernet68]/Queue[name=*]/Pfcwd"
+		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+		assertExpectedValueFromMap(t, response, expectedValueEthernet68Pfcwd)
+	})
+	t.Run("Get Interfaces/Port[name=*]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS], valid path for specific leaf for all nodes, but not implemented.", func(t *testing.T) {
+		expectedReturnCode := codes.NotFound
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/Port[name=*]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS]"
+		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+	})
+	t.Run("Get Interfaces/.../Pfcwd, valid path for specific PFC-related leaf for all nodes, but not implemented.", func(t *testing.T) {
+		expectedReturnCode := codes.OK
+		pathToTargetDB := "SONiC_DB"
+		xpath := "Interfaces/.../Pfcwd"
+		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
+		assertExpectedValueFromMap(t, response, expectedValueEthernet68Pfcwd)
+	})
+
+	// Perform some additional unit tests.
 	t.Run("Get Interfaces/Port[name=Ethernet68/1]/BaseCounter", func(t *testing.T) {
 		expectedReturnCode := codes.OK
 		pathToTargetDB := "SONiC_DB"
@@ -284,7 +501,7 @@ func TestVirtualPathClient(t *testing.T) {
 		expectedResponseValue := loadExpectedResponseByteData(t, "../testdata/Interfaces_Port_name_Ethernet68_1_Queue_name_Queue4_Pfcwd.txt")
 		assertExpectedValue(t, response, expectedResponseValue)
 	})
-	t.Run("Get Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/Pfcwd", func(t *testing.T) {
+	t.Run("Get Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/QueueCounter", func(t *testing.T) {
 		expectedReturnCode := codes.OK
 		pathToTargetDB := "SONiC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/QueueCounter"
