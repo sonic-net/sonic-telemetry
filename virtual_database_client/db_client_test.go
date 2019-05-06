@@ -591,12 +591,12 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 		// Query
 		var query client.Query
 		query.Addrs = []string{"127.0.0.1:8080"}
-		query.Target = "COUNTERS_DB"
+		query.Target = "SONiC_DB"
 		query.Type = client.Stream
-		query.Queries = []client.Path{{"COUNTERS", "Ethernet68"}}
+		query.Queries = []client.Path{{"Interfaces", "Port[name=Ethernet68]", "BaseCounter"}}
 		query.TLS = &tls.Config{InsecureSkipVerify: true}
 
-		logNotifications := false
+		logNotifications := true
 
 		// Collate notifications with handler.
 		var gotNotifications []client.Notification
@@ -615,7 +615,13 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 			return nil
 		}
 
-		go c.Subscribe(context.Background(), query)
+		logSubscribeErr := true
+		go func() {
+			c.Subscribe(context.Background(), query)
+			if logSubscribeErr {
+				fmt.Printf("c.Subscribe err: %v\n", err)
+			}
+		}()
 		defer c.Close()
 
 		// Wait for subscription to sync.
@@ -643,8 +649,8 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 
 		// Compare results.
 		if diff := pretty.Compare(expectedNotifications, gotNotifications); diff != "" {
-			t.Log("\n Want: \n", expectedNotifications)
-			t.Log("\n Got : \n", gotNotifications)
+			t.Log("\n\nWant: \n\n", expectedNotifications)
+			t.Log("\n\nGot : \n\n", gotNotifications)
 			t.Errorf("Unexpected updates:\n%s", diff)
 		}
 	})
