@@ -15,10 +15,12 @@ import (
 	"time"
 
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	"github.com/kylelemons/godebug/pretty"
 
 	gnmi "github.com/Azure/sonic-telemetry/gnmi_server"
 
 	xpath "github.com/jipanyang/gnxi/utils/xpath"
+	"github.com/openconfig/gnmi/client"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	value "github.com/openconfig/gnmi/value"
 
@@ -29,7 +31,11 @@ import (
 	codes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	status "google.golang.org/grpc/status"
+
+	gclient "github.com/jipanyang/gnmi/client/gnmi"
 )
+
+var clientTypes = []string{gclient.Type}
 
 func getRedisClient(t *testing.T, dbName string) *redis.Client {
 	dbn := spb.Target_value[dbName]
@@ -367,16 +373,13 @@ func loadExpectedResponseByteData(t *testing.T, path string) interface{} {
 	return data
 }
 
-func TestVirtualPathClient(t *testing.T) {
+func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	// Open COUNTERS_DB redis client.
 	countersDB := getRedisClient(t, "COUNTERS_DB")
 	defer countersDB.Close()
 	countersDB.FlushDB()
 
 	// Enable keyspace notification.
-	// Note (@ragaul):
-	//   Don't know exactly why this is needed -- likely for testing pub/sub (need investigate +
-	//   confirmation). Copied from gnmi_server/server_test.go
 	os.Setenv("PATH", "/usr/bin:/sbin:/bin:/usr/local/bin")
 	cmd := exec.Command("redis-cli", "config", "set", "notify-keyspace-events", "KEA")
 	_, err := cmd.Output()
@@ -524,6 +527,126 @@ func TestVirtualPathClient(t *testing.T) {
 		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		// Only checking return code, since returned data will: A) require a large text file; B) change
 		// whenever new kinds of test data is loaded into the DB (for example when modifying tests).
+	})
+}
+
+func flushDBAndLoadTestData(t *testing.T, countersDB *redis.Client) {
+	countersDB.FlushDB()
+
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS_PORT_NAME_MAP", "../testdata/COUNTERS_PORT_NAME_MAP.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS_QUEUE_NAME_MAP", "../testdata/COUNTERS_QUEUE_NAME_MAP.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1000000000039", "../testdata/COUNTERS:Ethernet68.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1000000000003", "../testdata/COUNTERS:Ethernet1.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1500000000092a", "../testdata/COUNTERS:oid:0x1500000000092a.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1500000000091c", "../testdata/COUNTERS:oid:0x1500000000091c.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1500000000091e", "../testdata/COUNTERS:oid:0x1500000000091e.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1500000000091f", "../testdata/COUNTERS:oid:0x1500000000091f.txt")
+	loadTestDataIntoRedis(t, countersDB, "COUNTERS:oid:0x1500000000091f", "../testdata/COUNTERS:oid:0x1500000000091f.txt")
+
+	prepareConfigDB(t)
+}
+
+func loadTestDataAsJSON(t *testing.T, testDataPath string) interface{} {
+	data, err := ioutil.ReadFile(testDataPath)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", testDataPath, err)
+	}
+
+	var dataJSON interface{}
+	json.Unmarshal(data, &dataJSON)
+
+	return dataJSON
+}
+
+func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
+	// Open COUNTERS_DB redis client.
+	countersDB := getRedisClient(t, "COUNTERS_DB")
+	defer countersDB.Close()
+
+	// Enable keyspace notification.
+	os.Setenv("PATH", "/usr/bin:/sbin:/bin:/usr/local/bin")
+	cmd := exec.Command("redis-cli", "config", "set", "notify-keyspace-events", "KEA")
+	_, err := cmd.Output()
+	if err != nil {
+		t.Fatal("failed to enable redis keyspace notification ", err)
+	}
+
+	// Start telementry service.
+	gnmiServer := creategNMIServer(t)
+	if gnmiServer == nil {
+		t.Fatalf("Unable to bind gNMI server to local port 8080.")
+	}
+	go rungNMIServer(t, gnmiServer)
+	defer gnmiServer.Stop()
+
+	// One unit test.
+	t.Run("Test description.", func(t *testing.T) {
+		flushDBAndLoadTestData(t, countersDB)
+
+		time.Sleep(time.Millisecond * 1000)
+
+		c := client.New()
+		defer c.Close()
+
+		// Query
+		var query client.Query
+		query.Addrs = []string{"127.0.0.1:8080"}
+		query.Target = "COUNTERS_DB"
+		query.Type = client.Stream
+		query.Queries = []client.Path{{"COUNTERS", "Ethernet68"}}
+		query.TLS = &tls.Config{InsecureSkipVerify: true}
+
+		logNotifications := false
+
+		// Collate notifications with handler.
+		var gotNotifications []client.Notification
+		query.NotificationHandler = func(notification client.Notification) error {
+			if logNotifications {
+				t.Logf("reflect.TypeOf(notification) %v : %v", reflect.TypeOf(notification), notification)
+			}
+
+			if n, ok := notification.(client.Update); ok {
+				n.TS = time.Unix(0, 200)
+				gotNotifications = append(gotNotifications, n)
+			} else {
+				gotNotifications = append(gotNotifications, notification)
+			}
+
+			return nil
+		}
+
+		go c.Subscribe(context.Background(), query)
+		defer c.Close()
+
+		// Wait for subscription to sync.
+		time.Sleep(time.Millisecond * 500)
+
+		// Do updates.
+		// rclient.HSet(update.tableName+update.delimitor+update.tableKey, update.field, update.value)
+		countersDB.HSet("COUNTERS:oid:0x1000000000039", "test_field", "test_value")
+
+		// Wait for updates to propogate notifications.
+		time.Sleep(time.Millisecond * 1000)
+
+		countersEthernet68 := loadTestDataAsJSON(t, "../testdata/COUNTERS:Ethernet68.txt")
+		countersEthernet68Updated := loadTestDataAsJSON(t, "../testdata/COUNTERS:Ethernet68.txt")
+		updateMap := countersEthernet68Updated.(map[string]interface{})
+		updateMap["test_field"] = "test_value"
+
+		// Expected notifications.
+		expectedNotifications := []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68},
+			client.Sync{},
+			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68Updated},
+		}
+
+		// Compare results.
+		if diff := pretty.Compare(expectedNotifications, gotNotifications); diff != "" {
+			t.Log("\n Want: \n", expectedNotifications)
+			t.Log("\n Got : \n", gotNotifications)
+			t.Errorf("Unexpected updates:\n%s", diff)
+		}
 	})
 }
 
