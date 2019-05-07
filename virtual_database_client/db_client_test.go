@@ -579,24 +579,31 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 	go rungNMIServer(t, gnmiServer)
 	defer gnmiServer.Stop()
 
-	// One unit test.
-	t.Run("Test description.", func(t *testing.T) {
+	// Generic function for performing a subscription test. The flow is:
+	// 1. Flush redis db and load in all test data.
+	// 2. Construct a gNMI client to perform the subscription RPC.
+	// 3. Build the subscription query struct.
+	// 4. Perform database updates.
+	// 5. Assert expectations on collated notifications.
+	doSubscribeTest := func(t *testing.T, queryPaths []client.Path, expectedNotifications []client.Notification, updates func(), shouldSucceed bool) {
+		// 1. Flush redis db and load in all test data.
 		flushDBAndLoadTestData(t, countersDB)
 
 		time.Sleep(time.Millisecond * 1000)
 
+		// 2. Construct a gNMI client to perform the subscription RPC.
 		c := client.New()
 		defer c.Close()
 
-		// Query
+		// 3. Build the subscription query struct.
 		var query client.Query
 		query.Addrs = []string{"127.0.0.1:8080"}
 		query.Target = "SONiC_DB"
 		query.Type = client.Stream
-		query.Queries = []client.Path{{"Interfaces", "Port[name=Ethernet68]", "BaseCounter"}}
+		query.Queries = queryPaths
 		query.TLS = &tls.Config{InsecureSkipVerify: true}
 
-		logNotifications := true
+		logNotifications := false
 
 		// Collate notifications with handler.
 		var gotNotifications []client.Notification
@@ -606,7 +613,7 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 			}
 
 			if n, ok := notification.(client.Update); ok {
-				n.TS = time.Unix(0, 200)
+				n.TS = time.Unix(0, 0) // Clear this to zero so expected notification formats are easier to assert.
 				gotNotifications = append(gotNotifications, n)
 			} else {
 				gotNotifications = append(gotNotifications, notification)
@@ -615,11 +622,11 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 			return nil
 		}
 
-		logSubscribeErr := true
+		logSubscribeErr := false
 		go func() {
 			c.Subscribe(context.Background(), query)
 			if logSubscribeErr {
-				fmt.Printf("c.Subscribe err: %v\n", err)
+				t.Logf("c.Subscribe err: %v\n", err)
 			}
 		}()
 		defer c.Close()
@@ -627,32 +634,178 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 		// Wait for subscription to sync.
 		time.Sleep(time.Millisecond * 500)
 
-		// Do updates.
-		// rclient.HSet(update.tableName+update.delimitor+update.tableKey, update.field, update.value)
-		countersDB.HSet("COUNTERS:oid:0x1000000000039", "test_field", "test_value")
+		// 4. Perform database updates.
+		updates()
 
 		// Wait for updates to propogate notifications.
 		time.Sleep(time.Millisecond * 1000)
 
-		countersEthernet68 := loadTestDataAsJSON(t, "../testdata/COUNTERS:Ethernet68.txt")
-		countersEthernet68Updated := loadTestDataAsJSON(t, "../testdata/COUNTERS:Ethernet68.txt")
-		updateMap := countersEthernet68Updated.(map[string]interface{})
-		updateMap["test_field"] = "test_value"
-
-		// Expected notifications.
-		expectedNotifications := []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68Updated},
-		}
-
-		// Compare results.
-		if diff := pretty.Compare(expectedNotifications, gotNotifications); diff != "" {
+		// 5. Assert expectations on collated notifications.
+		if diff := pretty.Compare(expectedNotifications, gotNotifications); shouldSucceed && diff != "" {
 			t.Log("\n\nWant: \n\n", expectedNotifications)
 			t.Log("\n\nGot : \n\n", gotNotifications)
 			t.Errorf("Unexpected updates:\n%s", diff)
 		}
+	}
+
+	t.Run("Query all under Ethernet68, add new test field, assert failure (not implemented).", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=Ethernet68]", "..."}}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1000000000039", "test_field", "test_value")
+		}
+
+		// Querying for a new field is not yet implemented.
+		assertFailure := false
+
+		doSubscribeTest(t, queryPaths, []client.Notification{}, updates, assertFailure)
+	})
+
+	t.Run("Query all under Ethernet68/1 (vendor valias), add new test field, assert failure (not implemented).", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=Ethernet68/1]", "..."}}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1000000000039", "test_field", "test_value")
+		}
+
+		// Querying for a new field is not yet implemented.
+		assertFailure := false
+
+		doSubscribeTest(t, queryPaths, []client.Notification{}, updates, assertFailure)
+	})
+
+	t.Run("Stream query for Interfaces/Port[name=Ethernet68]/BaseCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS], updating SAI_PORT_STAT_PFC_7_RX_PKTS from 2 to 3, assert failure (not implemented).", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=Ethernet68]", "BaseCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS]"}}
+
+		expectedNotifications := []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 0), Val: "2"},
+			client.Sync{},
+			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 0), Val: "3"},
+		}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1000000000039", "SAI_PORT_STAT_PFC_7_RX_PKTS", "3")
+		}
+
+		// Querying for a specific field under BaseCounter is not yet implemented.
+		assertFailure := false
+
+		doSubscribeTest(t, queryPaths, expectedNotifications, updates, assertFailure)
+	})
+
+	t.Run("Stream query for Interfaces/Port[name=Ethernet68]/Queue[name=Queue3]/Pfcwd, updating PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED from 0 to 1.", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=Ethernet68]", "Queue[name=Queue3]", "Pfcwd"}}
+
+		initialValue := make(map[string]string)
+		initialValue["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "0"
+		initialValue["PFC_WD_QUEUE_STATS_DEADLOCK_RESTORED"] = "0"
+		initialValue["PFC_WD_STATUS"] = "operational"
+		initialValue["SAI_PORT_STAT_PFC_3_RX_PKTS"] = "0"
+
+		updatedValue := make(map[string]string)
+		updatedValue["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "1"
+
+		expectedNotifications := []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68", "Queue", "Queue3", "Pfcwd"}, TS: time.Unix(0, 0), Val: initialValue},
+			client.Sync{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68", "Queue", "Queue3", "Pfcwd"}, TS: time.Unix(0, 0), Val: updatedValue},
+		}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1")
+		}
+
+		doSubscribeTest(t, queryPaths, expectedNotifications, updates, true)
+	})
+
+	t.Run("Stream query for Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue3]/Pfcwd (use vendor alias), updating PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED from 0 to 1.", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=Ethernet68/1]", "Queue[name=Queue3]", "Pfcwd"}}
+
+		initialValue := make(map[string]string)
+		initialValue["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "0"
+		initialValue["PFC_WD_QUEUE_STATS_DEADLOCK_RESTORED"] = "0"
+		initialValue["PFC_WD_STATUS"] = "operational"
+		initialValue["SAI_PORT_STAT_PFC_3_RX_PKTS"] = "0"
+
+		updatedValue := make(map[string]string)
+		updatedValue["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "1"
+
+		expectedNotifications := []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68/1", "Queue", "Queue3", "Pfcwd"}, TS: time.Unix(0, 0), Val: initialValue},
+			client.Sync{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68/1", "Queue", "Queue3", "Pfcwd"}, TS: time.Unix(0, 0), Val: updatedValue},
+		}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1")
+		}
+
+		doSubscribeTest(t, queryPaths, expectedNotifications, updates, true)
+	})
+
+	t.Run("Stream query for Interfaces/Port[name=*]/..., updating with new test field (not implemented).", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=*]", "..."}}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1000000000039", "test_field", "test_value")
+		}
+
+		// Querying for a new field is not yet implemented.
+		assertFailure := false
+
+		doSubscribeTest(t, queryPaths, []client.Notification{}, updates, assertFailure)
+	})
+
+	t.Run("Stream query for Interfaces/Port[name=*]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS], updating SAI_PORT_STAT_PFC_7_RX_PKTS from 2 to 4 (not implemented).", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=*]", "PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS]"}}
+
+		initialValue := make(map[string]string)
+		initialValue["SAI_PORT_STAT_PFC_7_RX_PKTS"] = "2"
+
+		updatedValue := make(map[string]string)
+		updatedValue["SAI_PORT_STAT_PFC_7_RX_PKTS"] = "4"
+
+		expectedNotifications := []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68", "PfcCounter", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 0), Val: initialValue},
+			client.Sync{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68", "PfcCounter", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 0), Val: updatedValue},
+		}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1000000000039", "SAI_PORT_STAT_PFC_7_RX_PKTS", "4")
+		}
+
+		// Querying for a specific field under PfcCounter is not yet implemented.
+		assertFailure := false
+
+		doSubscribeTest(t, queryPaths, expectedNotifications, updates, assertFailure)
+	})
+
+	t.Run("Stream query for Interfaces/Port[name=*]/Queue[name=*]/Pfcwd[field=PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED], updating PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED from 0 to 1.", func(t *testing.T) {
+		queryPaths := []client.Path{{"Interfaces", "Port[name=Ethernet68]", "Queue[name=Queue3]", "Pfcwd[field=PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED]"}}
+
+		initialValue := make(map[string]string)
+		initialValue["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "0"
+
+		updatedValue := make(map[string]string)
+		updatedValue["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "1"
+
+		expectedNotifications := []client.Notification{
+			client.Connected{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68", "Queue", "Queue3", "Pfcwd"}, TS: time.Unix(0, 0), Val: initialValue},
+			client.Sync{},
+			client.Update{Path: []string{"Interfaces", "Port", "Ethernet68", "Queue", "Queue3", "Pfcwd"}, TS: time.Unix(0, 0), Val: updatedValue},
+		}
+
+		updates := func() {
+			countersDB.HSet("COUNTERS:oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1")
+		}
+
+		doSubscribeTest(t, queryPaths, expectedNotifications, updates, true)
 	})
 }
 
