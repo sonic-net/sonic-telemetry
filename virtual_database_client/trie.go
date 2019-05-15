@@ -1,9 +1,5 @@
 package client
 
-import (
-//"fmt"
-)
-
 type PathNode struct {
 	val      string
 	depth    int

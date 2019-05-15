@@ -3,13 +3,7 @@
 package client
 
 import (
-	//"bytes"
-	//"encoding/json"
 	"fmt"
-	//"net"
-	//"reflect"
-	//"strconv"
-	//"strings"
 	"sync"
 	"time"
 
@@ -127,16 +121,6 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	client.prefix = prefix
 	client.paths = paths
 	return &client, nil
-	/*
-		client.pathG2S = make(map[*gnmipb.Path][]tablePath)
-		err = populateAlltablePaths(prefix, paths, &client.pathG2S)
-
-		if err != nil {
-			return nil, err
-		} else {
-			return &client, nil
-		}
-	*/
 }
 
 func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup) {

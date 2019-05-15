@@ -6,12 +6,7 @@ import (
 
 	log "github.com/golang/glog"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	//proto "github.com/golang/protobuf/proto"
 )
-
-//func (m *tablePath) String() string {
-//	return proto.CompactTextString(m)
-//}
 
 func deepcopy(path, copyPath *gnmipb.Path) {
 	copyPath.Elem = []*gnmipb.PathElem{}
@@ -121,7 +116,7 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 	separator, _ := GetTableKeySeparator(dbName)
 
 	elems := path.GetElem()
-	//fmt.Printf("path: %v\n\n", path)
+	log.V(5).Infof("path: %v\n\n", path)
 
 	// Populate port level
 	var idx_port = 1

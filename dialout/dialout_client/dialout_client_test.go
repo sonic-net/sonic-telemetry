@@ -9,20 +9,13 @@ import (
 
 	"github.com/go-redis/redis"
 
-	//"github.com/golang/protobuf/proto"
 	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 
-	//"github.com/kylelemons/godebug/pretty"
-	//"github.com/openconfig/gnmi/client"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/gnmi/value"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	//"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	//"google.golang.org/grpc/status"
-	//"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -31,7 +24,8 @@ import (
 	"testing"
 	"time"
 
-	//sds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
+	"google.golang.org/grpc/credentials"
+
 	sds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
 	spb "github.com/Azure/sonic-telemetry/proto"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
