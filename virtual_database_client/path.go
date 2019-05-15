@@ -119,7 +119,6 @@ func tableData2Msi(tblPath *tablePath, msi *map[string]interface{}) error {
 		return err
 	}
 
-	log.V(5).Infof("val: %v\n", val)
 	patterns := tblPath.patterns
 	for field, value := range val {
 		for _, pattern := range patterns {

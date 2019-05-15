@@ -427,45 +427,45 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	// Perform unit tests that closely resemble Jipan's original gnmi tests.
 	t.Run("Get Interfaces/Port[name=Ethernet70], a valid path (with no corresponding data in the db); expected NotFound", func(t *testing.T) {
 		expectedReturnCode := codes.NotFound
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet70]"
 		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet400], invalid valid path; expected NotFound", func(t *testing.T) {
 		expectedReturnCode := codes.NotFound
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet400]"
 		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68]/..., Everything under Ethernet68", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68]/..."
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		assertExpectedValueFromMap(t, response, expectedValueEthernet68)
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS], valid path for specific leaf, but not implemented.", func(t *testing.T) {
 		expectedReturnCode := codes.NotFound
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS]"
 		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68]/Queue[name=*]/Pfcwd", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68]/Queue[name=*]/Pfcwd"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		assertExpectedValueFromMap(t, response, expectedValueEthernet68Pfcwd)
 	})
 	t.Run("Get Interfaces/Port[name=*]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS], valid path for specific leaf for all nodes, but not implemented.", func(t *testing.T) {
 		expectedReturnCode := codes.NotFound
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=*]/PfcCounter[field=SAI_PORT_STAT_PFC_7_RX_PKTS]"
 		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 	})
 	t.Run("Get Interfaces/.../Pfcwd, valid path for specific PFC-related leaf for all nodes, but not implemented.", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/.../Pfcwd"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		assertExpectedValueFromMap(t, response, expectedValueEthernet68Pfcwd)
@@ -474,7 +474,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	// Perform some additional unit tests.
 	t.Run("Get Interfaces/Port[name=Ethernet68/1]/BaseCounter", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68/1]/BaseCounter"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		expectedResponseValue := loadExpectedResponseByteData(t, "../testdata/Interfaces_Port_name_Ethernet68_1_BaseCounter.txt")
@@ -482,7 +482,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68]/BaseCounter (no slash /1 after Ethernet68)", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68]/BaseCounter"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		expectedResponseValue := loadExpectedResponseByteData(t, "../testdata/Interfaces_Port_name_Ethernet68_1_BaseCounter.txt")
@@ -490,7 +490,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68/1]/PfcCounter", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68/1]/PfcCounter"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		expectedResponseValue := loadExpectedResponseByteData(t, "../testdata/Interfaces_Port_name_Ethernet68_1_PfcCounter.txt")
@@ -498,7 +498,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/Pfcwd", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/Pfcwd"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		expectedResponseValue := loadExpectedResponseByteData(t, "../testdata/Interfaces_Port_name_Ethernet68_1_Queue_name_Queue4_Pfcwd.txt")
@@ -506,7 +506,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/QueueCounter", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet68/1]/Queue[name=Queue4]/QueueCounter"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		expectedResponseValue := loadExpectedResponseByteData(t, "../testdata/Interfaces_Port_name_Ethernet68_1_Queue_name_Queue4_QueueCounter.txt")
@@ -514,7 +514,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	})
 	t.Run("Get Interfaces/Port[name=Ethernet70], a valid path (with no corresponding data in the db); expected NotFound", func(t *testing.T) {
 		expectedReturnCode := codes.NotFound
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=Ethernet70]"
 		response := sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		var expectedResponseValue interface{} = nil
@@ -522,7 +522,7 @@ func TestVirtualDatabaseGNMIGet(t *testing.T) {
 	})
 	t.Run("Get Interfaces/Port[name=*]/..., Retrieve everything under all ports", func(t *testing.T) {
 		expectedReturnCode := codes.OK
-		pathToTargetDB := "SONiC_DB"
+		pathToTargetDB := "SONIC_DB"
 		xpath := "Interfaces/Port[name=*]/..."
 		sendGetRequest(t, ctx, gnmiClient, xpath, pathToTargetDB, expectedReturnCode)
 		// Only checking return code, since returned data will: A) require a large text file; B) change
@@ -598,7 +598,7 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 		// 3. Build the subscription query struct.
 		var query client.Query
 		query.Addrs = []string{"127.0.0.1:8080"}
-		query.Target = "SONiC_DB"
+		query.Target = "SONIC_DB"
 		query.Type = client.Stream
 		query.Queries = queryPaths
 		query.TLS = &tls.Config{InsecureSkipVerify: true}

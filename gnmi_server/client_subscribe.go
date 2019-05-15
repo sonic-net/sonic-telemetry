@@ -102,7 +102,6 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	}
 
 	var target string
-	//fmt.Printf("Subscribe Prefix: %v\n", target)
 	prefix := c.subscribe.GetPrefix()
 	if prefix == nil {
 		return grpc.Errorf(codes.Unimplemented, "No target specified in prefix")
@@ -121,7 +120,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	var dc sdc.Client
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
-	} else if target == "SONiC_DB" {
+	} else if target == "SONIC_DB" {
 		dc, err = vdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)

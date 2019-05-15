@@ -20,19 +20,19 @@ var (
 	path2HdlrFuncTbl = []pathHdlrFunc{
 		{
 			// new virtual path for PFC WD stats
-			path:    []string{"SONiC_DB", "Interfaces", "Port", "Queue", "Pfcwd"},
+			path:    []string{"SONIC_DB", "Interfaces", "Port", "Queue", "Pfcwd"},
 			handler: handlerFunc(v2rPortQueuePfcwdStats),
 		}, {
 			// new virtual path for Queue counters
-			path:    []string{"SONiC_DB", "Interfaces", "Port", "Queue", "QueueCounter"},
+			path:    []string{"SONIC_DB", "Interfaces", "Port", "Queue", "QueueCounter"},
 			handler: handlerFunc(v2rPortQueueCounterStats),
 		}, {
 			// new virtual path for Port PFC counters
-			path:    []string{"SONiC_DB", "Interfaces", "Port", "PfcCounter"},
+			path:    []string{"SONIC_DB", "Interfaces", "Port", "PfcCounter"},
 			handler: handlerFunc(v2rPortPfcCounterStats),
 		}, {
 			// new virtual path for Port Base Counters
-			path:    []string{"SONiC_DB", "Interfaces", "Port", "BaseCounter"},
+			path:    []string{"SONIC_DB", "Interfaces", "Port", "BaseCounter"},
 			handler: handlerFunc(v2rPortBaseCounterStats),
 		},
 	}

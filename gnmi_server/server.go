@@ -181,7 +181,7 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	var dc sdc.Client
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
-	} else if target == "SONiC_DB" {
+	} else if target == "SONIC_DB" {
 		dc, err = vdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)
@@ -195,7 +195,7 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	if target == "SONiC_DB" {
+	if target == "SONIC_DB" {
 		notifications = make([]*gnmipb.Notification, len(spbValues))
 	}
 
