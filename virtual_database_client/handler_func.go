@@ -9,32 +9,32 @@ import (
 type handlerFunc func(*gnmipb.Path, *map[*gnmipb.Path][]tablePath) error
 
 type pathHdlrFunc struct {
-	path		[]string
-	handler		handlerFunc
+	path    []string
+	handler handlerFunc
 }
 
 var (
-	pathTrie	*PathTrie
+	pathTrie *PathTrie
 
 	// path2HdlrFuncTbl is used to populate trie tree which is used to
 	// map gNMI path to real database paths.
 	path2HdlrFuncTbl = []pathHdlrFunc{
 		{
 			// new virtual path for PFC WD stats
-			path:		[]string{"SONiC_DB", "Interfaces", "Port", "Queue", "Pfcwd"},
-			handler:	handlerFunc(v2rPortQueuePfcwdStats),
+			path:    []string{"SONiC_DB", "Interfaces", "Port", "Queue", "Pfcwd"},
+			handler: handlerFunc(v2rPortQueuePfcwdStats),
 		}, {
 			// new virtual path for Queue counters
-			path:		[]string{"SONiC_DB", "Interfaces", "Port", "Queue", "QueueCounter"},
-			handler:	handlerFunc(v2rPortQueueCounterStats),
+			path:    []string{"SONiC_DB", "Interfaces", "Port", "Queue", "QueueCounter"},
+			handler: handlerFunc(v2rPortQueueCounterStats),
 		}, {
 			// new virtual path for Port PFC counters
-			path:		[]string{"SONiC_DB", "Interfaces", "Port", "PfcCounter"},
-			handler:	handlerFunc(v2rPortPfcCounterStats),
+			path:    []string{"SONiC_DB", "Interfaces", "Port", "PfcCounter"},
+			handler: handlerFunc(v2rPortPfcCounterStats),
 		}, {
 			// new virtual path for Port Base Counters
-			path:		[]string{"SONiC_DB", "Interfaces", "Port", "BaseCounter"},
-			handler:	handlerFunc(v2rPortBaseCounterStats),
+			path:    []string{"SONiC_DB", "Interfaces", "Port", "BaseCounter"},
+			handler: handlerFunc(v2rPortBaseCounterStats),
 		},
 	}
 )

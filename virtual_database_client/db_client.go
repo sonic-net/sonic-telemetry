@@ -3,50 +3,50 @@
 package client
 
 import (
-    //"bytes"
-    //"encoding/json"
-    "fmt"
-    //"net"
-    //"reflect"
-    //"strconv"
-    //"strings"
-    "sync"
-    "time"
+	//"bytes"
+	//"encoding/json"
+	"fmt"
+	//"net"
+	//"reflect"
+	//"strconv"
+	//"strings"
+	"sync"
+	"time"
 
-    log "github.com/golang/glog"
+	log "github.com/golang/glog"
 
-    spb "github.com/Azure/sonic-telemetry/proto"
-    "github.com/go-redis/redis"
-    gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-    "github.com/workiva/go-datastructures/queue"
+	spb "github.com/Azure/sonic-telemetry/proto"
+	"github.com/go-redis/redis"
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/workiva/go-datastructures/queue"
 )
 
 const (
 	// indentString represents the default indentation string used for JSON.
 	// Two spaces are used here.
-	indentString					string = "  "
-	Default_REDIS_UNIXSOCKET		string = "/var/run/redis/redis.sock"
-	Default_REDIS_LOCAL_TCP_PORT	string = "localhost:6379"
+	indentString                 string = "  "
+	Default_REDIS_UNIXSOCKET     string = "/var/run/redis/redis.sock"
+	Default_REDIS_LOCAL_TCP_PORT string = "localhost:6379"
 )
 
 // Client defines a set of methods which every client must implement.
 // This package provides one implmentation for now: the DbClient
 //
 type Client interface {
-    // StreamRun will start watching service on data source
-    // and enqueue data change to the priority queue.
-    // It stops all activities upon receiving signal on stop channel
-    // It should run as a go routine
-    StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup)
-    // Poll will  start service to respond poll signal received on poll channel.
-    // data read from data source will be enqueued on to the priority queue
-    // The service will stop upon detection of poll channel closing.
-    // It should run as a go routine
-    PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup)
-    // Get return data from the data source in format of *spb.Value
-    Get(w *sync.WaitGroup) ([]*spb.Value, error)
-    // Close provides implemenation for explicit cleanup of Client
-    Close() error
+	// StreamRun will start watching service on data source
+	// and enqueue data change to the priority queue.
+	// It stops all activities upon receiving signal on stop channel
+	// It should run as a go routine
+	StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup)
+	// Poll will  start service to respond poll signal received on poll channel.
+	// data read from data source will be enqueued on to the priority queue
+	// The service will stop upon detection of poll channel closing.
+	// It should run as a go routine
+	PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup)
+	// Get return data from the data source in format of *spb.Value
+	Get(w *sync.WaitGroup) ([]*spb.Value, error)
+	// Close provides implemenation for explicit cleanup of Client
+	Close() error
 }
 
 var (
@@ -59,11 +59,11 @@ var (
 )
 
 type tablePath struct {
-    dbName      string
-    keyName     string
-    delimitor   string
-    fields      []string	// fields listed in list are returned
-	patterns	[]string	// fields matched with patterns are returned
+	dbName    string
+	keyName   string
+	delimitor string
+	fields    []string // fields listed in list are returned
+	patterns  []string // fields matched with patterns are returned
 }
 
 type Value struct {
@@ -82,30 +82,30 @@ func (val Value) Compare(other queue.Item) int {
 }
 
 type DbClient struct {
-    prefix  *gnmipb.Path
+	prefix *gnmipb.Path
 	// Used by Get server
-	paths	[]*gnmipb.Path
-    //pathG2S map[*gnmipb.Path][]tablePath
+	paths []*gnmipb.Path
+	//pathG2S map[*gnmipb.Path][]tablePath
 
-    q       *queue.PriorityQueue
-    channel chan struct{}
+	q       *queue.PriorityQueue
+	channel chan struct{}
 
-    synced sync.WaitGroup  // Control when to send gNMI sync_response
-    w      *sync.WaitGroup // wait for all sub go routines to finish
-    mu     sync.RWMutex    // Mutex for data protection among routines for DbClient
+	synced sync.WaitGroup  // Control when to send gNMI sync_response
+	w      *sync.WaitGroup // wait for all sub go routines to finish
+	mu     sync.RWMutex    // Mutex for data protection among routines for DbClient
 
-    sendMsg int64
-    recvMsg int64
-    errors  int64
+	sendMsg int64
+	recvMsg int64
+	errors  int64
 }
 
 func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
-    var client DbClient
-    var err error
-    // Testing program may ask to use redis local tcp connection
-    if UseRedisLocalTcpPort {
-        useRedisTcpClient()
-    }
+	var client DbClient
+	var err error
+	// Testing program may ask to use redis local tcp connection
+	if UseRedisLocalTcpPort {
+		useRedisTcpClient()
+	}
 
 	err = initCountersPortNameMap()
 	if err != nil {
@@ -128,17 +128,16 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	client.paths = paths
 	return &client, nil
 	/*
-	client.pathG2S = make(map[*gnmipb.Path][]tablePath)
-	err = populateAlltablePaths(prefix, paths, &client.pathG2S)
+		client.pathG2S = make(map[*gnmipb.Path][]tablePath)
+		err = populateAlltablePaths(prefix, paths, &client.pathG2S)
 
-	if err != nil {
-		return nil, err
-	} else {
-		return &client, nil
-	}
+		if err != nil {
+			return nil, err
+		} else {
+			return &client, nil
+		}
 	*/
 }
-
 
 func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup) {
 	c.w = w
@@ -146,54 +145,52 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	c.q = q
 	c.channel = stop
 
-    pathG2S := make(map[*gnmipb.Path][]tablePath)
-    err := populateAlltablePaths(c.prefix, c.paths, &pathG2S)
-    if err != nil {
-        enqueFatalMsg(c, err.Error())
+	pathG2S := make(map[*gnmipb.Path][]tablePath)
+	err := populateAlltablePaths(c.prefix, c.paths, &pathG2S)
+	if err != nil {
+		enqueFatalMsg(c, err.Error())
 		return
-    }
+	}
 
 	if len(pathG2S) == 0 {
 		enqueFatalMsg(c, fmt.Sprintf("Prefix:%v, path: %v not valid paths", c.prefix, c.paths))
 		return
 	}
-	
+
 	// Assume all ON_CHANGE mode
 	for gnmiPath, tblPaths := range pathG2S {
 		c.w.Add(1)
 		c.synced.Add(1)
 		go dbPathSubscribe(gnmiPath, tblPaths, c)
 	}
-	
-	// Wait until all data values corresponding to the paths specified 
+
+	// Wait until all data values corresponding to the paths specified
 	// in the SubscriptionList has been transmitted at least once
 	c.synced.Wait()
 	// Inject sync message
 	c.q.Put(Value{
 		&spb.Value{
-			Timestamp:		time.Now().UnixNano(),
-			SyncResponse:	true,
+			Timestamp:    time.Now().UnixNano(),
+			SyncResponse: true,
 		},
 	})
 	log.V(2).Infof("%v Synced", pathG2S)
 	return
 }
 
-
 func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
 	return
 }
-
 
 func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	// wait sync for Get, not used for now
 	c.w = w
 
-    pathG2S := make(map[*gnmipb.Path][]tablePath)
-    err := populateAlltablePaths(c.prefix, c.paths, &pathG2S)
-    if err != nil {
-        return nil, err
-    }
+	pathG2S := make(map[*gnmipb.Path][]tablePath)
+	err := populateAlltablePaths(c.prefix, c.paths, &pathG2S)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(pathG2S) == 0 {
 		return nil, fmt.Errorf("Failed to map to real db paths. Prefix: %v, paths: %v not valid paths", c.prefix, c.paths)
@@ -208,10 +205,10 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 		}
 
 		values = append(values, &spb.Value{
-			Prefix:		c.prefix,
-			Path:		gnmiPath,
-			Timestamp:	ts.UnixNano(),
-			Val:		val,
+			Prefix:    c.prefix,
+			Path:      gnmiPath,
+			Timestamp: ts.UnixNano(),
+			Val:       val,
 		})
 	}
 	log.V(5).Infof("Getting #%v", values)
@@ -221,65 +218,65 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 
 // TODO: Log data related to this session
 func (c *DbClient) Close() error {
-    return nil
+	return nil
 }
 
 func GetTableKeySeparator(target string) (string, error) {
-    _, ok := spb.Target_value[target]
-    if !ok {
-        log.V(1).Infof(" %v not a valid path target", target)
-        return "", fmt.Errorf("%v not a valid path target", target)
-    }
+	_, ok := spb.Target_value[target]
+	if !ok {
+		log.V(1).Infof(" %v not a valid path target", target)
+		return "", fmt.Errorf("%v not a valid path target", target)
+	}
 
-    var separator string
-    switch target {
-    case "CONFIG_DB":
-        separator = "|"
-    case "STATE_DB":
-        separator = "|"
-    default:
-        separator = ":"
-    }
-    return separator, nil
+	var separator string
+	switch target {
+	case "CONFIG_DB":
+		separator = "|"
+	case "STATE_DB":
+		separator = "|"
+	default:
+		separator = ":"
+	}
+	return separator, nil
 }
 
 // For testing only
 func useRedisTcpClient() {
-    for dbName, dbn := range spb.Target_value {
-        if dbName != "OTHERS" {
-            // DB connector for direct redis operation
-            var redisDb *redis.Client
-            if UseRedisLocalTcpPort {
-                redisDb = redis.NewClient(&redis.Options{
-                    Network:     "tcp",
-                    Addr:        Default_REDIS_LOCAL_TCP_PORT,
-                    Password:    "", // no password set
-                    DB:          int(dbn),
-                    DialTimeout: 0,
-                })
-            }
-            Target2RedisDb[dbName] = redisDb
-        }
-    }
+	for dbName, dbn := range spb.Target_value {
+		if dbName != "OTHERS" {
+			// DB connector for direct redis operation
+			var redisDb *redis.Client
+			if UseRedisLocalTcpPort {
+				redisDb = redis.NewClient(&redis.Options{
+					Network:     "tcp",
+					Addr:        Default_REDIS_LOCAL_TCP_PORT,
+					Password:    "", // no password set
+					DB:          int(dbn),
+					DialTimeout: 0,
+				})
+			}
+			Target2RedisDb[dbName] = redisDb
+		}
+	}
 }
 
 // Client package prepare redis clients to all DBs automatically
 func init() {
-    for dbName, dbn := range spb.Target_value {
-        if dbName != "OTHERS" {
-            // DB connector for direct redis operation
-            var redisDb *redis.Client
+	for dbName, dbn := range spb.Target_value {
+		if dbName != "OTHERS" {
+			// DB connector for direct redis operation
+			var redisDb *redis.Client
 
-            redisDb = redis.NewClient(&redis.Options{
-                Network:     "unix",
-                Addr:        Default_REDIS_UNIXSOCKET,
-                Password:    "", // no password set
-                DB:          int(dbn),
-                DialTimeout: 0,
-            })
-            Target2RedisDb[dbName] = redisDb
-        }
-    }
+			redisDb = redis.NewClient(&redis.Options{
+				Network:     "unix",
+				Addr:        Default_REDIS_UNIXSOCKET,
+				Password:    "", // no password set
+				DB:          int(dbn),
+				DialTimeout: 0,
+			})
+			Target2RedisDb[dbName] = redisDb
+		}
+	}
 }
 
 // Convert from SONiC Value to its corresponding gNMI proto stream
@@ -288,7 +285,7 @@ func ValToResp(val Value) (*gnmipb.SubscribeResponse, error) {
 	switch val.GetSyncResponse() {
 	case true:
 		return &gnmipb.SubscribeResponse{
-			Response:	&gnmipb.SubscribeResponse_SyncResponse{
+			Response: &gnmipb.SubscribeResponse_SyncResponse{
 				SyncResponse: true,
 			},
 		}, nil
@@ -299,14 +296,14 @@ func ValToResp(val Value) (*gnmipb.SubscribeResponse, error) {
 		}
 
 		return &gnmipb.SubscribeResponse{
-			Response:	&gnmipb.SubscribeResponse_Update{
-				Update:	&gnmipb.Notification{
-					Timestamp:	val.GetTimestamp(),
-					Prefix:		val.GetPrefix(),
-					Update:		[]*gnmipb.Update{
+			Response: &gnmipb.SubscribeResponse_Update{
+				Update: &gnmipb.Notification{
+					Timestamp: val.GetTimestamp(),
+					Prefix:    val.GetPrefix(),
+					Update: []*gnmipb.Update{
 						{
-							Path:	val.GetPath(),
-							Val:	val.GetVal(),
+							Path: val.GetPath(),
+							Val:  val.GetVal(),
 						},
 					},
 				},
