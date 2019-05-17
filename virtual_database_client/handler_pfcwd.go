@@ -102,7 +102,6 @@ func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]table
 	updatePath(path, &tmpl, parentConfig, leaf, &targetFields)
 
 	// Populate tablePaths
-	//fmt.Printf("path passed in populate: %v\n", &tmpl)
 	err := pop_PortQueuePfcwdStats(&tmpl, pathG2S, targetFields)
 	if err != nil {
 		return err
