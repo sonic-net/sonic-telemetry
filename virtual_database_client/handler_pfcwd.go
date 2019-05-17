@@ -181,7 +181,6 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 	}
 
 	// Alias translation
-	//stringSlice := strings.Split(queName, separator)
 	if !strings.HasPrefix(queName, "Queue") {
 		return fmt.Errorf("%v not a vaild queue name. Use format 'Queue<Num>'", queName)
 	}

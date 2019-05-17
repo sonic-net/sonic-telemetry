@@ -42,12 +42,6 @@ func populateAlltablePaths(prefix *gnmipb.Path, paths []*gnmipb.Path, pathG2S *m
 // root-to-leaf virtual paths in the vpath tree.
 // Then map each vpath to a list of redis DB path.
 func populateNewtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
-	//fullPath := path
-	//if prefix != nil {
-	//	fullPath = gnmiFullPath(prefix, path)
-	//}
-	//fmt.Printf("fullPath: %v\n", fullPath)
-
 	target := prefix.GetTarget()
 	stringSlice := []string{target}
 	elems := path.GetElem()
@@ -60,13 +54,6 @@ func populateNewtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][
 		return err
 	}
 
-	// Debug
-	//for k, v := range (*pathG2S) {
-	//	fmt.Printf("gNMI path: %v\n", k)
-	//	for _, tblPath := range v{
-	//		fmt.Printf("new tablePath: %v\n", tblPath)
-	//	}
-	//}
 	return nil
 }
 

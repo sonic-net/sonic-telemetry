@@ -12,7 +12,6 @@ var (
 	countersPortNameMap = make(map[string]string)
 
 	// Queue name to oid map in COUNTERS table of COUNTERS_DB
-	//countersQueueNameMap = make(map[string]string)
 	countersQueueNameMap = make(map[string]map[string]string)
 
 	// Alias translation: from vendor port name to sonic interface name
