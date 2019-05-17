@@ -89,7 +89,6 @@ func GetTmpl_PortQueuePfcwdStats(path *gnmipb.Path) {
 func v2rPortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tablePath) error {
 	var tmpl = gnmipb.Path{}
 	GetTmpl_PortQueuePfcwdStats(&tmpl)
-	//fmt.Printf("tmpl: %v\n", &tmpl)
 
 	parentConfig := map[int]string{1: "Port", 2: "Queue"}
 
@@ -245,8 +244,6 @@ func pop_PortQueuePfcwdStats(path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]tabl
 				out_tblPaths = append(out_tblPaths, tblPath_port)
 			}
 
-			//fmt.Printf("tablePath: %v\n", &tblPath_que)
-			//fmt.Printf("tablePath: %v\n", &tblPath_port)
 			if len(out_tblPaths) > 0 {
 				(*pathG2S)[path] = out_tblPaths
 			}

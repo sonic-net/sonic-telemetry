@@ -506,11 +506,6 @@ func makeJSON_redis(msi *map[string]interface{}, key *string, op *string, mfv ma
 		for f, v := range mfv {
 			(*msi)[f] = v
 		}
-		// Debug log
-		//log.V(5).Infof("msi: %v\n", msi)
-		//log.V(5).Infof("key: %v\n", key)
-		//log.V(5).Infof("op: %v\n", op)
-		//log.V(5).Infof("fv: %v\n", mfv)
 
 		return nil
 	}
