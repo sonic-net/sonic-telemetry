@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	vdc "github.com/Azure/sonic-telemetry/virtual_database_client"
 	"github.com/kylelemons/godebug/pretty"
 
 	gnmi "github.com/Azure/sonic-telemetry/gnmi_server"
@@ -811,5 +811,5 @@ func TestVirtualDatabaseGNMISubscribe(t *testing.T) {
 
 func init() {
 	// Inform gNMI server to use redis tcp localhost connection
-	sdc.UseRedisLocalTcpPort = true
+	vdc.UseRedisLocalTcpPort = true
 }
