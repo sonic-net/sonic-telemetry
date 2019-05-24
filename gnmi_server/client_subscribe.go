@@ -11,8 +11,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	//spb "github.com/Azure/sonic-telemetry/proto"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	vdc "github.com/Azure/sonic-telemetry/virtual_database_client"
+
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
@@ -119,6 +120,8 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	var dc sdc.Client
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
+	} else if target == "SONIC_DB" {
+		dc, err = vdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)
 	}
@@ -223,6 +226,11 @@ func (c *Client) send(stream gnmipb.GNMI_SubscribeServer) error {
 		switch v := items[0].(type) {
 		case sdc.Value:
 			if resp, err = sdc.ValToResp(v); err != nil {
+				c.errors++
+				return err
+			}
+		case vdc.Value:
+			if resp, err = vdc.ValToResp(v); err != nil {
 				c.errors++
 				return err
 			}

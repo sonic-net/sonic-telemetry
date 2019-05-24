@@ -93,6 +93,7 @@ func (val Value) Compare(other queue.Item) int {
 type DbClient struct {
 	prefix  *gnmipb.Path
 	pathG2S map[*gnmipb.Path][]tablePath
+
 	q       *queue.PriorityQueue
 	channel chan struct{}
 
@@ -112,6 +113,14 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	if UseRedisLocalTcpPort {
 		useRedisTcpClient()
 	}
+
+	// TODO: Remove debug log
+	//for _, _path := range paths {
+	//	fmt.Printf("single path: %v\n", _path)
+	//}
+	//
+	//fmt.Printf("prefix: %v\n", prefix)
+
 	if prefix.GetTarget() == "COUNTERS_DB" {
 		err = initCountersPortNameMap()
 		if err != nil {
@@ -145,7 +154,7 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 // String returns the target the client is querying.
 func (c *DbClient) String() string {
 	// TODO: print gnmiPaths of this DbClient
-	return fmt.Sprintf("DbClient Prefix %v  sendMsg %v, recvMsg %v",
+	return fmt.Sprintf("DbClient Prefix %v	sendMsg %v, recvMsg %v",
 		c.prefix.GetTarget(), c.sendMsg, c.recvMsg)
 }
 
@@ -243,6 +252,7 @@ func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	ts := time.Now()
 	for gnmiPath, tblPaths := range c.pathG2S {
 		val, err := tableData2TypedValue(tblPaths, nil)
+		//log.V(5).Infof("Val: %v\n", val)
 		if err != nil {
 			return nil, err
 		}
@@ -496,6 +506,7 @@ func makeJSON_redis(msi *map[string]interface{}, key *string, op *string, mfv ma
 		for f, v := range mfv {
 			(*msi)[f] = v
 		}
+
 		return nil
 	}
 
@@ -515,12 +526,12 @@ func makeJSON_redis(msi *map[string]interface{}, key *string, op *string, mfv ma
 		of[*op] = fp
 		(*msi)[*key] = of
 	}
+
 	return nil
 }
 
 // emitJSON marshalls map[string]interface{} to JSON byte stream.
 func emitJSON(v *map[string]interface{}) ([]byte, error) {
-	//j, err := json.MarshalIndent(*v, "", indentString)
 	j, err := json.Marshal(*v)
 	if err != nil {
 		return nil, fmt.Errorf("JSON marshalling error: %v", err)
@@ -589,6 +600,7 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 			// Split dbkey string into two parts and second part is key in table
 			keys := strings.SplitN(dbkey, tblPath.delimitor, 2)
 			key = keys[1]
+
 			err = makeJSON_redis(msi, &key, op, fv)
 		}
 		if err != nil {
@@ -597,6 +609,7 @@ func tableData2Msi(tblPath *tablePath, useKey bool, op *string, msi *map[string]
 		}
 		log.V(6).Infof("Added idex %v fv %v ", idx, fv)
 	}
+
 	return nil
 }
 
@@ -643,6 +656,9 @@ func tableData2TypedValue(tblPaths []tablePath, op *string) (*gnmipb.TypedValue,
 					}}, nil
 			}
 		}
+
+		// Debug logging
+		log.V(5).Infof("tblPath: %v\n", tblPath)
 
 		err := tableData2Msi(&tblPath, useKey, nil, &msi)
 		if err != nil {

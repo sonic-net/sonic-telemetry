@@ -1,11 +1,14 @@
 package telemetry_dialout
 
 import (
-	// "encoding/json"
 	"crypto/tls"
 	"errors"
 	"fmt"
+
 	spb "github.com/Azure/sonic-telemetry/proto"
+
+	"net"
+
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	"github.com/go-redis/redis"
 	log "github.com/golang/glog"
@@ -15,8 +18,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"net"
-	//"reflect"
+
 	"strconv"
 	"strings"
 	"sync"

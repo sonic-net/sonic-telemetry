@@ -6,9 +6,17 @@ package gnmi
 import (
 	"crypto/tls"
 	"encoding/json"
+
 	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
+
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"reflect"
+	"testing"
+	"time"
 
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/openconfig/gnmi/client"
@@ -19,15 +27,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"reflect"
-	"testing"
-	"time"
+
 	// Register supported client types.
 	spb "github.com/Azure/sonic-telemetry/proto"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+
 	gclient "github.com/jipanyang/gnmi/client/gnmi"
 )
 

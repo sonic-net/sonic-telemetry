@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	vdc "github.com/Azure/sonic-telemetry/virtual_database_client"
+
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
@@ -75,6 +77,11 @@ func (srv *Server) Serve() error {
 		return fmt.Errorf("Serve() failed: not initialized")
 	}
 	return srv.s.Serve(srv.lis)
+}
+
+func (srv *Server) Stop() {
+	s := srv.s
+	s.Stop()
 }
 
 // Address returns the port the Server is listening to.
@@ -174,6 +181,8 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	var dc sdc.Client
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(paths, prefix)
+	} else if target == "SONIC_DB" {
+		dc, err = vdc.NewDbClient(paths, prefix)
 	} else {
 		dc, err = sdc.NewDbClient(paths, prefix)
 	}
@@ -184,6 +193,10 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	spbValues, err := dc.Get(nil)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	if target == "SONIC_DB" {
+		notifications = make([]*gnmipb.Notification, len(spbValues))
 	}
 
 	for index, spbValue := range spbValues {
