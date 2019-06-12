@@ -409,3 +409,11 @@ func (c *NonDbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 func (c *NonDbClient) Close() error {
 	return nil
 }
+
+func  (c *NonDbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
+	return nil
+}
+func (c *NonDbClient) Capabilities() ([]gnmipb.ModelData) {
+	return nil
+}
+
