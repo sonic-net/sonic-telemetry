@@ -44,6 +44,11 @@ type Client interface {
 	PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup)
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
+	// Set data based on path and value
+	Set(path *gnmipb.Path,  t *gnmipb.TypedValue, op int) error
+	// Capabilities of the switch
+	Capabilities() ([]gnmipb.ModelData)
+
 	// Close provides implemenation for explicit cleanup of Client
 	Close() error
 }
@@ -1011,3 +1016,11 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 		}
 	}
 }
+
+func  (c *DbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
+	return nil
+}
+func (c *DbClient) Capabilities() ([]gnmipb.ModelData) {
+	return nil
+}
+

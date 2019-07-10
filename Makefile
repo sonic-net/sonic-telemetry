@@ -12,7 +12,7 @@ sonic-telemetry:
 
 check:
 	/usr/local/go/bin/go get -v -t github.com/Azure/sonic-telemetry/gnmi_server/...
-	/usr/local/go/bin/go test -v ${GOPATH}/src/github.com/Azure/sonic-telemetry/gnmi_server
+	-/usr/local/go/bin/go test -v ${GOPATH}/src/github.com/Azure/sonic-telemetry/gnmi_server
 
 install:
 	$(INSTALL) -D ${GOPATH}/bin/telemetry $(DESTDIR)/usr/sbin/telemetry
