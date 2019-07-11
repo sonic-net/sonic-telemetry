@@ -14,10 +14,10 @@ import (
 
 	log "github.com/golang/glog"
 
-	spb "github.com/Azure/sonic-telemetry/proto"
+	spb "proto"
 	"github.com/go-redis/redis"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/workiva/go-datastructures/queue"
+	"github.com/Workiva/go-datastructures/queue"
 )
 
 const (
