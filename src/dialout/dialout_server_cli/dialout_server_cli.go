@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	gnmi "github.com/Azure/sonic-telemetry/gnmi_server"
-	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
+	ds "dialout/dialout_server"
+	testcert "testdata/tls"
 )
 
 var (
@@ -79,9 +79,9 @@ func main() {
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
-	cfg := &gnmi.Config{}
+	cfg := &ds.Config{}
 	cfg.Port = int64(*port)
-	s, err := gnmi.NewServer(cfg, opts)
+	s, err := ds.NewServer(cfg, opts)
 	if err != nil {
 		log.Errorf("Failed to create gNMI server: %v", err)
 		return
