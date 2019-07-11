@@ -1,5 +1,5 @@
 all: precheck deps telemetry
-GO=go
+GO=/usr/local/go/bin/go
 SRC_FILES=$(wildcard ./src/telemetry/*.go)
 TOP_DIR := $(abspath ..)
 TELEM_DIR := $(abspath .)
@@ -9,7 +9,7 @@ GO_DEP_PATH=$(abspath .)/$(BUILD_DIR)
 GO_MGMT_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
 CVL_GOPATH=$(GO_MGMT_PATH):$(GO_MGMT_PATH)/src/cvl/build
-GOPATH = $(CVL_GOPATH):$(GO_DEP_PATH):$(GO_MGMT_PATH):$(GO_SONIC_TELEMETRY_PATH):$(TELEM_DIR)
+GOPATH = /tmp/go:$(CVL_GOPATH):$(GO_DEP_PATH):$(GO_MGMT_PATH):$(GO_SONIC_TELEMETRY_PATH):$(TELEM_DIR)
 
 ifdef DEBUG
 	GOFLAGS += -gcflags="all=-N -l"
@@ -44,6 +44,9 @@ telemetry:$(BUILD_DIR)/telemetry
 
 $(BUILD_DIR)/telemetry:
 	@echo "Building $@"
+	make -C $(GO_MGMT_PATH)/src/cvl build/.deps
+	sudo dpkg -i /sonic/target/debs/stretch/libyang0.16_0.16.105-1_amd64.deb
+	sudo dpkg -i /sonic/target/debs/stretch/libyang-dev_0.16.105-1_amd64.deb
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(SRC_FILES)
 
 clean:
