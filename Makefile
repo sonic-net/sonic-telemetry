@@ -1,7 +1,6 @@
 all: precheck deps telemetry
 GO=/usr/local/go/bin/go
-SRC_FILES=$(wildcard ./src/telemetry/*.go)
-DIALOUT_SRC_FILES=$(wildcard ./src/dialout/dialout_client_cli/*.go)
+
 TOP_DIR := $(abspath ..)
 TELEM_DIR := $(abspath .)
 GOFLAGS:=
@@ -19,7 +18,7 @@ ifdef DEBUG
 	GOFLAGS += -gcflags="all=-N -l"
 endif
 
-all: $(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli
+all: deps telemetry
 
 precheck:
 	$(shell mkdir -p $(BUILD_DIR))
@@ -43,17 +42,21 @@ $(BUILD_DIR)/.deps:
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/gorilla/mux
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/goyang
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/ygot/ygot
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/jsonquery
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/xmlquery
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/google/gnxi/utils
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnxi/utils/xpath
 
-telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli
+telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gnmi_get $(BUILD_DIR)/gnmi_set
 
-$(BUILD_DIR)/telemetry:
+$(BUILD_DIR)/telemetry:src/telemetry/telemetry.go
 	@echo "Building $@"
 	make -C $(GO_MGMT_PATH)/src/cvl build/.deps
-	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(SRC_FILES)
-$(BUILD_DIR)/dialout_client_cli:
-	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(DIALOUT_SRC_FILES)
+	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
+$(BUILD_DIR)/dialout_client_cli:src/dialout/dialout_client_cli/dialout_client_cli.go
+	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
+$(BUILD_DIR)/gnmi_get:src/gnmi_clients/gnmi_get.go
+	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
+$(BUILD_DIR)/gnmi_set:src/gnmi_clients/gnmi_set.go
+	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
 
 clean:
 	rm -rf $(BUILD_DIR)/telemetry
@@ -69,7 +72,11 @@ check:
 install:
 	$(INSTALL) -D $(BUILD_DIR)/telemetry $(DESTDIR)/usr/sbin/telemetry
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
+	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/gnmi_get
+	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/gnmi_set
 
 deinstall:
 	rm $(DESTDIR)/usr/sbin/telemetry
 	rm $(DESTDIR)/usr/sbin/dialout_client_cli
+	rm $(DESTDIR)/usr/sbin/gnmi_get
+	rm $(DESTDIR)/usr/sbin/gnmi_set
