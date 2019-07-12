@@ -49,7 +49,7 @@ telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gn
 
 $(BUILD_DIR)/telemetry:src/telemetry/telemetry.go
 	@echo "Building $@"
-	make -C $(GO_MGMT_PATH)/src/cvl build/.deps
+	make -C $(GO_MGMT_PATH)
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
 $(BUILD_DIR)/dialout_client_cli:src/dialout/dialout_client_cli/dialout_client_cli.go
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
