@@ -1,6 +1,7 @@
 all: precheck deps telemetry
 GO=/usr/local/go/bin/go
 SRC_FILES=$(wildcard ./src/telemetry/*.go)
+DIALOUT_SRC_FILES=$(wildcard ./src/dialout/dialout_client_cli/*.go)
 TOP_DIR := $(abspath ..)
 TELEM_DIR := $(abspath .)
 GOFLAGS:=
@@ -10,10 +11,15 @@ GO_MGMT_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
 CVL_GOPATH=$(GO_MGMT_PATH):$(GO_MGMT_PATH)/src/cvl/build
 GOPATH = /tmp/go:$(CVL_GOPATH):$(GO_DEP_PATH):$(GO_MGMT_PATH):$(GO_SONIC_TELEMETRY_PATH):$(TELEM_DIR)
+INSTALL := /usr/bin/install
+
+.PHONY : all precheck deps telemetry clean cleanall check install deinstall
 
 ifdef DEBUG
 	GOFLAGS += -gcflags="all=-N -l"
 endif
+
+all: $(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli
 
 precheck:
 	$(shell mkdir -p $(BUILD_DIR))
@@ -40,14 +46,14 @@ $(BUILD_DIR)/.deps:
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/jsonquery
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/xmlquery
 
-telemetry:$(BUILD_DIR)/telemetry
+telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli
 
 $(BUILD_DIR)/telemetry:
 	@echo "Building $@"
 	make -C $(GO_MGMT_PATH)/src/cvl build/.deps
-	sudo dpkg -i /sonic/target/debs/stretch/libyang0.16_0.16.105-1_amd64.deb
-	sudo dpkg -i /sonic/target/debs/stretch/libyang-dev_0.16.105-1_amd64.deb
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(SRC_FILES)
+$(BUILD_DIR)/dialout_client_cli:
+	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(DIALOUT_SRC_FILES)
 
 clean:
 	rm -rf $(BUILD_DIR)/telemetry
@@ -56,3 +62,14 @@ clean:
 cleanall:
 	rm -rf $(BUILD_DIR)
 	make -C  $(GO_MGMT_PATH) cleanall
+
+check:
+	-$(GO) test -v ${GOPATH}/src/gnmi_server
+
+install:
+	$(INSTALL) -D $(BUILD_DIR)/telemetry $(DESTDIR)/usr/sbin/telemetry
+	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
+
+deinstall:
+	rm $(DESTDIR)/usr/sbin/telemetry
+	rm $(DESTDIR)/usr/sbin/dialout_client_cli
