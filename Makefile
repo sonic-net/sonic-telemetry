@@ -8,7 +8,7 @@ BUILD_DIR=build
 GO_DEP_PATH=$(abspath .)/$(BUILD_DIR)
 GO_MGMT_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
-CVL_GOPATH=$(GO_MGMT_PATH):$(GO_MGMT_PATH)/src/cvl/build
+CVL_GOPATH=$(GO_MGMT_PATH):$(GO_MGMT_PATH)/gopkgs:$(GO_MGMT_PATH)/src/cvl/build
 GOPATH = /tmp/go:$(CVL_GOPATH):$(GO_DEP_PATH):$(GO_MGMT_PATH):$(GO_SONIC_TELEMETRY_PATH):$(TELEM_DIR)
 INSTALL := /usr/bin/install
 
@@ -74,6 +74,9 @@ install:
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/gnmi_get
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/gnmi_set
+	mkdir -p $(DESTDIR)/usr/bin/
+	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/sbin
+	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/bin
 
 deinstall:
 	rm $(DESTDIR)/usr/sbin/telemetry
