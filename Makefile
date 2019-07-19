@@ -45,7 +45,7 @@ $(BUILD_DIR)/.deps:
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/google/gnxi/utils
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnxi/utils/xpath
 
-telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gnmi_get $(BUILD_DIR)/gnmi_set
+telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gnmi_get $(BUILD_DIR)/gnmi_set $(BUILD_DIR)/gnmi_cli
 
 $(BUILD_DIR)/telemetry:src/telemetry/telemetry.go
 	@echo "Building $@"
@@ -56,6 +56,8 @@ $(BUILD_DIR)/dialout_client_cli:src/dialout/dialout_client_cli/dialout_client_cl
 $(BUILD_DIR)/gnmi_get:src/gnmi_clients/gnmi_get.go
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
 $(BUILD_DIR)/gnmi_set:src/gnmi_clients/gnmi_set.go
+	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
+$(BUILD_DIR)/gnmi_cli:src/gnmi_clients/gnmi_cli.go
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
 
 clean:

@@ -103,6 +103,84 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 }
 
 func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
+	c.w = w
+	defer c.w.Done()
+	c.q = q
+	c.channel = poll
+
+	for {
+		_, more := <-c.channel
+		if !more {
+			log.V(1).Infof("%v poll channel closed, exiting pollDb routine", c)
+			return
+		}
+		t1 := time.Now()
+		for gnmiPath, URIPath := range c.path2URI {
+			val, err := transutil.TranslProcessGet(URIPath, nil)
+			if err != nil {
+				return
+			}
+
+			spbv := &spb.Value{
+				Prefix:       c.prefix,
+				Path:         gnmiPath,
+				Timestamp:    time.Now().UnixNano(),
+				SyncResponse: false,
+				Val:          val,
+			}
+
+			c.q.Put(Value{spbv})
+			log.V(6).Infof("Added spbv #%v", spbv)
+		}
+
+		c.q.Put(Value{
+			&spb.Value{
+				Timestamp:    time.Now().UnixNano(),
+				SyncResponse: true,
+			},
+		})
+		log.V(4).Infof("Sync done, poll time taken: %v ms", int64(time.Since(t1)/time.Millisecond))
+	}
+}
+func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup) {
+	c.w = w
+	defer c.w.Done()
+	c.q = q
+	c.channel = once
+
+	
+	_, more := <-c.channel
+	if !more {
+		log.V(1).Infof("%v once channel closed, exiting onceDb routine", c)
+		return
+	}
+	t1 := time.Now()
+	for gnmiPath, URIPath := range c.path2URI {
+		val, err := transutil.TranslProcessGet(URIPath, nil)
+		if err != nil {
+			return
+		}
+
+		spbv := &spb.Value{
+			Prefix:       c.prefix,
+			Path:         gnmiPath,
+			Timestamp:    time.Now().UnixNano(),
+			SyncResponse: false,
+			Val:          val,
+		}
+
+		c.q.Put(Value{spbv})
+		log.V(6).Infof("Added spbv #%v", spbv)
+	}
+
+	c.q.Put(Value{
+		&spb.Value{
+			Timestamp:    time.Now().UnixNano(),
+			SyncResponse: true,
+		},
+	})
+	log.V(4).Infof("Sync done, once time taken: %v ms", int64(time.Since(t1)/time.Millisecond))
+	
 }
 
 func (c *TranslClient) Capabilities() []gnmipb.ModelData {
