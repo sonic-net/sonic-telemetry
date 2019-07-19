@@ -24,6 +24,7 @@ type Client struct {
 	errors    int64
 	polled    chan struct{}
 	stop      chan struct{}
+	once      chan struct{}
 	mu        sync.RWMutex
 	q         *queue.PriorityQueue
 	subscribe *gnmipb.SubscriptionList
@@ -143,7 +144,10 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 		c.w.Add(1)
 		go dc.PollRun(c.q, c.polled, &c.w)
 	case gnmipb.SubscriptionList_ONCE:
-		return grpc.Errorf(codes.Unimplemented, "SubscriptionList_ONCE is not implemented for SONiC gRPC/gNMI yet: %q", query)
+		c.once = make(chan struct{}, 1)
+		c.once <- struct{}{}
+		c.w.Add(1)
+		go dc.OnceRun(c.q, c.once, &c.w)
 	default:
 		return grpc.Errorf(codes.InvalidArgument, "Unkown subscription mode: %q", query)
 	}
