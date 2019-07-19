@@ -117,15 +117,20 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 		return grpc.Errorf(codes.NotFound, "Invalid subscription path: %v %q", err, query)
 	}
 	var dc sdc.Client
-	if target == "OTHERS" {
-		dc, err = sdc.NewNonDbClient(paths, prefix)
-	} else {
-		dc, err = sdc.NewDbClient(paths, prefix)
-	}
 
-	if err != nil {
-		return grpc.Errorf(codes.NotFound, "%v", err)
-	}
+    if target == "OTHERS" {
+            dc, err = sdc.NewNonDbClient(paths, prefix)
+    } else if target == "APP_DB" || target == "CONFIG_DB" || target == "COUNTERS_DB" {
+            dc, err = sdc.NewDbClient(paths, prefix)
+    } else {
+            /* For any other target or no target create new Transl Client. */
+            dc, err = sdc.NewTranslClient(prefix, paths)
+    }
+
+    if err != nil {
+            return grpc.Errorf(codes.NotFound, "%v", err)
+    }
+
 
 	switch mode := c.subscribe.GetMode(); mode {
 	case gnmipb.SubscriptionList_STREAM:
