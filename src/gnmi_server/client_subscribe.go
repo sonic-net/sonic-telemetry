@@ -180,6 +180,9 @@ func (c *Client) Close() {
 	if c.polled != nil {
 		close(c.polled)
 	}
+	if c.once != nil {
+		close(c.once)
+	}
 }
 
 func (c *Client) recv(stream gnmipb.GNMI_SubscribeServer) {
