@@ -114,17 +114,29 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	ticker_map := make(map[uint64]*ticker_info)
 	var cases []reflect.SelectCase
 	cases_map := make(map[int]uint64)
+	var subscribe_mode gnmipb.SubscriptionMode
+
 	for _,sub := range subscribe.Subscription {
 		switch sub.Mode {
+
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
-			fmt.Println("TARGET")
+			// Until we get event subscription mode discovery from translib api, default to sample mode.
+			subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+
+		case gnmipb.SubscriptionMode_ON_CHANGE:
+			subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
+		case gnmipb.SubscriptionMode_SAMPLE:
+			subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+		default:
+			log.V(1).Infof("Bad Subscription Mode for client %s ", c)
+			continue
+		}
+
+		if subscribe_mode == gnmipb.SubscriptionMode_SAMPLE {
 			interval := sub.SampleInterval
 			if interval == 0 {
-				if len(cases) == 0 {
-					interval = 3*1e9
-				}else{
-					interval = 7*1e9
-				}
+				//For now set default interval to 5 seoncds until we get API to discover minimum interval per path.
+				interval = 5*1e9
 
 			} else {
 				interval = sub.SampleInterval
@@ -142,15 +154,8 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				ticker_map[interval].paths = append(ticker_map[interval].paths, sub.Path)
 				ticker_map[interval].uris = append(ticker_map[interval].uris, c.path2URI[sub.Path])
 			}
-
-		case gnmipb.SubscriptionMode_ON_CHANGE:
-			fmt.Println("CHANGE")
-		case gnmipb.SubscriptionMode_SAMPLE:
-			fmt.Println("SAMPLE")
-		default:
-			fmt.Println("???")
-
 		}
+
 	}
 	cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(c.channel)})
 
@@ -189,6 +194,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 		})
 	}
 }
+
 
 func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
 	c.w = w
