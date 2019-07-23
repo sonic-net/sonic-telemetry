@@ -106,20 +106,21 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	c.q = q
 	c.channel = stop
 
-	
-	ticker_map := make(map[uint64]*time.Ticker)
-	uri_timer_map := make(map[uint64][]string)
-	path_timer_map := make(map[uint64][]*gnmipb.Path)
+	type ticker_info struct{
+		t     *time.Ticker
+		uris  []string
+		paths []*gnmipb.Path
+	}
+	ticker_map := make(map[uint64]*ticker_info)
 	var cases []reflect.SelectCase
 	cases_map := make(map[int]uint64)
-	i := 0
 	for _,sub := range subscribe.Subscription {
 		switch sub.Mode {
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
 			fmt.Println("TARGET")
 			interval := sub.SampleInterval
 			if interval == 0 {
-				if i == 0 {
+				if len(cases) == 0 {
 					interval = 3*1e9
 				}else{
 					interval = 7*1e9
@@ -128,18 +129,18 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			} else {
 				interval = sub.SampleInterval
 			}
-			fmt.Println(interval)
 			if ticker_map[interval] == nil {
+				ticker_map[interval] = &ticker_info {
+					t: time.NewTicker(time.Duration(interval) * time.Nanosecond),
+					paths: []*gnmipb.Path{sub.Path},
+					uris: []string{c.path2URI[sub.Path]},
+				}
+				cases_map[len(cases)] = interval
+				cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ticker_map[interval].t.C)})
 
-				ticker_map[interval] = time.NewTicker(time.Duration(interval) * time.Nanosecond)
-				cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ticker_map[interval].C)})
-				cases_map[i] = interval
-				path_timer_map[interval] = append(path_timer_map[interval], sub.Path)
-				uri_timer_map[interval] = append(uri_timer_map[interval], c.path2URI[sub.Path])
-				i+=1
 			} else {
-				path_timer_map[interval] = append(path_timer_map[interval], sub.Path)
-				uri_timer_map[interval] = append(uri_timer_map[interval], c.path2URI[sub.Path])
+				ticker_map[interval].paths = append(ticker_map[interval].paths, sub.Path)
+				ticker_map[interval].uris = append(ticker_map[interval].uris, c.path2URI[sub.Path])
 			}
 
 		case gnmipb.SubscriptionMode_ON_CHANGE:
@@ -151,7 +152,6 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 
 		}
 	}
-
 	cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(c.channel)})
 
 	for {
@@ -162,18 +162,17 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			fmt.Println("Done")
 			return
 		}
-		fmt.Println("tick", ttm, time.Now(), cases_map[chosen], uri_timer_map[cases_map[chosen]])
+		fmt.Println("tick", ttm, time.Now(), cases_map[chosen], ticker_map[cases_map[chosen]].uris)
 
-		for ii, uri := range uri_timer_map[cases_map[chosen]] {
+		for ii, uri := range ticker_map[cases_map[chosen]].uris {
 			val, err := transutil.TranslProcessGet(uri, nil)
-			fmt.Println("Get: ", uri)
 			if err != nil {
 				return
 			}
 
 			spbv := &spb.Value{
 				Prefix:       c.prefix,
-				Path:         path_timer_map[cases_map[chosen]][ii],
+				Path:         ticker_map[cases_map[chosen]].paths[ii],
 				Timestamp:    time.Now().UnixNano(),
 				SyncResponse: false,
 				Val:          val,
