@@ -77,8 +77,8 @@ var (
 	clientCert = flag.String("client_crt", "", "Client certificate file. Used for client certificate-based authentication.")
 	clientKey  = flag.String("client_key", "", "Client private key file. Used for client certificate-based authentication.")
 	//Subscribe Options
-	streaming_type = flag.String("streaming_type", "TARGET_DEFINED", "One of TARGET_DEFINED, ON_CHANGE or SAMPLE")
-	streamin_sample_int = flag.Uint("streaming_sample_interval", 0, "Streaming sample inteval seconds, 0 means lowest supported.")
+	streaming_type = flag.Uint("streaming_type", 0, "One of TARGET_DEFINED, ON_CHANGE or SAMPLE")
+	streaming_sample_int = flag.Uint("streaming_sample_interval", 0, "Streaming sample inteval seconds, 0 means lowest supported.")
 )
 
 func init() {
@@ -281,6 +281,8 @@ func executeSubscribe(ctx context.Context) error {
 	if len(*queryFlag) == 0 {
 		return errors.New("--query must be set")
 	}
+	q.Streaming_type = gpb.SubscriptionMode(*streaming_type)
+	q.Streaming_sample_int = uint64(*streaming_sample_int)
 	for _, path := range *queryFlag {
 		query, err := parseQuery(path, cfg.Delimiter)
 		if err != nil {

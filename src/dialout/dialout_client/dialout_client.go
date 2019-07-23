@@ -387,7 +387,7 @@ restart: //Remote server might go down, in that case we restart with next destin
 		select {
 		default:
 			cs.w.Add(1)
-			go cs.dc.StreamRun(cs.q, cs.stop, &cs.w)
+			go cs.dc.StreamRun(cs.q, cs.stop, &cs.w, nil)
 			time.Sleep(100 * time.Millisecond)
 			err = cs.send(pub)
 			if err != nil {

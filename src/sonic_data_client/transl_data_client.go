@@ -117,6 +117,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	var subscribe_mode gnmipb.SubscriptionMode
 
 	for _,sub := range subscribe.Subscription {
+		fmt.Println(sub.Mode, sub.SampleInterval)
 		switch sub.Mode {
 
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
