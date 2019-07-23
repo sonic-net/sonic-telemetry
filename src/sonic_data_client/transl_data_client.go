@@ -132,7 +132,11 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				path_timer_map[interval] = append(path_timer_map[interval], sub.Path)
 				uri_timer_map[interval] = append(uri_timer_map[interval], c.path2URI[sub.Path])
 				i+=1
+			} else {
+				path_timer_map[interval] = append(path_timer_map[interval], sub.Path)
+				uri_timer_map[interval] = append(uri_timer_map[interval], c.path2URI[sub.Path])
 			}
+
 			
 
 
