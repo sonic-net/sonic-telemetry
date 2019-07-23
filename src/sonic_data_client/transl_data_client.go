@@ -106,7 +106,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	c.q = q
 	c.channel = stop
 
-	// var tickers []time.Ticker
+	
 	ticker_map := make(map[uint64]*time.Ticker)
 	uri_timer_map := make(map[uint64][]string)
 	path_timer_map := make(map[uint64][]*gnmipb.Path)
@@ -119,7 +119,12 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			fmt.Println("TARGET")
 			interval := sub.SampleInterval
 			if interval == 0 {
-				interval = 3*1e9
+				if i == 0 {
+					interval = 3*1e9
+				}else{
+					interval = 7*1e9
+				}
+
 			} else {
 				interval = sub.SampleInterval
 			}
@@ -137,10 +142,6 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				uri_timer_map[interval] = append(uri_timer_map[interval], c.path2URI[sub.Path])
 			}
 
-			
-
-
-
 		case gnmipb.SubscriptionMode_ON_CHANGE:
 			fmt.Println("CHANGE")
 		case gnmipb.SubscriptionMode_SAMPLE:
@@ -150,28 +151,22 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 
 		}
 	}
-	// fmt.Println(ticker_map)
-	
 
-
-	
-	// for tm, t := range ticker_map {
- //    	cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(t.C)}
- //    	cases_map[i] = tm
- //    	i += 1
-	// }
 	cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(c.channel)})
-	
 
 	for {
-		chosen, _, ok := reflect.Select(cases)
+		chosen, ttm, ok := reflect.Select(cases)
+
+
 		if !ok {
 			fmt.Println("Done")
 			return
 		}
-		fmt.Println("tick", cases_map[chosen], uri_timer_map[cases_map[chosen]])
+		fmt.Println("tick", ttm, time.Now(), cases_map[chosen], uri_timer_map[cases_map[chosen]])
+
 		for ii, uri := range uri_timer_map[cases_map[chosen]] {
 			val, err := transutil.TranslProcessGet(uri, nil)
+			fmt.Println("Get: ", uri)
 			if err != nil {
 				return
 			}
@@ -194,23 +189,6 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			},
 		})
 	}
-	// for _,t := range ticker_map {
-		
-	// 	for {
-	// 	select {
-	// 	case _ = <-t.C:
-	// 		fmt.Println("Tick")
-	// 	case <-c.channel:
-	// 		fmt.Println("Done")
-	// 		return
-
-	// 	}
-	// 	}
-		
-	// }
-	
-
-
 }
 
 func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
