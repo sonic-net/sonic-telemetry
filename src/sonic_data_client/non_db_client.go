@@ -310,7 +310,6 @@ func lookupGetFunc(prefix, path *gnmipb.Path) (dataGetFunc, error) {
 
 func NewNonDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	var ndc NonDbClient
-
 	ndc.path2Getter = make(map[*gnmipb.Path]dataGetFunc)
 	ndc.prefix = prefix
 	for _, path := range paths {
@@ -332,7 +331,7 @@ func (c *NonDbClient) String() string {
 }
 
 // To be implemented
-func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup) {
+func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	return
 }
 

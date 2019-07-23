@@ -36,7 +36,7 @@ type Client interface {
 	// and enqueue data change to the priority queue.
 	// It stops all activities upon receiving signal on stop channel
 	// It should run as a go routine
-	StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup)
+	StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList)
 	// Poll will  start service to respond poll signal received on poll channel.
 	// data read from data source will be enqueued on to the priority queue
 	// The service will stop upon detection of poll channel closing.
@@ -114,6 +114,7 @@ type DbClient struct {
 func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	var client DbClient
 	var err error
+
 	// Testing program may ask to use redis local tcp connection
 	if UseRedisLocalTcpPort {
 		useRedisTcpClient()
@@ -155,7 +156,7 @@ func (c *DbClient) String() string {
 		c.prefix.GetTarget(), c.sendMsg, c.recvMsg)
 }
 
-func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup) {
+func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	c.w = w
 	defer c.w.Done()
 	c.q = q

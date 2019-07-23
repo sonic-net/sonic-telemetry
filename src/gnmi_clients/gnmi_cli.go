@@ -76,6 +76,9 @@ var (
 	caCert     = flag.String("ca_crt", "", "CA certificate file. Used to verify server TLS certificate.")
 	clientCert = flag.String("client_crt", "", "Client certificate file. Used for client certificate-based authentication.")
 	clientKey  = flag.String("client_key", "", "Client private key file. Used for client certificate-based authentication.")
+	//Subscribe Options
+	streaming_type = flag.String("streaming_type", "TARGET_DEFINED", "One of TARGET_DEFINED, ON_CHANGE or SAMPLE")
+	streamin_sample_int = flag.Uint("streaming_sample_interval", 0, "Streaming sample inteval seconds, 0 means lowest supported.")
 )
 
 func init() {
