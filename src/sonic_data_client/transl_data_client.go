@@ -121,6 +121,13 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
 			// Until we get event subscription mode discovery from translib api, default to sample mode.
+			//Future API:
+			//if !IsSubscribeSupported(c.path2URI[sub.Path]) {
+			//	subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+			//} else {
+			//	subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
+			//}
+
 			subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
 
 		case gnmipb.SubscriptionMode_ON_CHANGE:
@@ -154,6 +161,14 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				ticker_map[interval].paths = append(ticker_map[interval].paths, sub.Path)
 				ticker_map[interval].uris = append(ticker_map[interval].uris, c.path2URI[sub.Path])
 			}
+		} else if subscribe_mode == gnmipb.SubscriptionMode_ON_CHANGE {
+
+			//Dont support ON_CHANGE for now, until translib API support for subscribe is available
+			//Future API:
+			//c.w.Add(1)
+			//c.synced.Add(1)
+			//go Subscribe(c.path2URI[sub.Path], q, stop)
+			return
 		}
 
 	}
