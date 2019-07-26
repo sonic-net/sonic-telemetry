@@ -45,7 +45,7 @@ $(BUILD_DIR)/.deps:
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/google/gnxi/utils
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnxi/utils/xpath
 
-telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gnmi_get $(BUILD_DIR)/gnmi_set $(BUILD_DIR)/gnmi_cli
+telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gnmi_get $(BUILD_DIR)/gnmi_set# $(BUILD_DIR)/gnmi_cli
 
 $(BUILD_DIR)/telemetry:src/telemetry/telemetry.go
 	@echo "Building $@"
@@ -74,8 +74,10 @@ check:
 install:
 	$(INSTALL) -D $(BUILD_DIR)/telemetry $(DESTDIR)/usr/sbin/telemetry
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
-	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/gnmi_get
-	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/gnmi_set
+	$(INSTALL) -D $(BUILD_DIR)/gnmi_get $(DESTDIR)/usr/sbin/gnmi_get
+	$(INSTALL) -D $(BUILD_DIR)/gnmi_set $(DESTDIR)/usr/sbin/gnmi_set
+	$(INSTALL) -D src/gnmi_clients/gnmi_cli $(DESTDIR)/usr/sbin/gnmi_cli
+
 	mkdir -p $(DESTDIR)/usr/bin/
 	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/sbin
 	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/bin

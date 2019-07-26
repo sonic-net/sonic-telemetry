@@ -137,7 +137,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	case gnmipb.SubscriptionList_STREAM:
 		c.stop = make(chan struct{}, 1)
 		c.w.Add(1)
-		go dc.StreamRun(c.q, c.stop, &c.w)
+		go dc.StreamRun(c.q, c.stop, &c.w, c.subscribe)
 	case gnmipb.SubscriptionList_POLL:
 		c.polled = make(chan struct{}, 1)
 		c.polled <- struct{}{}
