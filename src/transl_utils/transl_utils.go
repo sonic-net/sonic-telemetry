@@ -127,6 +127,11 @@ func TranslProcessReplace(uri string, t *gnmipb.TypedValue) error {
 	req := translib.SetRequest{Path:uri, Payload:payload}
 	resp, err1 := translib.Create(req)
 	if err1 != nil{
+		//If Create fails, it may be due to object already existing/can not be created
+		// such as interface, in this case use Update.
+		resp, err1 = translib.Update(req)
+	}
+	if err1 != nil{
 		log.V(2).Infof("REPLACE operation failed with error =%v", resp.ErrSrc)
 		return fmt.Errorf("REPLACE failed for this message")
 	}
@@ -145,6 +150,11 @@ func TranslProcessUpdate(uri string, t *gnmipb.TypedValue) error {
 	payload := []byte(str3)
 	req := translib.SetRequest{Path:uri, Payload:payload}
 	resp, err := translib.Create(req)
+	if err != nil{
+		//If Create fails, it may be due to object already existing/can not be created
+		// such as interface, in this case use Update.
+		resp, err = translib.Update(req)
+	}
 	if err != nil{
 		log.V(2).Infof("UPDATE operation failed with error =%v", resp.ErrSrc)
 		return fmt.Errorf("UPDATE failed for this message")
