@@ -110,6 +110,11 @@ func enqueFatalMsgTranslib(c *TranslClient, msg string) {
 		},
 	})
 }
+type ticker_info struct{
+	t     *time.Ticker
+	uris  []string
+	paths []*gnmipb.Path
+}
 
 func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	c.w = w
@@ -117,11 +122,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	c.q = q
 	c.channel = stop
 
-	type ticker_info struct{
-		t     *time.Ticker
-		uris  []string
-		paths []*gnmipb.Path
-	}
+
 	ticker_map := make(map[int]*ticker_info)
 	var cases []reflect.SelectCase
 	cases_map := make(map[int]int)
@@ -134,6 +135,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	var onChangeSubsString []string
 	var onChangeSubsgNMI []*gnmipb.Path
 	onChangeMap := make(map[string]*gnmipb.Path)
+	valueCache := make(map[string]*gnmipb.TypedValue)
 	
 	for i,sub := range subscribe.Subscription {
 		fmt.Println(sub.Mode, sub.SampleInterval)
@@ -188,44 +190,54 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 					return
 				}
 			}
-			//Reuse ticker for same sample intervals, otherwise create a new one.
-			if ticker_map[interval] == nil {
-				ticker_map[interval] = &ticker_info {
-					t: time.NewTicker(time.Duration(interval) * time.Nanosecond),
-					paths: []*gnmipb.Path{sub.Path},
-					uris: []string{c.path2URI[sub.Path]},
-				}
-				cases_map[len(cases)] = interval
-				cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ticker_map[interval].t.C)})
-
-			} else {
-				ticker_map[interval].paths = append(ticker_map[interval].paths, sub.Path)
-				ticker_map[interval].uris = append(ticker_map[interval].uris, c.path2URI[sub.Path])
+			//Send initial data now so we can send sync response.
+			val, err := transutil.TranslProcessGet(c.path2URI[sub.Path], nil)
+			if err != nil {
+				return
 			}
+			spbv := &spb.Value{
+				Prefix:       c.prefix,
+				Path:         sub.Path,
+				Timestamp:    time.Now().UnixNano(),
+				SyncResponse: false,
+				Val:          val,
+			}
+			c.q.Put(Value{spbv})
+			addTimer(c, ticker_map, &cases, cases_map, interval, sub.Path)
+			fmt.Println(ticker_map, cases, cases_map)
 		} else if subscribe_mode == gnmipb.SubscriptionMode_ON_CHANGE {
-
-			//Dont support ON_CHANGE for now, until translib API support for subscribe is available
-			//Future API:
-			//c.w.Add(1)
-			//c.synced.Add(1)
-			//go Subscribe(c.path2URI[sub.Path], q, stop)
-
 			onChangeSubsString = append(onChangeSubsString, c.path2URI[sub.Path])
 			onChangeSubsgNMI = append(onChangeSubsgNMI, sub.Path)
 			onChangeMap[c.path2URI[sub.Path]] = sub.Path
+			//For testing
+			sub.HeartbeatInterval = 20*uint64(time.Second)
+			if sub.HeartbeatInterval > 0 {
+				if int(sub.HeartbeatInterval) < subSupport[i].MinInterval * int(time.Second) {
+					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Heartbeat Interval %ds, minimum interval is %ds", int(sub.HeartbeatInterval)/int(time.Second), subSupport[i].MinInterval))
+					return
+				}
+				addTimer(c, ticker_map, &cases, cases_map, int(sub.HeartbeatInterval), sub.Path)
+			}
+			
 		}
 	}
 	
 	if len(onChangeSubsString) > 0 {
 		c.w.Add(1)
-		// c.synced.Add(1)
-		// go translib.Subscribe(onChangeSubs, q, stop)
+		c.synced.Add(1)
 		go TranslSubscribe(onChangeSubsgNMI, onChangeSubsString, onChangeMap, c)
 		fmt.Println("OnChange:", onChangeSubsString)
 		fmt.Println("OnChange:", onChangeSubsgNMI)
 
 	}
-	
+	// Wait until all data values corresponding to the path(s) specified
+	// in the SubscriptionList has been transmitted at least once
+	c.synced.Wait()
+	spbs := &spb.Value{
+		Timestamp:    time.Now().UnixNano(),
+		SyncResponse: true,
+	}
+	c.q.Put(Value{spbs})
 	cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(c.channel)})
 
 	for {
@@ -251,16 +263,36 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				SyncResponse: false,
 				Val:          val,
 			}
-
 			c.q.Put(Value{spbv})
+			// if (valueCache[uri] == nil) and (onChangeMap[uri] == nil){
+				//Send Sync Message if first time sending a response.
+				// spbs := &spb.Value{
+				// 	Timestamp:    time.Now().UnixNano(),
+				// 	SyncResponse: true,
+				// }
+				// c.q.Put(Value{spbs})
+			// }
+			valueCache[uri] = val
 			log.V(6).Infof("Added spbv #%v", spbv)
 		}
-		c.q.Put(Value{
-			&spb.Value{
-				Timestamp:    time.Now().UnixNano(),
-				SyncResponse: true,
-			},
-		})
+
+	}
+}
+
+func addTimer(c *TranslClient, ticker_map map[int]*ticker_info, cases *[]reflect.SelectCase, cases_map map[int]int, interval int, path *gnmipb.Path) {
+	//Reuse ticker for same sample intervals, otherwise create a new one.
+	if ticker_map[interval] == nil {
+		ticker_map[interval] = &ticker_info {
+			t: time.NewTicker(time.Duration(interval) * time.Nanosecond),
+			paths: []*gnmipb.Path{path},
+			uris: []string{c.path2URI[path]},
+		}
+		cases_map[len(*cases)] = interval
+		*cases = append(*cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ticker_map[interval].t.C)})
+
+	} else {
+		ticker_map[interval].paths = append(ticker_map[interval].paths, path)
+		ticker_map[interval].uris = append(ticker_map[interval].uris, c.path2URI[path])
 	}
 }
 
@@ -302,12 +334,13 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 			log.V(6).Infof("Added spbv #%v", spbv)
 			
 			if v.SyncComplete {
-				c.q.Put(Value{
-					&spb.Value{
-						Timestamp:    time.Now().UnixNano(),
-						SyncResponse: true,
-					},
-				})
+				c.synced.Done()
+				// c.q.Put(Value{
+				// 	&spb.Value{
+				// 		Timestamp:    time.Now().UnixNano(),
+				// 		SyncResponse: true,
+				// 	},
+				// })
 			}
 		default:
 			log.V(1).Infof("Unknown data type %v for %s in queue", items[0], c)
