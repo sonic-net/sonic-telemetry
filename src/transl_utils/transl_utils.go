@@ -184,9 +184,3 @@ func isTranslibSuccess(err error) bool {
 
         return true
 }
-
-func TranslProcessSubscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup) ([]*IsSubscribeResponse, error) error {
-	defer w.Done()
-	resp, err := Subscribe(c.path2URI[sub.Path], q, stop)
-	return resp, err
-}

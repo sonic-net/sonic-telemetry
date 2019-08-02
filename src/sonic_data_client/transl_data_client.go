@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"reflect"
 	"translib"
+	"bytes"
+	"encoding/json"
 )
 
 const (
@@ -129,7 +131,9 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 		stringPaths[i] = c.path2URI[sub.Path]
 	}
 	subSupport,_ := translib.IsSubscribeSupported(stringPaths)
-	var onChangeSubs []string
+	var onChangeSubsString []string
+	var onChangeSubsgNMI []*gnmipb.Path
+	onChangeMap := make(map[string]*gnmipb.Path)
 	
 	for i,sub := range subscribe.Subscription {
 		fmt.Println(sub.Mode, sub.SampleInterval)
@@ -206,16 +210,19 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			//c.synced.Add(1)
 			//go Subscribe(c.path2URI[sub.Path], q, stop)
 
-			onChangeSubs = append(onChangeSubs, c.path2URI[sub.Path])
+			onChangeSubsString = append(onChangeSubsString, c.path2URI[sub.Path])
+			onChangeSubsgNMI = append(onChangeSubsgNMI, sub.Path)
+			onChangeMap[c.path2URI[sub.Path]] = sub.Path
 		}
 	}
 	
-	if len(onChangeSubs) > 0 {
+	if len(onChangeSubsString) > 0 {
 		c.w.Add(1)
-		c.synced.Add(1)
+		// c.synced.Add(1)
 		// go translib.Subscribe(onChangeSubs, q, stop)
-		go TranslProcessSubscribe(onChangeSubs, c.q, c.channel, c.w)
-		fmt.Println("OnChange:", onChangeSubs)
+		go TranslSubscribe(onChangeSubsgNMI, onChangeSubsString, onChangeMap, c)
+		fmt.Println("OnChange:", onChangeSubsString)
+		fmt.Println("OnChange:", onChangeSubsgNMI)
 
 	}
 	
@@ -257,6 +264,61 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	}
 }
 
+func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient) {
+	defer c.w.Done()
+	q := queue.NewPriorityQueue(1, false)
+	fmt.Println(q)
+	fmt.Println("HERE A")
+	resp, err := translib.Subscribe(stringPaths, q, c.channel)
+	fmt.Println("HERE B")
+	for {
+		items, err := q.Get(1)
+		if err != nil {
+			log.V(1).Infof("%v", err)
+			return
+		}
+		switch v := items[0].(type) {
+		case *translib.SubscribeResponse:
+			var jv []byte
+			dst := new(bytes.Buffer)
+			json.Compact(dst, v.Payload)
+			jv = dst.Bytes()
+
+
+			/* Fill the values into GNMI data structures . */
+			val := &gnmipb.TypedValue{
+				Value: &gnmipb.TypedValue_JsonIetfVal{
+				JsonIetfVal: jv,
+				}}
+
+			spbv := &spb.Value{
+				Prefix:       c.prefix,
+				Path:         pathMap[v.Path],
+				Timestamp:    v.Timestamp,
+				SyncResponse: false,
+				Val:          val,
+			}
+			c.q.Put(Value{spbv})
+			log.V(6).Infof("Added spbv #%v", spbv)
+			
+			if v.SyncComplete {
+				c.q.Put(Value{
+					&spb.Value{
+						Timestamp:    time.Now().UnixNano(),
+						SyncResponse: true,
+					},
+				})
+			}
+		default:
+			log.V(1).Infof("Unknown data type %v for %s in queue", items[0], c)
+			fmt.Println(v)
+		}
+		
+	}
+	fmt.Println(resp)
+	fmt.Println(err)
+	
+}
 
 
 
