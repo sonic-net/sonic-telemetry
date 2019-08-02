@@ -11,6 +11,7 @@ import (
 	"time"
 	"fmt"
 	"reflect"
+	"translib"
 )
 
 const (
@@ -99,6 +100,14 @@ func (c *TranslClient) Set(path *gnmipb.Path, val *gnmipb.TypedValue, flagop int
 
 	return err
 }
+func enqueFatalMsgTranslib(c *TranslClient, msg string) {
+	c.q.Put(Value{
+		&spb.Value{
+			Timestamp: time.Now().UnixNano(),
+			Fatal:     msg,
+		},
+	})
+}
 
 func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	c.w = w
@@ -111,44 +120,71 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 		uris  []string
 		paths []*gnmipb.Path
 	}
-	ticker_map := make(map[uint64]*ticker_info)
+	ticker_map := make(map[int]*ticker_info)
 	var cases []reflect.SelectCase
-	cases_map := make(map[int]uint64)
+	cases_map := make(map[int]int)
 	var subscribe_mode gnmipb.SubscriptionMode
-
-	for _,sub := range subscribe.Subscription {
+	stringPaths := make([]string, len(subscribe.Subscription))
+	for i,sub := range subscribe.Subscription {
+		stringPaths[i] = c.path2URI[sub.Path]
+	}
+	subSupport,_ := translib.IsSubscribeSupported(stringPaths)
+	var onChangeSubs []string
+	
+	for i,sub := range subscribe.Subscription {
 		fmt.Println(sub.Mode, sub.SampleInterval)
 		switch sub.Mode {
 
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
-			// Until we get event subscription mode discovery from translib api, default to sample mode.
-			//Future API:
-			//if !IsSubscribeSupported(c.path2URI[sub.Path]) {
-			//	subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
-			//} else {
-			//	subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
-			//}
 
-			subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+			if subSupport[i].IsSupported {
+				if subSupport[i].PreferredType == translib.Sample {
+					subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+				} else if subSupport[i].PreferredType == translib.OnChange {
+					subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
+				}
+			} else {
+				subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+			}
 
 		case gnmipb.SubscriptionMode_ON_CHANGE:
-			subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
+			if subSupport[i].IsSupported {	
+				if (subSupport[i].MinInterval > 0) {
+					subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
+				}else{
+					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid subscribe path %v", stringPaths[i]))
+					return
+				}
+			} else {
+				enqueFatalMsgTranslib(c, fmt.Sprintf("ON_CHANGE Streaming mode invalid for %v", stringPaths[i]))
+				return
+			}
 		case gnmipb.SubscriptionMode_SAMPLE:
-			subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+			if (subSupport[i].MinInterval > 0) {
+				subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
+			}else{
+				enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid subscribe path %v", stringPaths[i]))
+				return
+			}
 		default:
 			log.V(1).Infof("Bad Subscription Mode for client %s ", c)
-			continue
+			enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Subscription Mode %d", sub.Mode))
+			return
 		}
-
+		fmt.Println("subscribe_mode:", subscribe_mode)
+		fmt.Println("min int:", subSupport[i].MinInterval*int(time.Second))
 		if subscribe_mode == gnmipb.SubscriptionMode_SAMPLE {
-			interval := sub.SampleInterval
+			interval := int(sub.SampleInterval)
 			if interval == 0 {
-				//For now set default interval to 5 seoncds until we get API to discover minimum interval per path.
-				interval = 5*1e9
-
+				interval = subSupport[i].MinInterval * int(time.Second)
+				fmt.Println("OK", interval, subSupport[i].MinInterval*int(time.Second))
 			} else {
-				interval = sub.SampleInterval
+				if interval < (subSupport[i].MinInterval*int(time.Second)) {
+					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Sample Interval %ds, minimum interval is %ds", interval/int(time.Second), subSupport[i].MinInterval))
+					return
+				}
 			}
+			//Reuse ticker for same sample intervals, otherwise create a new one.
 			if ticker_map[interval] == nil {
 				ticker_map[interval] = &ticker_info {
 					t: time.NewTicker(time.Duration(interval) * time.Nanosecond),
@@ -169,10 +205,20 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			//c.w.Add(1)
 			//c.synced.Add(1)
 			//go Subscribe(c.path2URI[sub.Path], q, stop)
-			return
+
+			onChangeSubs = append(onChangeSubs, c.path2URI[sub.Path])
 		}
+	}
+	
+	if len(onChangeSubs) > 0 {
+		c.w.Add(1)
+		c.synced.Add(1)
+		// go translib.Subscribe(onChangeSubs, q, stop)
+		go TranslProcessSubscribe(onChangeSubs, c.q, c.channel, c.w)
+		fmt.Println("OnChange:", onChangeSubs)
 
 	}
+	
 	cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(c.channel)})
 
 	for {
@@ -210,6 +256,8 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 		})
 	}
 }
+
+
 
 
 func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {

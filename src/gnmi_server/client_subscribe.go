@@ -158,6 +158,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	c.Close()
 	// Wait until all child go routines exited
 	c.w.Wait()
+	fmt.Println("HERE DONE")
 	return grpc.Errorf(codes.InvalidArgument, "%s", err)
 }
 
