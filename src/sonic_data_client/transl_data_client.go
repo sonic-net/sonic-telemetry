@@ -143,7 +143,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
 
-			if subSupport[i].IsSupported {
+			if subSupport[i].IsOnChangeSupported {
 				if subSupport[i].PreferredType == translib.Sample {
 					subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
 				} else if subSupport[i].PreferredType == translib.OnChange {
@@ -154,7 +154,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			}
 
 		case gnmipb.SubscriptionMode_ON_CHANGE:
-			if subSupport[i].IsSupported {	
+			if subSupport[i].IsOnChangeSupported {	
 				if (subSupport[i].MinInterval > 0) {
 					subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
 				}else{
@@ -209,8 +209,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			onChangeSubsString = append(onChangeSubsString, c.path2URI[sub.Path])
 			onChangeSubsgNMI = append(onChangeSubsgNMI, sub.Path)
 			onChangeMap[c.path2URI[sub.Path]] = sub.Path
-			//For testing
-			sub.HeartbeatInterval = 20*uint64(time.Second)
+			fmt.Println("HB INT: ", sub.HeartbeatInterval)
 			if sub.HeartbeatInterval > 0 {
 				if int(sub.HeartbeatInterval) < subSupport[i].MinInterval * int(time.Second) {
 					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Heartbeat Interval %ds, minimum interval is %ds", int(sub.HeartbeatInterval)/int(time.Second), subSupport[i].MinInterval))

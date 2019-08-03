@@ -79,6 +79,7 @@ var (
 	//Subscribe Options
 	streaming_type = flag.Uint("streaming_type", 0, "One of TARGET_DEFINED, ON_CHANGE or SAMPLE")
 	streaming_sample_int = flag.Uint("streaming_sample_interval", 0, "Streaming sample inteval seconds, 0 means lowest supported.")
+	heartbeat_int = flag.Uint("heartbeat_interval", 0, "Heartbeat inteval seconds.")
 )
 
 func init() {
@@ -283,6 +284,7 @@ func executeSubscribe(ctx context.Context) error {
 	}
 	q.Streaming_type = gpb.SubscriptionMode(*streaming_type)
 	q.Streaming_sample_int = uint64(*streaming_sample_int)
+	q.Heartbeat_int = uint64(*heartbeat_int)
 	for _, path := range *queryFlag {
 		query, err := parseQuery(path, cfg.Delimiter)
 		if err != nil {
