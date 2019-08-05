@@ -250,11 +250,14 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 		fmt.Println("tick", ttm, time.Now(), cases_map[chosen], ticker_map[cases_map[chosen]].uris)
 
 		for ii, uri := range ticker_map[cases_map[chosen]].uris {
+			var is_hb_tick bool
+			if onChangeMap[uri] != nil {
+				is_hb_tick = true
+			}
 			val, err := transutil.TranslProcessGet(uri, nil)
 			if err != nil {
 				return
 			}
-
 			spbv := &spb.Value{
 				Prefix:       c.prefix,
 				Path:         ticker_map[cases_map[chosen]].paths[ii],
@@ -262,15 +265,9 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				SyncResponse: false,
 				Val:          val,
 			}
+
 			c.q.Put(Value{spbv})
-			// if (valueCache[uri] == nil) and (onChangeMap[uri] == nil){
-				//Send Sync Message if first time sending a response.
-				// spbs := &spb.Value{
-				// 	Timestamp:    time.Now().UnixNano(),
-				// 	SyncResponse: true,
-				// }
-				// c.q.Put(Value{spbs})
-			// }
+			
 			valueCache[uri] = val
 			log.V(6).Infof("Added spbv #%v", spbv)
 		}
@@ -310,11 +307,18 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 		}
 		switch v := items[0].(type) {
 		case *translib.SubscribeResponse:
+
+			if v.IsTerminated {
+				//DB Connection or other backend error
+				enqueFatalMsgTranslib(c, "DB Connection Error")
+				close(c.channel)
+				return
+			}
+
 			var jv []byte
 			dst := new(bytes.Buffer)
 			json.Compact(dst, v.Payload)
 			jv = dst.Bytes()
-
 
 			/* Fill the values into GNMI data structures . */
 			val := &gnmipb.TypedValue{
@@ -334,12 +338,6 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 			
 			if v.SyncComplete {
 				c.synced.Done()
-				// c.q.Put(Value{
-				// 	&spb.Value{
-				// 		Timestamp:    time.Now().UnixNano(),
-				// 		SyncResponse: true,
-				// 	},
-				// })
 			}
 		default:
 			log.V(1).Infof("Unknown data type %v for %s in queue", items[0], c)
