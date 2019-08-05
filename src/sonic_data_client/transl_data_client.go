@@ -111,9 +111,9 @@ func enqueFatalMsgTranslib(c *TranslClient, msg string) {
 	})
 }
 type ticker_info struct{
-	t     *time.Ticker
-	uris  []string
-	paths []*gnmipb.Path
+	t              *time.Ticker
+	sub            *gnmipb.Subscription
+	heartbeat      bool
 }
 
 func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
@@ -123,7 +123,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	c.channel = stop
 
 
-	ticker_map := make(map[int]*ticker_info)
+	ticker_map := make(map[int][]*ticker_info)
 	var cases []reflect.SelectCase
 	cases_map := make(map[int]int)
 	var subscribe_mode gnmipb.SubscriptionMode
@@ -135,8 +135,8 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	var onChangeSubsString []string
 	var onChangeSubsgNMI []*gnmipb.Path
 	onChangeMap := make(map[string]*gnmipb.Path)
-	valueCache := make(map[string]*gnmipb.TypedValue)
-	
+	valueCache := make(map[string]string)
+
 	for i,sub := range subscribe.Subscription {
 		fmt.Println(sub.Mode, sub.SampleInterval)
 		switch sub.Mode {
@@ -178,12 +178,10 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			return
 		}
 		fmt.Println("subscribe_mode:", subscribe_mode)
-		fmt.Println("min int:", subSupport[i].MinInterval*int(time.Second))
 		if subscribe_mode == gnmipb.SubscriptionMode_SAMPLE {
 			interval := int(sub.SampleInterval)
 			if interval == 0 {
 				interval = subSupport[i].MinInterval * int(time.Second)
-				fmt.Println("OK", interval, subSupport[i].MinInterval*int(time.Second))
 			} else {
 				if interval < (subSupport[i].MinInterval*int(time.Second)) {
 					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Sample Interval %ds, minimum interval is %ds", interval/int(time.Second), subSupport[i].MinInterval))
@@ -203,19 +201,26 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				Val:          val,
 			}
 			c.q.Put(Value{spbv})
-			addTimer(c, ticker_map, &cases, cases_map, interval, sub.Path)
-			fmt.Println(ticker_map, cases, cases_map)
+			valueCache[c.path2URI[sub.Path]] = string(val.GetJsonIetfVal())
+			addTimer(c, ticker_map, &cases, cases_map, interval, sub, false)
+			//Heartbeat intervals are valid for SAMPLE in the case suppress_redundant is specified
+			if sub.SuppressRedundant && sub.HeartbeatInterval > 0 {
+				if int(sub.HeartbeatInterval) < subSupport[i].MinInterval * int(time.Second) {
+					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Heartbeat Interval %ds, minimum interval is %ds", int(sub.HeartbeatInterval)/int(time.Second), subSupport[i].MinInterval))
+					return
+				}
+				addTimer(c, ticker_map, &cases, cases_map, int(sub.HeartbeatInterval), sub, true)
+			}
 		} else if subscribe_mode == gnmipb.SubscriptionMode_ON_CHANGE {
 			onChangeSubsString = append(onChangeSubsString, c.path2URI[sub.Path])
 			onChangeSubsgNMI = append(onChangeSubsgNMI, sub.Path)
 			onChangeMap[c.path2URI[sub.Path]] = sub.Path
-			fmt.Println("HB INT: ", sub.HeartbeatInterval)
 			if sub.HeartbeatInterval > 0 {
 				if int(sub.HeartbeatInterval) < subSupport[i].MinInterval * int(time.Second) {
 					enqueFatalMsgTranslib(c, fmt.Sprintf("Invalid Heartbeat Interval %ds, minimum interval is %ds", int(sub.HeartbeatInterval)/int(time.Second), subSupport[i].MinInterval))
 					return
 				}
-				addTimer(c, ticker_map, &cases, cases_map, int(sub.HeartbeatInterval), sub.Path)
+				addTimer(c, ticker_map, &cases, cases_map, int(sub.HeartbeatInterval), sub, true)
 			}
 			
 		}
@@ -225,8 +230,6 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 		c.w.Add(1)
 		c.synced.Add(1)
 		go TranslSubscribe(onChangeSubsgNMI, onChangeSubsString, onChangeMap, c)
-		fmt.Println("OnChange:", onChangeSubsString)
-		fmt.Println("OnChange:", onChangeSubsgNMI)
 
 	}
 	// Wait until all data values corresponding to the path(s) specified
@@ -240,65 +243,67 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	cases = append(cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(c.channel)})
 
 	for {
-		chosen, ttm, ok := reflect.Select(cases)
+		chosen, _, ok := reflect.Select(cases)
 
 
 		if !ok {
-			fmt.Println("Done")
 			return
 		}
-		fmt.Println("tick", ttm, time.Now(), cases_map[chosen], ticker_map[cases_map[chosen]].uris)
 
-		for ii, uri := range ticker_map[cases_map[chosen]].uris {
-			var is_hb_tick bool
-			if onChangeMap[uri] != nil {
-				is_hb_tick = true
-			}
-			val, err := transutil.TranslProcessGet(uri, nil)
+		for _,tick := range ticker_map[cases_map[chosen]] {
+			fmt.Printf("tick, heartbeat: %t, path: %s", tick.heartbeat, c.path2URI[tick.sub.Path])
+			val, err := transutil.TranslProcessGet(c.path2URI[tick.sub.Path], nil)
 			if err != nil {
 				return
 			}
 			spbv := &spb.Value{
 				Prefix:       c.prefix,
-				Path:         ticker_map[cases_map[chosen]].paths[ii],
+				Path:         tick.sub.Path,
 				Timestamp:    time.Now().UnixNano(),
 				SyncResponse: false,
 				Val:          val,
 			}
-
-			c.q.Put(Value{spbv})
 			
-			valueCache[uri] = val
-			log.V(6).Infof("Added spbv #%v", spbv)
-		}
 
+			if (tick.sub.SuppressRedundant) && (!tick.heartbeat) && (string(val.GetJsonIetfVal()) == valueCache[c.path2URI[tick.sub.Path]]) {
+				log.V(6).Infof("Redundant Message Suppressed #%v", string(val.GetJsonIetfVal()))
+			} else {
+				c.q.Put(Value{spbv})
+				valueCache[c.path2URI[tick.sub.Path]] = string(val.GetJsonIetfVal())
+				log.V(6).Infof("Added spbv #%v", spbv)
+			}
+			
+			
+		}
 	}
 }
 
-func addTimer(c *TranslClient, ticker_map map[int]*ticker_info, cases *[]reflect.SelectCase, cases_map map[int]int, interval int, path *gnmipb.Path) {
+func addTimer(c *TranslClient, ticker_map map[int][]*ticker_info, cases *[]reflect.SelectCase, cases_map map[int]int, interval int, sub *gnmipb.Subscription, heartbeat bool) {
 	//Reuse ticker for same sample intervals, otherwise create a new one.
 	if ticker_map[interval] == nil {
-		ticker_map[interval] = &ticker_info {
+		ticker_map[interval] = make([]*ticker_info, 1, 1)
+		ticker_map[interval][0] = &ticker_info {
 			t: time.NewTicker(time.Duration(interval) * time.Nanosecond),
-			paths: []*gnmipb.Path{path},
-			uris: []string{c.path2URI[path]},
+			sub: sub,
+			heartbeat: heartbeat,
 		}
 		cases_map[len(*cases)] = interval
-		*cases = append(*cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ticker_map[interval].t.C)})
-
-	} else {
-		ticker_map[interval].paths = append(ticker_map[interval].paths, path)
-		ticker_map[interval].uris = append(ticker_map[interval].uris, c.path2URI[path])
+		*cases = append(*cases, reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ticker_map[interval][0].t.C)})
+	}else {
+		ticker_map[interval] = append(ticker_map[interval], &ticker_info {
+			t: ticker_map[interval][0].t,
+			sub: sub,
+			heartbeat: heartbeat,
+		})
 	}
+	
+
 }
 
 func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient) {
 	defer c.w.Done()
 	q := queue.NewPriorityQueue(1, false)
-	fmt.Println(q)
-	fmt.Println("HERE A")
-	resp, err := translib.Subscribe(stringPaths, q, c.channel)
-	fmt.Println("HERE B")
+	translib.Subscribe(stringPaths, q, c.channel)
 	for {
 		items, err := q.Get(1)
 		if err != nil {
@@ -341,13 +346,8 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 			}
 		default:
 			log.V(1).Infof("Unknown data type %v for %s in queue", items[0], c)
-			fmt.Println(v)
 		}
-		
 	}
-	fmt.Println(resp)
-	fmt.Println(err)
-	
 }
 
 
