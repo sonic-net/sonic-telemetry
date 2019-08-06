@@ -303,6 +303,7 @@ func addTimer(c *TranslClient, ticker_map map[int][]*ticker_info, cases *[]refle
 func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient) {
 	defer c.w.Done()
 	q := queue.NewPriorityQueue(1, false)
+	var sync_done bool
 	translib.Subscribe(stringPaths, q, c.channel)
 	for {
 		items, err := q.Get(1)
@@ -341,8 +342,10 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 			c.q.Put(Value{spbv})
 			log.V(6).Infof("Added spbv #%v", spbv)
 			
-			if v.SyncComplete {
+			if v.SyncComplete && !sync_done {
+				fmt.Println("SENDING SYNC")
 				c.synced.Done()
+				sync_done = true
 			}
 		default:
 			log.V(1).Infof("Unknown data type %v for %s in queue", items[0], c)
