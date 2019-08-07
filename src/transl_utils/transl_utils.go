@@ -165,16 +165,17 @@ func TranslProcessUpdate(uri string, t *gnmipb.TypedValue) error {
 /* Fetch the supported models. */
 func GetModels() []gnmipb.ModelData {
 
-	supportedModels := []gnmipb.ModelData{
-		gnmipb.ModelData{
-			Name: "openconfig-acl", Organization: "OC", Version: "1.1",
-		},
-		gnmipb.ModelData{
-			Name: "openconfig-vlan", Organization: "BRCM", Version: "1.0",
-		},
-	}
+	gnmiModels := make([]gnmipb.ModelData, 0, 1)
+	supportedModels, _ := translib.GetModels()
+	for _,model := range supportedModels {
+		gnmiModels = append(gnmiModels, gnmipb.ModelData{
+			Name: model.Name,
+			Organization: model.Org,
+			Version: model.Ver,
 
-	return supportedModels
+		})
+	}
+	return gnmiModels
 }
 
 func isTranslibSuccess(err error) bool {
