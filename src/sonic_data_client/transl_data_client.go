@@ -143,7 +143,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 
 		case gnmipb.SubscriptionMode_TARGET_DEFINED:
 
-			if subSupport[i].IsOnChangeSupported {
+			if subSupport[i].Err == nil && subSupport[i].IsOnChangeSupported {
 				if subSupport[i].PreferredType == translib.Sample {
 					subscribe_mode = gnmipb.SubscriptionMode_SAMPLE
 				} else if subSupport[i].PreferredType == translib.OnChange {
@@ -154,7 +154,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			}
 
 		case gnmipb.SubscriptionMode_ON_CHANGE:
-			if subSupport[i].IsOnChangeSupported {	
+			if subSupport[i].Err == nil && subSupport[i].IsOnChangeSupported {
 				if (subSupport[i].MinInterval > 0) {
 					subscribe_mode = gnmipb.SubscriptionMode_ON_CHANGE
 				}else{
@@ -225,7 +225,6 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 			
 		}
 	}
-	
 	if len(onChangeSubsString) > 0 {
 		c.w.Add(1)
 		c.synced.Add(1)
