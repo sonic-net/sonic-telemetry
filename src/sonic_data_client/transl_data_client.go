@@ -228,7 +228,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 	if len(onChangeSubsString) > 0 {
 		c.w.Add(1)
 		c.synced.Add(1)
-		go TranslSubscribe(onChangeSubsgNMI, onChangeSubsString, onChangeMap, c)
+		go TranslSubscribe(onChangeSubsgNMI, onChangeSubsString, onChangeMap, c, subscribe.UpdatesOnly)
 
 	}
 	// Wait until all data values corresponding to the path(s) specified
@@ -299,7 +299,7 @@ func addTimer(c *TranslClient, ticker_map map[int][]*ticker_info, cases *[]refle
 
 }
 
-func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient) {
+func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient, updates_only bool) {
 	defer c.w.Done()
 	q := queue.NewPriorityQueue(1, false)
 	var sync_done bool
@@ -338,7 +338,14 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 				SyncResponse: false,
 				Val:          val,
 			}
-			c.q.Put(Value{spbv})
+
+			//Don't send initial update with full object if user wants updates only.
+			if updates_only && !sync_done {
+				log.V(1).Infof("Msg suppressed due to updates_only")
+			} else {
+				c.q.Put(Value{spbv})
+			}
+
 			log.V(6).Infof("Added spbv #%v", spbv)
 			
 			if v.SyncComplete && !sync_done {
