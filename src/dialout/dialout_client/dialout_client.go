@@ -5,13 +5,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	spb "github.com/Azure/sonic-telemetry/proto"
-	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	spb "proto"
+	sdc "sonic_data_client"
 	"github.com/go-redis/redis"
 	log "github.com/golang/glog"
 	gpb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
-	"github.com/workiva/go-datastructures/queue"
+	"github.com/Workiva/go-datastructures/queue"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -387,7 +387,7 @@ restart: //Remote server might go down, in that case we restart with next destin
 		select {
 		default:
 			cs.w.Add(1)
-			go cs.dc.StreamRun(cs.q, cs.stop, &cs.w)
+			go cs.dc.StreamRun(cs.q, cs.stop, &cs.w, nil)
 			time.Sleep(100 * time.Millisecond)
 			err = cs.send(pub)
 			if err != nil {
