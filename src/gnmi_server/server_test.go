@@ -1,4 +1,4 @@
-package gnmi
+package gnmi_server
 
 // server_test covers gNMI get, subscribe (stream and poll) test
 // Prerequisite: redis-server should be running.
@@ -313,7 +313,7 @@ func TestGnmiGet(t *testing.T) {
 	s := createServer(t)
 	go runServer(t, s)
 
-	prepareDb(t)
+	// prepareDb(t)
 
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -331,171 +331,186 @@ func TestGnmiGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
-	countersPortNameMapByte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
+	// fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
+	// countersPortNameMapByte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
 
-	fileName = "../testdata/COUNTERS:Ethernet68.txt"
-	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
+	// fileName = "../testdata/COUNTERS:Ethernet68.txt"
+	// countersEthernet68Byte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
 
-	fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd.txt"
-	countersEthernet68PfcwdByte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
+	// fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd.txt"
+	// countersEthernet68PfcwdByte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
 
-	fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd_alias.txt"
-	countersEthernet68PfcwdAliasByte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
+	// fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd_alias.txt"
+	// countersEthernet68PfcwdAliasByte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
-	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
+	// fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
+	// countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
-	countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
+	// fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
+	// countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
 
-	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
-	countersEthernetWildcardPfcwdByte, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		t.Fatalf("read file %v err: %v", fileName, err)
-	}
-
+	// fileName = "../testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
+	// countersEthernetWildcardPfcwdByte, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// 	t.Fatalf("read file %v err: %v", fileName, err)
+	// }
+   fileName := "../testdata/interfaces.json"
+   interfaces, err := ioutil.ReadFile(fileName)
+   if err != nil {
+           t.Fatalf("read file %v err: %v", fileName, err)
+   }
 	tds := []struct {
 		desc        string
 		pathTarget  string
 		textPbPath  string
 		wantRetCode codes.Code
 		wantRespVal interface{}
-	}{{
-		desc:       "Test non-existing path Target",
-		pathTarget: "MY_DB",
+	}{
+	// 	{
+	// 	desc:       "Test non-existing path Target",
+	// 	pathTarget: "MY_DB",
+	// 	textPbPath: `
+	// 		elem: <name: "MyCounters" >
+	// 	`,
+	// 	wantRetCode: codes.NotFound,
+	// }, {
+	// 	desc:       "Test empty path target",
+	// 	pathTarget: "",
+	// 	textPbPath: `
+	// 		elem: <name: "MyCounters" >
+	// 	`,
+	// 	wantRetCode: codes.Unimplemented,
+	// }, {
+	// 	desc:       "Get valid but non-existing node",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 		elem: <name: "MyCounters" >
+	// 	`,
+	// 	wantRetCode: codes.NotFound,
+	// }, {
+	// 	desc:       "Get COUNTERS_PORT_NAME_MAP",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 		elem: <name: "COUNTERS_PORT_NAME_MAP" >
+	// 	`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersPortNameMapByte,
+	// }, {
+	// 	desc:       "get COUNTERS:Ethernet68",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet68" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernet68Byte,
+	// }, {
+	// 	desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet68" >
+	// 				elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: "2",
+	// }, {
+	// 	desc:       "get COUNTERS:Ethernet68 Pfcwd",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet68" >
+	// 				elem: <name: "Pfcwd" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernet68PfcwdByte,
+	// }, {
+	// 	desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet68/1" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernet68Byte,
+	// }, {
+	// 	desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet68/1" >
+	// 				elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: "2",
+	// }, {
+	// 	desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet68/1" >
+	// 				elem: <name: "Pfcwd" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernet68PfcwdAliasByte,
+	// }, {
+	// 	desc:       "get COUNTERS:Ethernet*",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet*" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernetWildcardByte,
+	// }, {
+	// 	desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet*" >
+	// 				elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernetWildcardPfcByte,
+	// }, {
+	// 	desc:       "get COUNTERS:Ethernet* Pfcwd",
+	// 	pathTarget: "COUNTERS_DB",
+	// 	textPbPath: `
+	// 				elem: <name: "COUNTERS" >
+	// 				elem: <name: "Ethernet*" >
+	// 				elem: <name: "Pfcwd" >
+	// 			`,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: countersEthernetWildcardPfcwdByte,
+	// }
+	{
+		desc:       "Get OC Interfaces",
+		pathTarget: "OC_YANG",
 		textPbPath: `
-			elem: <name: "MyCounters" >
+			elem: <name: "openconfig-interfaces:interfaces" >
 		`,
-		wantRetCode: codes.NotFound,
-	}, {
-		desc:       "Test empty path target",
-		pathTarget: "",
-		textPbPath: `
-			elem: <name: "MyCounters" >
-		`,
-		wantRetCode: codes.Unimplemented,
-	}, {
-		desc:       "Get valid but non-existing node",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-			elem: <name: "MyCounters" >
-		`,
-		wantRetCode: codes.NotFound,
-	}, {
-		desc:       "Get COUNTERS_PORT_NAME_MAP",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-			elem: <name: "COUNTERS_PORT_NAME_MAP" >
-		`,
 		wantRetCode: codes.OK,
-		wantRespVal: countersPortNameMapByte,
-	}, {
-		desc:       "get COUNTERS:Ethernet68",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet68" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68Byte,
-	}, {
-		desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet68" >
-					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: "2",
-	}, {
-		desc:       "get COUNTERS:Ethernet68 Pfcwd",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet68" >
-					elem: <name: "Pfcwd" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68PfcwdByte,
-	}, {
-		desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet68/1" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68Byte,
-	}, {
-		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet68/1" >
-					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: "2",
-	}, {
-		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet68/1" >
-					elem: <name: "Pfcwd" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68PfcwdAliasByte,
-	}, {
-		desc:       "get COUNTERS:Ethernet*",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet*" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernetWildcardByte,
-	}, {
-		desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet*" >
-					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernetWildcardPfcByte,
-	}, {
-		desc:       "get COUNTERS:Ethernet* Pfcwd",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
-					elem: <name: "COUNTERS" >
-					elem: <name: "Ethernet*" >
-					elem: <name: "Pfcwd" >
-				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernetWildcardPfcwdByte,
-	}}
+		wantRespVal: interfaces,
+	},
+}
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
@@ -1394,14 +1409,49 @@ func runTestSubscribe(t *testing.T) {
 	}
 }
 
-func TestGnmiSubscribe(t *testing.T) {
+// func TestGnmiSubscribe(t *testing.T) {
+// 	s := createServer(t)
+// 	go runServer(t, s)
+
+// 	runTestSubscribe(t)
+
+// 	s.s.Stop()
+// }
+
+func TestCapabilities(t *testing.T) {
+	//t.Log("Start server")
 	s := createServer(t)
 	go runServer(t, s)
 
-	runTestSubscribe(t)
+	// prepareDb(t)
 
-	s.s.Stop()
+	//t.Log("Start gNMI client")
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
+
+	//targetAddr := "30.57.185.38:8080"
+	targetAddr := "127.0.0.1:8080"
+	conn, err := grpc.Dial(targetAddr, opts...)
+	if err != nil {
+		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
+	}
+	defer conn.Close()
+
+	gClient := pb.NewGNMIClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+    var req pb.CapabilityRequest
+    resp,err := gClient.Capabilities(ctx, &req)
+    if err != nil {
+        t.Fatalf("Failed to get Capabilities")
+    }
+    if len(resp.SupportedModels) == 0 {
+        t.Fatalf("No Supported Models found!")
+    }
+
 }
+
 
 func init() {
 	// Inform gNMI server to use redis tcp localhost connection
