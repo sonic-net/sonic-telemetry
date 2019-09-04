@@ -85,9 +85,10 @@ func createServer(t *testing.T) *Server {
 // runTestGet requests a path from the server by Get grpc call, and compares if
 // the return code and response value are expected.
 func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}) {
-
+	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) func(*testing.T){
+        //var retCodeOk bool
 	// Send request
+    return func(t *testing.T) {
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
@@ -105,44 +106,49 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 	if !ok {
 		t.Fatal("got a non-grpc error from grpc call")
 	}
+
 	if gotRetStatus.Code() != wantRetCode {
+		//retCodeOk = false
 		t.Log("err: ", err)
 		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
+	} else  {
+		//retCodeOk = true
 	}
-
-	// Check response value
-	var gotVal interface{}
-	if resp != nil {
-		notifs := resp.GetNotification()
-		if len(notifs) != 1 {
-			t.Fatalf("got %d notifications, want 1", len(notifs))
-		}
-		updates := notifs[0].GetUpdate()
-		if len(updates) != 1 {
-			t.Fatalf("got %d updates in the notification, want 1", len(updates))
-		}
-		val := updates[0].GetVal()
-		if val.GetJsonIetfVal() == nil {
-			gotVal, err = value.ToScalar(val)
-			if err != nil {
-				t.Errorf("got: %v, want a scalar value", gotVal)
+       // Check response value
+	if (valTest) {
+		var gotVal interface{}
+		if resp != nil {
+			notifs := resp.GetNotification()
+			if len(notifs) != 1 {
+				t.Fatalf("got %d notifications, want 1", len(notifs))
 			}
-		} else {
+			updates := notifs[0].GetUpdate()
+			if len(updates) != 1 {
+				t.Fatalf("got %d updates in the notification, want 1", len(updates))
+			}
+			val := updates[0].GetVal()
+			if val.GetJsonIetfVal() == nil {
+				gotVal, err = value.ToScalar(val)
+				if err != nil {
+					t.Errorf("got: %v, want a scalar value", gotVal)
+				}
+			} else {
 			// Unmarshal json data to gotVal container for comparison
-			if err := json.Unmarshal(val.GetJsonIetfVal(), &gotVal); err != nil {
-				t.Fatalf("error in unmarshaling IETF JSON data to json container: %v", err)
+				if err := json.Unmarshal(val.GetJsonIetfVal(), &gotVal); err != nil {
+					t.Fatalf("error in unmarshaling IETF JSON data to json container: %v", err)
+				}
+				var wantJSONStruct interface{}
+				if err := json.Unmarshal(wantRespVal.([]byte), &wantJSONStruct); err != nil {
+					t.Fatalf("error in unmarshaling IETF JSON data to json container: %v", err)
+				}
+				wantRespVal = wantJSONStruct
 			}
-			var wantJSONStruct interface{}
-			if err := json.Unmarshal(wantRespVal.([]byte), &wantJSONStruct); err != nil {
-				t.Fatalf("error in unmarshaling IETF JSON data to json container: %v", err)
-			}
-			wantRespVal = wantJSONStruct
+		}
+		if !reflect.DeepEqual(gotVal, wantRespVal) {
+			t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
 		}
 	}
-
-	if !reflect.DeepEqual(gotVal, wantRespVal) {
-		t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
-	}
+    }
 }
 
 func runServer(t *testing.T, s *Server) {
@@ -331,177 +337,21 @@ func TestGnmiGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
-	// countersPortNameMapByte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-
-	// fileName = "../testdata/COUNTERS:Ethernet68.txt"
-	// countersEthernet68Byte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-
-	// fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd.txt"
-	// countersEthernet68PfcwdByte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-
-	// fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd_alias.txt"
-	// countersEthernet68PfcwdAliasByte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-
-	// fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
-	// countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-
-	// fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
-	// countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-
-	// fileName = "../testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
-	// countersEthernetWildcardPfcwdByte, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// 	t.Fatalf("read file %v err: %v", fileName, err)
-	// }
-   fileName := "../testdata/interfaces.json"
-   interfaces, err := ioutil.ReadFile(fileName)
-   if err != nil {
+	fileName := "../testdata/interfaces.json"
+    //    interfaces, err := ioutil.ReadFile(fileName)
+        var emptyRespVal interface{}
+        if err != nil {
            t.Fatalf("read file %v err: %v", fileName, err)
-   }
+        }
 	tds := []struct {
 		desc        string
 		pathTarget  string
 		textPbPath  string
 		wantRetCode codes.Code
 		wantRespVal interface{}
+		valTest     bool
 	}{
-	// 	{
-	// 	desc:       "Test non-existing path Target",
-	// 	pathTarget: "MY_DB",
-	// 	textPbPath: `
-	// 		elem: <name: "MyCounters" >
-	// 	`,
-	// 	wantRetCode: codes.NotFound,
-	// }, {
-	// 	desc:       "Test empty path target",
-	// 	pathTarget: "",
-	// 	textPbPath: `
-	// 		elem: <name: "MyCounters" >
-	// 	`,
-	// 	wantRetCode: codes.Unimplemented,
-	// }, {
-	// 	desc:       "Get valid but non-existing node",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 		elem: <name: "MyCounters" >
-	// 	`,
-	// 	wantRetCode: codes.NotFound,
-	// }, {
-	// 	desc:       "Get COUNTERS_PORT_NAME_MAP",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 		elem: <name: "COUNTERS_PORT_NAME_MAP" >
-	// 	`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersPortNameMapByte,
-	// }, {
-	// 	desc:       "get COUNTERS:Ethernet68",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet68" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernet68Byte,
-	// }, {
-	// 	desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet68" >
-	// 				elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: "2",
-	// }, {
-	// 	desc:       "get COUNTERS:Ethernet68 Pfcwd",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet68" >
-	// 				elem: <name: "Pfcwd" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernet68PfcwdByte,
-	// }, {
-	// 	desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet68/1" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernet68Byte,
-	// }, {
-	// 	desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet68/1" >
-	// 				elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: "2",
-	// }, {
-	// 	desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet68/1" >
-	// 				elem: <name: "Pfcwd" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernet68PfcwdAliasByte,
-	// }, {
-	// 	desc:       "get COUNTERS:Ethernet*",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet*" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernetWildcardByte,
-	// }, {
-	// 	desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet*" >
-	// 				elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernetWildcardPfcByte,
-	// }, {
-	// 	desc:       "get COUNTERS:Ethernet* Pfcwd",
-	// 	pathTarget: "COUNTERS_DB",
-	// 	textPbPath: `
-	// 				elem: <name: "COUNTERS" >
-	// 				elem: <name: "Ethernet*" >
-	// 				elem: <name: "Pfcwd" >
-	// 			`,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: countersEthernetWildcardPfcwdByte,
-	// }
-	{
+      /*  {
 		desc:       "Get OC Interfaces",
 		pathTarget: "OC_YANG",
 		textPbPath: `
@@ -509,12 +359,63 @@ func TestGnmiGet(t *testing.T) {
 		`,
 		wantRetCode: codes.OK,
 		wantRespVal: interfaces,
+                valTest:true,
 	},
+     */ {
+                desc:       "Get OC Platform",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-platform:components" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC System State",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-system:system/state" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC System CPU",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-system:system/cpus" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC System memory",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-system:system/memory" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC System processes",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-system:system/processes" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
 }
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
-			runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal)
+			runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
 		})
 	}
 	s.s.Stop()
