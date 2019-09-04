@@ -8,8 +8,8 @@ BUILD_DIR=build
 GO_DEP_PATH=$(abspath .)/$(BUILD_DIR)
 GO_MGMT_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
-CVL_GOPATH=$(GO_MGMT_PATH):$(GO_MGMT_PATH)/gopkgs:$(GO_MGMT_PATH)/src/cvl/build
-GOPATH = /tmp/go:$(CVL_GOPATH):$(GO_DEP_PATH):$(GO_MGMT_PATH):$(GO_SONIC_TELEMETRY_PATH):$(TELEM_DIR)
+CVL_GOPATH=$(GO_MGMT_PATH)/gopkgs:$(GO_MGMT_PATH):$(GO_MGMT_PATH)/src/cvl/build
+GOPATH = $(CVL_GOPATH):$(GO_DEP_PATH):$(GO_MGMT_PATH):/tmp/go:$(GO_SONIC_TELEMETRY_PATH):$(TELEM_DIR)
 INSTALL := /usr/bin/install
 
 .PHONY : all precheck deps telemetry clean cleanall check install deinstall
@@ -49,7 +49,6 @@ telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gn
 
 $(BUILD_DIR)/telemetry:src/telemetry/telemetry.go
 	@echo "Building $@"
-	make -C $(GO_MGMT_PATH)
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
 $(BUILD_DIR)/dialout_client_cli:src/dialout/dialout_client_cli/dialout_client_cli.go
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
@@ -62,11 +61,9 @@ $(BUILD_DIR)/gnmi_cli:src/gnmi_clients/gnmi_cli.go
 
 clean:
 	rm -rf $(BUILD_DIR)/telemetry
-	make -C  $(GO_MGMT_PATH) clean
 
 cleanall:
 	rm -rf $(BUILD_DIR)
-	make -C  $(GO_MGMT_PATH) cleanall
 
 check:
 	-$(GO) test -v ${GOPATH}/src/gnmi_server
@@ -76,7 +73,7 @@ install:
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_get $(DESTDIR)/usr/sbin/gnmi_get
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_set $(DESTDIR)/usr/sbin/gnmi_set
-	$(INSTALL) -D src/gnmi_clients/gnmi_cli $(DESTDIR)/usr/sbin/gnmi_cli
+	#$(INSTALL) -D src/gnmi_clients/gnmi_cli $(DESTDIR)/usr/sbin/gnmi_cli
 
 	mkdir -p $(DESTDIR)/usr/bin/
 	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/sbin
