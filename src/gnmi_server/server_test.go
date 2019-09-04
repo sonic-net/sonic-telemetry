@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
+	"fmt"
 	// Register supported client types.
 	spb "proto"
 	sdc "sonic_data_client"
@@ -83,7 +84,7 @@ func createServer(t *testing.T) *Server {
 }
 
 // runTestGet requests a path from the server by Get grpc call, and compares if
-// the return code and response value are expected.
+// the return code is OK.
 func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
 	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) func(*testing.T){
         //var retCodeOk bool
@@ -151,8 +152,47 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
     }
 }
 
+func extractJSON(val string) []byte {
+    jsonBytes, err := ioutil.ReadFile(val)
+    if err == nil {
+        return jsonBytes
+    }
+    return []byte(val)
+}
+
+func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
+	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, subModule string,key string, val string, attributeData string) func(*testing.T){
+	// Send request
+    return func(t *testing.T) {
+	var pbPath pb.Path
+	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
+		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
+	}
+	//prefix := pb.Path{Target: pathTarget}
+        var v *pb.TypedValue
+        v = &pb.TypedValue{
+            Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
+
+	req := &pb.SetRequest{
+                Replace: []*pb.Update{&pb.Update{Path: &pb.Path{Elem: []*pb.PathElem{&pb.PathElem{Name: textPbPath},&pb.PathElem{Name: subModule, Key: map[string]string{key: val}},&pb.PathElem{Name: "config"} }}, Val: v}},
+}
+
+
+	resp, err := gClient.Set(ctx, req)
+	fmt.Println(resp)
+	gotRetStatus, ok := status.FromError(err)
+	if !ok {
+		t.Fatal("got a non-grpc error from grpc call")
+	}
+	if gotRetStatus.Code() != wantRetCode {
+		t.Log("err: ", err)
+		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
+	} else  {
+	}
+}
+}
 func runServer(t *testing.T, s *Server) {
-	//t.Log("Starting RPC server on address:", s.Address())
+        //t.Log("Starting RPC server on address:", s.Address())
 	err := s.Serve() // blocks until close
 	if err != nil {
 		t.Fatalf("gRPC server err: %v", err)
@@ -314,6 +354,66 @@ func prepareDb(t *testing.T) {
 	prepareConfigDb(t)
 }
 
+func TestGnmiSet(t *testing.T) {
+	//t.Log("Start server")
+	s := createServer(t)
+	go runServer(t, s)
+
+	// prepareDb(t)
+
+	//t.Log("Start gNMI client")
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
+
+	//targetAddr := "30.57.185.38:8080"
+	targetAddr := "127.0.0.1:8080"
+	conn, err := grpc.Dial(targetAddr, opts...)
+	if err != nil {
+		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
+	}
+	defer conn.Close()
+
+	gClient := pb.NewGNMIClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+        var emptyRespVal interface{}
+        tds := []struct {
+                desc        string
+                pathTarget  string
+                textPbPath  string
+                wantRetCode codes.Code
+                wantRespVal interface{}
+                subModule   string
+                subModuleVal  string
+                attributeData string
+                SubModuleKey string
+                SubModuleVal string
+	}{
+        {
+                desc: "Set OC Interface MTU",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-interfaces:interfaces" >
+                `,
+                subModule: "interface",
+		SubModuleKey: "name",
+                SubModuleVal: "Ethernet0",
+                attributeData: "../testdata/set_interface_mtu.json",
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+        },
+}
+
+	for _, td := range tds {
+		t.Run(td.desc, func(t *testing.T) {
+			runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.subModule, td.SubModuleKey, td.SubModuleVal, td.attributeData)
+		})
+	}
+	s.s.Stop()
+}
+
+
 func TestGnmiGet(t *testing.T) {
 	//t.Log("Start server")
 	s := createServer(t)
@@ -411,6 +511,57 @@ func TestGnmiGet(t *testing.T) {
                 wantRespVal: emptyRespVal,
                 valTest:false,
         },
+	        {
+                desc:       "Get OC Interfaces",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "/openconfig-interfaces:interfaces" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC Interface",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC Interface admin-status",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/admin-status" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC Interface admin-status",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/ifindex" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+        {
+                desc:       "Get OC Interface admin-status",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/mtu" >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                valTest:false,
+        },
+
 }
 
 	for _, td := range tds {
