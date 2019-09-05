@@ -89,7 +89,6 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) {
         //var retCodeOk bool
 	// Send request
-    
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
@@ -167,15 +166,15 @@ func extractJSON(val string) []byte {
 }
 
 func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, subModule string,key string, val string, attributeData string) {
+	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string) {
 	// Send request
-    
+
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
 	}
-	pbPath.Elem = append(pbPath.Elem, &pb.PathElem{Name: subModule, Key: map[string]string{key: val}})
-	// pbPath.Elem = append(pbPath.Elem, &pb.PathElem{Name: "config"})
+
+	pbPath.Elem = append(pbPath.Elem, &pb.PathElem{Name: "config"})
 
 	//prefix := pb.Path{Target: pathTarget}
         var v *pb.TypedValue
@@ -184,9 +183,7 @@ func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 
 	req := &pb.SetRequest{
                 Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
-}
-
-	
+	}
 	resp, err := gClient.Set(ctx, req)
 	fmt.Println(resp)
 	gotRetStatus, ok := status.FromError(err)
@@ -200,6 +197,7 @@ func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 	}
 
 }
+
 func runServer(t *testing.T, s *Server) {
         //t.Log("Starting RPC server on address:", s.Address())
 	err := s.Serve() // blocks until close
@@ -393,30 +391,24 @@ func TestGnmiSet(t *testing.T) {
                 textPbPath  string
                 wantRetCode codes.Code
                 wantRespVal interface{}
-                subModule   string
-                subModuleVal  string
                 attributeData string
-                SubModuleKey string
-                SubModuleVal string
 	}{
         {
                 desc: "Set OC Interface MTU",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > >
                 `,
-                subModule: "interface",
-		SubModuleKey: "name",
-                SubModuleVal: "Ethernet0",
                 attributeData: "../testdata/set_interface_mtu.json",
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
         },
+
 }
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
-			runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.subModule, td.SubModuleKey, td.SubModuleVal, td.attributeData)
+			runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal,  td.attributeData)
 		})
 	}
 	s.s.Stop()
