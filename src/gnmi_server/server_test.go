@@ -89,7 +89,7 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) {
         //var retCodeOk bool
 	// Send request
-    
+
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
@@ -150,12 +150,11 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 			}
 		}
 
-		
+
 		if !reflect.DeepEqual(gotVal, wantRespVal) {
 			t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
 		}
 	}
-    
 }
 
 func extractJSON(val string) []byte {
@@ -168,23 +167,20 @@ func extractJSON(val string) []byte {
 
 func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
     textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string) {
-    // Send request
-    
+    // Send request 
     var pbPath pb.Path
     if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
         t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
     }
 
     //prefix := pb.Path{Target: pathTarget}
-        var v *pb.TypedValue
-        v = &pb.TypedValue{
-            Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
+    var v *pb.TypedValue
+    v = &pb.TypedValue{
+        Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
 
     req := &pb.SetRequest{
                 Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
-}
-
-    
+    }
     resp, err := gClient.Set(ctx, req)
     fmt.Println(resp)
     gotRetStatus, ok := status.FromError(err)
@@ -196,7 +192,6 @@ func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
         t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
     } else  {
     }
-
 }
 
 func runServer(t *testing.T, s *Server) {
@@ -367,13 +362,10 @@ func TestGnmiSet(t *testing.T) {
 	s := createServer(t)
 	go runServer(t, s)
 
-	// prepareDb(t)
-
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
 
-	//targetAddr := "30.57.185.38:8080"
 	targetAddr := "127.0.0.1:8080"
 	conn, err := grpc.Dial(targetAddr, opts...)
 	if err != nil {
@@ -424,19 +416,15 @@ func TestGnmiSet(t *testing.T) {
 	s.s.Stop()
 }
 
-
 func TestGnmiGet(t *testing.T) {
 	//t.Log("Start server")
 	s := createServer(t)
 	go runServer(t, s)
 
-	// prepareDb(t)
-
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
 
-	//targetAddr := "30.57.185.38:8080"
 	targetAddr := "127.0.0.1:8080"
 	conn, err := grpc.Dial(targetAddr, opts...)
 	if err != nil {
@@ -447,13 +435,12 @@ func TestGnmiGet(t *testing.T) {
 	gClient := pb.NewGNMIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	fileName := "../testdata/interfaces.json"
-    //    interfaces, err := ioutil.ReadFile(fileName)
-        var emptyRespVal interface{}
+	/*fileName := "../testdata/interfaces.json"
+        interfaces, err := ioutil.ReadFile(fileName)
         if err != nil {
            t.Fatalf("read file %v err: %v", fileName, err)
-        }
+        }*/
+        var emptyRespVal interface{}
 	tds := []struct {
 		desc        string
 		pathTarget  string
@@ -572,8 +559,7 @@ func TestGnmiGet(t *testing.T) {
                 wantRespVal: emptyRespVal,
                 valTest:false,
         },
-
-}
+        }
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
