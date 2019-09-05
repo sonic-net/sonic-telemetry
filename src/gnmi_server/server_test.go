@@ -89,6 +89,7 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) {
         //var retCodeOk bool
 	// Send request
+    
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
@@ -166,35 +167,35 @@ func extractJSON(val string) []byte {
 }
 
 func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string) {
-	// Send request
+    textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string) {
+    // Send request
+    
+    var pbPath pb.Path
+    if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
+        t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
+    }
 
-	var pbPath pb.Path
-	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
-		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
-	}
-
-	pbPath.Elem = append(pbPath.Elem, &pb.PathElem{Name: "config"})
-
-	//prefix := pb.Path{Target: pathTarget}
+    //prefix := pb.Path{Target: pathTarget}
         var v *pb.TypedValue
         v = &pb.TypedValue{
             Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
 
-	req := &pb.SetRequest{
+    req := &pb.SetRequest{
                 Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
-	}
-	resp, err := gClient.Set(ctx, req)
-	fmt.Println(resp)
-	gotRetStatus, ok := status.FromError(err)
-	if !ok {
-		t.Fatal("got a non-grpc error from grpc call")
-	}
-	if gotRetStatus.Code() != wantRetCode {
-		t.Log("err: ", err)
-		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
-	} else  {
-	}
+}
+
+    
+    resp, err := gClient.Set(ctx, req)
+    fmt.Println(resp)
+    gotRetStatus, ok := status.FromError(err)
+    if !ok {
+        t.Fatal("got a non-grpc error from grpc call")
+    }
+    if gotRetStatus.Code() != wantRetCode {
+        t.Log("err: ", err)
+        t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
+    } else  {
+    }
 
 }
 
@@ -403,8 +404,17 @@ func TestGnmiSet(t *testing.T) {
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
         },
-
-}
+	{
+                desc: "Set OC Interface IP",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                    elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > >
+                `,
+                attributeData: "../testdata/set_interface_ipv4.json",
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+        },
+	}
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
