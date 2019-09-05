@@ -103,10 +103,14 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 
 	resp, err := gClient.Get(ctx, req)
 	// Check return code
+	fmt.Println(resp)
 	gotRetStatus, ok := status.FromError(err)
 	if !ok {
 		t.Fatal("got a non-grpc error from grpc call")
 	}
+	// if resp == nil {
+	// 	t.Fatalf("nil response from gNMI")
+	// }
 
 	if gotRetStatus.Code() != wantRetCode {
 		//retCodeOk = false
@@ -145,6 +149,8 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 				wantRespVal = wantJSONStruct
 			}
 		}
+
+		
 		if !reflect.DeepEqual(gotVal, wantRespVal) {
 			t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
 		}
@@ -478,7 +484,7 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC System State",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-system:system/state" >
+                        elem: <name: "openconfig-system:system" > elem: <name: "state" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
@@ -488,7 +494,7 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC System CPU",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-system:system/cpus" >
+                        elem: <name: "openconfig-system:system" > elem: <name: "cpus" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
@@ -498,7 +504,7 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC System memory",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-system:system/memory" >
+                        elem: <name: "openconfig-system:system" > elem: <name: "memory" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
@@ -508,7 +514,7 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC System processes",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-system:system/processes" >
+                        elem: <name: "openconfig-system:system" > elem: <name: "processes" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
@@ -518,7 +524,7 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC Interfaces",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "/openconfig-interfaces:interfaces" >
+                        elem: <name: "openconfig-interfaces:interfaces" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
@@ -528,7 +534,7 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC Interface",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
@@ -538,27 +544,27 @@ func TestGnmiGet(t *testing.T) {
                 desc:       "Get OC Interface admin-status",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/admin-status" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "admin-status" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 valTest:false,
         },
         {
-                desc:       "Get OC Interface admin-status",
+                desc:       "Get OC Interface ifindex",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/ifindex" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "ifindex" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 valTest:false,
         },
         {
-                desc:       "Get OC Interface admin-status",
+                desc:       "Get OC Interface mtu",
                 pathTarget: "OC_YANG",
                 textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/mtu" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "mtu" >
                 `,
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
