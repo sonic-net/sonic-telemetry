@@ -182,7 +182,7 @@ func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 
 	
 	resp, err := gClient.Set(ctx, req)
-	
+	fmt.Println(resp)
 	gotRetStatus, ok := status.FromError(err)
 	if !ok {
 		t.Fatal("got a non-grpc error from grpc call")
