@@ -390,7 +390,13 @@ func TestGnmiSet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	fileName := "../testdata/get_interface.json"
+        interfaceData, err := ioutil.ReadFile(fileName)
+        if err != nil {
+           t.Fatalf("read file %v err: %v", fileName, err)
+        }
         var emptyRespVal interface{}
+
         tds := []struct {
                 desc            string
                 pathTarget      string
@@ -399,6 +405,7 @@ func TestGnmiSet(t *testing.T) {
                 wantRespVal     interface{}
                 attributeData   string
                 operation       op_t
+                valTest         bool
 	}{
         {
                 desc: "Set OC Interface MTU",
@@ -410,6 +417,7 @@ func TestGnmiSet(t *testing.T) {
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 operation: Replace,
+                valTest:false,
         },
 	{
                 desc: "Set OC Interface IP",
@@ -421,6 +429,17 @@ func TestGnmiSet(t *testing.T) {
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 operation: Replace,
+                valTest:false,
+        },
+        {
+                desc:       "Check OC Interface values set",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
+                `,
+                wantRetCode: codes.OK,
+                wantRespVal: interfaceData,
+                valTest:true,
         },
 	{
                 desc: "Delete OC Interface IP",
@@ -432,13 +451,22 @@ func TestGnmiSet(t *testing.T) {
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 operation: Delete,
+                valTest:false,
         },
 	}
 
 	for _, td := range tds {
-		t.Run(td.desc, func(t *testing.T) {
-			runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal,  td.attributeData, td.operation)
-		})
+                if td.valTest == true {
+		    // wait for 2 seconds for change to sync
+		    time.Sleep(2* time.Second)
+                    t.Run(td.desc, func(t *testing.T) {
+                            runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
+                    })
+                } else {
+                    t.Run(td.desc, func(t *testing.T) {
+                            runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal,  td.attributeData, td.operation)
+                    })
+                }
 	}
 	s.s.Stop()
 }
