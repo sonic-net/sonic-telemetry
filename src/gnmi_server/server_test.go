@@ -165,21 +165,34 @@ func extractJSON(val string) []byte {
     return []byte(val)
 }
 
+type op_t int
+const (
+    Delete op_t = 1
+    Replace op_t = 2
+)
+
 func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-    textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string) {
+    textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string, op op_t) {
     // Send request 
     var pbPath pb.Path
     if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
         t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
     }
+    req := &pb.SetRequest{}
+    switch op {
+        case Replace:
+            //prefix := pb.Path{Target: pathTarget}
+            var v *pb.TypedValue
+            v = &pb.TypedValue{
+                Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
 
-    //prefix := pb.Path{Target: pathTarget}
-    var v *pb.TypedValue
-    v = &pb.TypedValue{
-        Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
-
-    req := &pb.SetRequest{
-                Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
+            req = &pb.SetRequest{
+                        Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
+            }
+        case Delete:
+            req = &pb.SetRequest{
+                        Delete: []*pb.Path{&pbPath},
+            }
     }
     resp, err := gClient.Set(ctx, req)
     fmt.Println(resp)
@@ -379,12 +392,13 @@ func TestGnmiSet(t *testing.T) {
 
         var emptyRespVal interface{}
         tds := []struct {
-                desc        string
-                pathTarget  string
-                textPbPath  string
-                wantRetCode codes.Code
-                wantRespVal interface{}
-                attributeData string
+                desc            string
+                pathTarget      string
+                textPbPath      string
+                wantRetCode     codes.Code
+                wantRespVal     interface{}
+                attributeData   string
+                operation       op_t
 	}{
         {
                 desc: "Set OC Interface MTU",
@@ -395,6 +409,7 @@ func TestGnmiSet(t *testing.T) {
                 attributeData: "../testdata/set_interface_mtu.json",
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
+                operation: Replace,
         },
 	{
                 desc: "Set OC Interface IP",
@@ -405,12 +420,24 @@ func TestGnmiSet(t *testing.T) {
                 attributeData: "../testdata/set_interface_ipv4.json",
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
+                operation: Replace,
+        },
+	{
+                desc: "Delete OC Interface IP",
+                pathTarget: "OC_YANG",
+                textPbPath: `
+                    elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > > elem:<name: "ipv4" > elem:<name: "addresses" > elem:<name:"address" key:<key:"ip" value:"10.9.9.9" > >
+                `,
+                attributeData: "",
+                wantRetCode: codes.OK,
+                wantRespVal: emptyRespVal,
+                operation: Delete,
         },
 	}
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
-			runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal,  td.attributeData)
+			runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal,  td.attributeData, td.operation)
 		})
 	}
 	s.s.Stop()
