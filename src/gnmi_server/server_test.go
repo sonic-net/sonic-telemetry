@@ -86,10 +86,10 @@ func createServer(t *testing.T) *Server {
 // runTestGet requests a path from the server by Get grpc call, and compares if
 // the return code is OK.
 func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) func(*testing.T){
+	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) {
         //var retCodeOk bool
 	// Send request
-    return func(t *testing.T) {
+    
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
@@ -149,7 +149,7 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 			t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
 		}
 	}
-    }
+    
 }
 
 func extractJSON(val string) []byte {
@@ -161,25 +161,28 @@ func extractJSON(val string) []byte {
 }
 
 func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, subModule string,key string, val string, attributeData string) func(*testing.T){
+	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, subModule string,key string, val string, attributeData string) {
 	// Send request
-    return func(t *testing.T) {
+    
 	var pbPath pb.Path
 	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
 		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
 	}
+	pbPath.Elem = append(pbPath.Elem, &pb.PathElem{Name: subModule, Key: map[string]string{key: val}})
+	// pbPath.Elem = append(pbPath.Elem, &pb.PathElem{Name: "config"})
+
 	//prefix := pb.Path{Target: pathTarget}
         var v *pb.TypedValue
         v = &pb.TypedValue{
             Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
 
 	req := &pb.SetRequest{
-                Replace: []*pb.Update{&pb.Update{Path: &pb.Path{Elem: []*pb.PathElem{&pb.PathElem{Name: textPbPath},&pb.PathElem{Name: subModule, Key: map[string]string{key: val}},&pb.PathElem{Name: "config"} }}, Val: v}},
+                Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
 }
 
-
+	
 	resp, err := gClient.Set(ctx, req)
-	fmt.Println(resp)
+	
 	gotRetStatus, ok := status.FromError(err)
 	if !ok {
 		t.Fatal("got a non-grpc error from grpc call")
@@ -189,7 +192,7 @@ func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
 	} else  {
 	}
-}
+
 }
 func runServer(t *testing.T, s *Server) {
         //t.Log("Starting RPC server on address:", s.Address())
