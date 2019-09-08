@@ -4,8 +4,8 @@ Priority: optional
 Maintainer: Jipan Yang <jipan.yang@alibaba-inc.com>
 Build-Depends: debhelper (>= 8.0.0),
 Standards-Version: 3.9.3
-Homepage: https://github.com/Azure/sonic-telemetry
-XS-Go-Import-Path: github.com/Azure/sonic-telemetry
+Homepage: https://github.com/project-arlo/sonic-telemetry
+XS-Go-Import-Path: github.com/project-arlo/sonic-telemetry
 
 Package: sonic-telemetry
 Architecture: any
