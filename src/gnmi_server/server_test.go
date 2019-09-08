@@ -413,7 +413,11 @@ func TestGnmiSet(t *testing.T) {
                 textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > >
                 `,
+<<<<<<< HEAD:src/gnmi_server/server_test.go
                 attributeData: "testdata/set_interface_mtu.json",
+=======
+                attributeData: "../testdata/set_interface_mtu.json",
+>>>>>>> project-arlo-telemetry/brcm_poc:src/gnmi_server/server_test.go
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 operation: Replace,
@@ -425,7 +429,11 @@ func TestGnmiSet(t *testing.T) {
                 textPbPath: `
                     elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > >
                 `,
+<<<<<<< HEAD:src/gnmi_server/server_test.go
                 attributeData: "testdata/set_interface_ipv4.json",
+=======
+                attributeData: "../testdata/set_interface_ipv4.json",
+>>>>>>> project-arlo-telemetry/brcm_poc:src/gnmi_server/server_test.go
                 wantRetCode: codes.OK,
                 wantRespVal: emptyRespVal,
                 operation: Replace,
