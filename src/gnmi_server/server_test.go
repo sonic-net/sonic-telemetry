@@ -75,7 +75,7 @@ func createServer(t *testing.T) *Server {
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
-	cfg := &Config{Port: 8080}
+	cfg := &Config{Port: 8081}
 	s, err := NewServer(cfg, opts)
 	if err != nil {
 		t.Errorf("Failed to create gNMI server: %v", err)
@@ -372,14 +372,14 @@ func prepareDb(t *testing.T) {
 
 func TestGnmiSet(t *testing.T) {
 	//t.Log("Start server")
-	//s := createServer(t)
-	//go runServer(t, s)
+	s := createServer(t)
+	go runServer(t, s)
 
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
 
-	targetAddr := "127.0.0.1:8080"
+	targetAddr := "127.0.0.1:8081"
 	conn, err := grpc.Dial(targetAddr, opts...)
 	if err != nil {
 		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
@@ -468,19 +468,19 @@ func TestGnmiSet(t *testing.T) {
                     })
                 }
 	}
-	//s.s.Stop()
+	s.s.Stop()
 }
 
 func TestGnmiGet(t *testing.T) {
 	//t.Log("Start server")
-	//s := createServer(t)
-	//go runServer(t, s)
+	s := createServer(t)
+	go runServer(t, s)
 
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
 
-	targetAddr := "127.0.0.1:8080"
+	targetAddr := "127.0.0.1:8081"
 	conn, err := grpc.Dial(targetAddr, opts...)
 	if err != nil {
 		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
@@ -621,7 +621,7 @@ func TestGnmiGet(t *testing.T) {
 			runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
 		})
 	}
-	//s.s.Stop()
+	s.s.Stop()
 }
 
 type tablePathValue struct {
@@ -1447,7 +1447,7 @@ func runTestSubscribe(t *testing.T) {
 		time.Sleep(time.Millisecond * 1000)
 		t.Run(tt.desc, func(t *testing.T) {
 			q := tt.q
-			q.Addrs = []string{"127.0.0.1:8080"}
+			q.Addrs = []string{"127.0.0.1:8081"}
 			c := client.New()
 			defer c.Close()
 			var gotNoti []client.Notification
@@ -1524,8 +1524,8 @@ func runTestSubscribe(t *testing.T) {
 
 func TestCapabilities(t *testing.T) {
 	//t.Log("Start server")
-	//s := createServer(t)
-	//go runServer(t, s)
+	s := createServer(t)
+	go runServer(t, s)
 
 	// prepareDb(t)
 
@@ -1534,7 +1534,7 @@ func TestCapabilities(t *testing.T) {
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
 
 	//targetAddr := "30.57.185.38:8080"
-	targetAddr := "127.0.0.1:8080"
+	targetAddr := "127.0.0.1:8081"
 	conn, err := grpc.Dial(targetAddr, opts...)
 	if err != nil {
 		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
