@@ -1,1 +1,1 @@
-./gnmi_cli -insecure -logtostderr -address 127.0.0.1:8080 -query_type s -streaming_type 1 -q /openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/oper-status -v 0 -target OC-YANG
+./gnmi_cli -insecure -logtostderr -address 127.0.0.1:8080 -query_type s -streaming_type ON_CHANGE -q /openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/oper-status -v 0 -target OC-YANG
