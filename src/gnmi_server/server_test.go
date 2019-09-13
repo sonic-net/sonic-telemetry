@@ -390,11 +390,11 @@ func TestGnmiSet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fileName := "testdata/get_interface.json"
-        interfaceData, err := ioutil.ReadFile(fileName)
-        if err != nil {
-           t.Fatalf("read file %v err: %v", fileName, err)
-        }
+	// fileName := "testdata/get_interface.json"
+        // interfaceData, err := ioutil.ReadFile(fileName)
+        // if err != nil {
+           // t.Fatalf("read file %v err: %v", fileName, err)
+        // }
         var emptyRespVal interface{}
 
         tds := []struct {
@@ -431,16 +431,16 @@ func TestGnmiSet(t *testing.T) {
                 operation: Replace,
                 valTest:false,
         },
-        {
-                desc:       "Check OC Interface values set",
-                pathTarget: "OC_YANG",
-                textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
-                `,
-                wantRetCode: codes.OK,
-                wantRespVal: interfaceData,
-                valTest:true,
-        },
+        // {
+        //         desc:       "Check OC Interface values set",
+        //         pathTarget: "OC_YANG",
+        //         textPbPath: `
+        //                 elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
+        //         `,
+        //         wantRetCode: codes.OK,
+        //         wantRespVal: interfaceData,
+        //         valTest:true,
+        // },
 	{
                 desc: "Delete OC Interface IP",
                 pathTarget: "OC_YANG",
