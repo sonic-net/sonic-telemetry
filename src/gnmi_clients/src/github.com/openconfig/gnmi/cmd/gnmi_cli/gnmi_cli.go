@@ -293,7 +293,11 @@ func executeSubscribe(ctx context.Context) error {
 		return errors.New("-streaming_type must be one of: (TARGET_DEFINED, ON_CHANGE, SAMPLE)")
 	}
 	q.Streaming_sample_int = uint64(*streaming_sample_int)*uint64(time.Second)
-	q.Heartbeat_int = uint64(*heartbeat_int)*uint64(time.Second)
+	if *queryType == "streaming" || *queryType == "s" {
+		q.Heartbeat_int = uint64(*heartbeat_int)*uint64(time.Second)
+	} else if *heartbeat_int > 0  {
+		return errors.New("-heartbeat_interval only valid with streaming query type")
+	}
 	q.Suppress_redundant = bool(*suppress_redundant)
 	for _, path := range *queryFlag {
 		query, err := parseQuery(path, cfg.Delimiter)
