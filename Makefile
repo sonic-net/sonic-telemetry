@@ -8,6 +8,11 @@ DBDIR := /var/run/redis/sonic-db/
 all: sonic-telemetry
 
 sonic-telemetry:
+# copy sonic-telemetry source code into ${GOPATH}/src directory for building, otherwise it is not using committed codes
+	mkdir -p ${GOPATH}/src/github.com/Azure
+	rsync -a ../sonic-telemetry ${GOPATH}/src/github.com/Azure/
+	cd ${GOPATH}/src/github.com/Azure/sonic-telemetry
+# go get won't overwrite exsisting ${GOPATH}/src/sonic-telemetry directory and download other package
 	/usr/local/go/bin/go get -v github.com/Azure/sonic-telemetry/telemetry
 	/usr/local/go/bin/go get -v github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
 
