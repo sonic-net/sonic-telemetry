@@ -15,6 +15,17 @@ const (
 var sonic_db_config = make(map[string]interface{})
 var sonic_db_init bool
 
+func GetDbList()(map[string]interface{}) {
+    if !sonic_db_init {
+        DbInit()
+    }
+    db_list, ok := sonic_db_config["DATABASES"].(map[string]interface{})
+    if !ok {
+        panic(fmt.Errorf("DATABASES' is not valid key in database_config.json file!"))
+    }
+    return db_list
+}
+
 func GetDbInst(db_name string)(map[string]interface{}) {
     if !sonic_db_init {
         DbInit()
@@ -32,6 +43,18 @@ func GetDbInst(db_name string)(map[string]interface{}) {
         panic(fmt.Errorf("instance name '%v' is not valid in database_config.json file!", inst_name))
     }
     return inst.(map[string]interface{})
+}
+
+func GetDbSeparator(db_name string)(string) {
+    if !sonic_db_init {
+        DbInit()
+    }
+    db_list := GetDbList()
+    separator, ok := db_list[db_name].(map[string]interface{})["separator"]
+    if !ok {
+        panic(fmt.Errorf("'separator' is not a valid field in database_config.json file!"))
+    }
+    return separator.(string)
 }
 
 func GetDbSock(db_name string)(string) {

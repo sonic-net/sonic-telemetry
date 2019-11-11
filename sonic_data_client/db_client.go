@@ -303,15 +303,7 @@ func GetTableKeySeparator(target string) (string, error) {
 		return "", fmt.Errorf("%v not a valid path target", target)
 	}
 
-	var separator string
-	switch target {
-	case "CONFIG_DB":
-		separator = "|"
-	case "STATE_DB":
-		separator = "|"
-	default:
-		separator = ":"
-	}
+	var separator string = sdcfg.GetDbSeparator(target)
 	return separator, nil
 }
 
