@@ -57,6 +57,18 @@ func GetDbSeparator(db_name string)(string) {
     return separator.(string)
 }
 
+func GetDbId(db_name string)(int) {
+    if !sonic_db_init {
+        DbInit()
+    }
+    db_list := GetDbList()
+    id, ok := db_list[db_name].(map[string]interface{})["id"]
+    if !ok {
+        panic(fmt.Errorf("'id' is not a valid field in database_config.json file!"))
+    }
+    return int(id.(float64))
+}
+
 func GetDbSock(db_name string)(string) {
     if !sonic_db_init {
         DbInit()

@@ -642,7 +642,7 @@ func processTelemetryClientConfig(ctx context.Context, redisDb *redis.Client, ke
 // read configDB data for telemetry client and start publishing service for client subscription
 func DialOutRun(ctx context.Context, ccfg *ClientConfig) error {
 	clientCfg = ccfg
-	dbn := spb.Target_value["CONFIG_DB"]
+	dbn := sdcfg.GetDbId("CONFIG_DB")
 
 	var redisDb *redis.Client
 	if sdc.UseRedisLocalTcpPort == false {
@@ -650,7 +650,7 @@ func DialOutRun(ctx context.Context, ccfg *ClientConfig) error {
 			Network:     "unix",
 			Addr:        sdcfg.GetDbSock("CONFIG_DB"),
 			Password:    "", // no password set
-			DB:          int(dbn),
+			DB:          dbn,
 			DialTimeout: 0,
 		})
 	} else {
@@ -658,7 +658,7 @@ func DialOutRun(ctx context.Context, ccfg *ClientConfig) error {
 			Network:     "tcp",
 			Addr:        sdcfg.GetDbTcpAddr("CONFIG_DB"),
 			Password:    "", // no password set
-			DB:          int(dbn),
+			DB:          dbn,
 			DialTimeout: 0,
 		})
 	}

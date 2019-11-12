@@ -29,7 +29,6 @@ import (
 	"time"
 
 	sds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
-	spb "github.com/Azure/sonic-telemetry/proto"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
 	gclient "github.com/openconfig/gnmi/client/gnmi"
@@ -96,12 +95,11 @@ func runServer(t *testing.T, s *sds.Server) {
 }
 
 func getRedisClient(t *testing.T) *redis.Client {
-	dbn := spb.Target_value["COUNTERS_DB"]
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
 		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB"),
 		Password:    "", // no password set
-		DB:          int(dbn),
+		DB:          sdcfg.GetDbId("COUNTERS_DB"),
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
@@ -126,12 +124,11 @@ func exe_cmd(t *testing.T, cmd string) {
 }
 
 func getConfigDbClient(t *testing.T) *redis.Client {
-	dbn := spb.Target_value["CONFIG_DB"]
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
 		Addr:        sdcfg.GetDbTcpAddr("CONFIG_DB"),
 		Password:    "", // no password set
-		DB:          int(dbn),
+		DB:          sdcfg.GetDbId("CONFIG_DB"),
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
