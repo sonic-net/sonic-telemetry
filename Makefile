@@ -32,24 +32,46 @@ deps: $(BUILD_DIR)/.deps
 
 $(BUILD_DIR)/.deps:
 	touch $(BUILD_DIR)/.deps
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/Workiva/go-datastructures/queue
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/goyang
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/ygot/ygot
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/golang/glog
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/go-redis/redis
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/c9s/goprocinfo/linux
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/golang/protobuf/proto
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/openconfig/gnmi/proto/gnmi
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/Workiva/go-datastructures/queue; cd $(GO_DEP_PATH)/src/github.com/Workiva/go-datastructures; \
+git checkout f07cbe3f82ca2fd6e5ab94afce65fe43319f675f 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/Workiva/go-datastructures
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/goyang; cd $(GO_DEP_PATH)/src/github.com/openconfig/goyang; \
+git checkout 064f9690516f4f72db189f4690b84622c13b7296 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/openconfig/goyang
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/ygot/ygot; cd $(GO_DEP_PATH)/src/github.com/openconfig/ygot/ygot; \
+git checkout b14560776567988c832f9685af6f0e695ee95727 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/openconfig/ygot/ygot
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/golang/glog; cd $(GO_DEP_PATH)/src/github.com/golang/glog; \
+git checkout 23def4e6c14b4da8ac2ed8007337bc5eb5007998 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/golang/glog
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/go-redis/redis; cd $(GO_DEP_PATH)/src/github.com/go-redis/redis; \
+git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/go-redis/redis
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/c9s/goprocinfo/linux; cd $(GO_DEP_PATH)/src/github.com/c9s/goprocinfo/linux; \
+git checkout 0b2ad9ac246b05c4f5750721d0c4d230888cac5e 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/c9s/goprocinfo/linux
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/golang/protobuf/proto; cd $(GO_DEP_PATH)/github.com/golang/protobuf/proto; \
+git checkout ed6926b37a637426117ccab59282c3839528a700 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/golang/protobuf/proto
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u  github.com/openconfig/gnmi/proto/gnmi; cd $(GO_DEP_PATH)/github.com/openconfig/gnmi/proto/gnmi; \
+git checkout 89b2bf29312cda887da916d0f3a32c1624b7935f 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/openconfig/gnmi/proto/gnmi
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u  golang.org/x/net/context
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u  google.golang.org/grpc
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u google.golang.org/grpc/credentials
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u gopkg.in/go-playground/validator.v9
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/gorilla/mux
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/goyang
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/openconfig/ygot/ygot
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/google/gnxi/utils
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnxi/utils/xpath
-	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnmi/client/gnmi
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/gorilla/mux; cd $(GO_DEP_PATH)/src/github.com/gorilla/mux; \
+git checkout 49c01487a141b49f8ffe06277f3dca3ee80a55fa 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/gorilla/mux
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/google/gnxi/utils; cd $(GO_DEP_PATH)/github.com/google/gnxi/utils; \
+git checkout 6697a080bc2d3287d9614501a3298b3dcfea06df 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/google/gnxi/utils
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnxi/utils/xpath; cd $(GO_DEP_PATH)/github.com/jipanyang/gnxi/utils/xpath; \
+git checkout f0a90cca6fd0041625bcce561b71f849c9b65a8d 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/jipanyang/gnxi/utils/xpath
+	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/jipanyang/gnmi/client/gnmi; cd $(GO_DEP_PATH)/github.com/jipanyang/gnmi/client/gnmi; \
+git checkout cb4d464fa018c29eadab98281448000bee4dcc3d 2>/dev/null ; true; \
+GOPATH=$(GO_DEP_PATH) $(GO) install -v -gcflags "-N -l" $(GO_DEP_PATH)/src/github.com/jipanyang/gnmi/client/gnmi
 
 telemetry:$(BUILD_DIR)/telemetry $(BUILD_DIR)/dialout_client_cli $(BUILD_DIR)/gnmi_get $(BUILD_DIR)/gnmi_set $(BUILD_DIR)/gnmi_cli
 
