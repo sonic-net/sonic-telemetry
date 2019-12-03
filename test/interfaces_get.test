@@ -1,1 +1,0 @@
-./gnmi_get -xpath /openconfig-interfaces:interfaces -target_addr 127.0.0.1:8080 -insecure

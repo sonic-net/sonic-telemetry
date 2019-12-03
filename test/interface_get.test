@@ -1,1 +1,0 @@
-./gnmi_get -xpath /openconfig-interfaces:interfaces/interface[name=Ethernet0] -target_addr 127.0.0.1:8080 -insecure
