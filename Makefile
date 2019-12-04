@@ -84,8 +84,8 @@ patch: $(BUILD_DIR)/.patched
 $(BUILD_DIR)/.patched:
 	touch $(BUILD_DIR)/.patched
 	patch -p0 <patches/gnmi_cli.all.patch
-	patch -p1 -d build/src/github.com/openconfig <patches/ygot.patch
-	patch -p1 -d build/src/github.com/openconfig/goyang <patches/goyang.patch
+	patch -p1 -d build/src/github.com/openconfig <$(GO_MGMT_PATH)/ygot-modified-files/ygot.patch
+	patch -p1 -d build/src/github.com/openconfig/goyang <$(GO_MGMT_PATH)/goyang-modified-files/goyang.patch
 	@grep ParseJsonMap  $(GO_DEP_PATH)/src/github.com/antchfx/jsonquery/node.go || \
 	printf "\nfunc ParseJsonMap(jsonMap *map[string]interface{}) (*Node, error) {\n \
 		doc := &Node{Type: DocumentNode}\n \
@@ -100,6 +100,9 @@ $(BUILD_DIR)/telemetry:src/telemetry/telemetry.go
 	@echo "Building $@"
 	GOPATH=$(GOPATH) BUILD_GOPATH=$(GO_DEP_PATH) GO=$(GO) $(GO) generate translib/ocbinds
 	make -C $(GO_MGMT_PATH)/src/cvl/schema
+	make -C $(GO_MGMT_PATH)/models
+	make -C $(GO_MGMT_PATH)/models/yang
+	make -C $(GO_MGMT_PATH)/models/yang/sonic
 	GOPATH=$(GOPATH):$(GO_MGMT_PATH) $(GO) build cvl
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $^
 $(BUILD_DIR)/dialout_client_cli:src/dialout/dialout_client_cli/dialout_client_cli.go
@@ -136,7 +139,8 @@ install:
 
 	mkdir -p $(DESTDIR)/usr/bin/
 	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/sbin
-	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/models/yang
+	find $(GO_MGMT_PATH)/models -name '*.yang' -exec cp {} $(DESTDIR)/usr/models/yang/ \;
 
 deinstall:
 	rm $(DESTDIR)/usr/sbin/telemetry
