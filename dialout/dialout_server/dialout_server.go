@@ -3,7 +3,7 @@ package dialout_server
 import (
 	"errors"
 	"fmt"
-	spb "proto"
+	spb "github.com/Azure/sonic-telemetry/proto"
 	log "github.com/golang/glog"
 	"github.com/google/gnxi/utils"
 	gpb "github.com/openconfig/gnmi/proto/gnmi"

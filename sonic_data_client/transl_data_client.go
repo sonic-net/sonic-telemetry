@@ -3,7 +3,7 @@ package client
 
 import (
 	spb "proto"
-	transutil "transl_utils"
+	transutil "github.com/Azure/sonic-telemetry/transl_utils"
 	log "github.com/golang/glog"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/Workiva/go-datastructures/queue"
@@ -11,7 +11,7 @@ import (
 	"time"
 	"fmt"
 	"reflect"
-	"translib"
+	"github.com/Azure/sonic-telemetry/translib"
 	"bytes"
 	"encoding/json"
 )
