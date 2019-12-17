@@ -28,6 +28,7 @@ sonic-telemetry: go.mod
 	$(GO) get -x github.com/golang/glog@23def4e6c14b4da8ac2ed8007337bc5eb5007998
 	rm -rf vendor
 	$(GO) mod vendor
+	ln -s vendor src
 	cp -r $(GOPATH)/pkg/mod/github.com/openconfig/goyang@v0.0.0-20190924211109-064f9690516f/* vendor/github.com/openconfig/goyang/
 	cp -r $(GOPATH)/pkg/mod/github.com/openconfig/ygot@v0.6.1-0.20190723223108-724a6b18a922/* vendor/github.com/openconfig/ygot/
 	chmod -R u+w vendor
@@ -56,5 +57,7 @@ clean:
 	rm -rf cvl
 	rm -rf translib
 	rm -rf vendor
+	chmod -f -R u+w $(GOPATH)/pkg || true
 	rm -rf $(GOPATH)
+	rm -f src
 
