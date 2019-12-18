@@ -64,6 +64,7 @@ clean:
 	rm -f src
 
 
+
 install:
 	$(INSTALL) -D $(BUILD_DIR)/telemetry $(DESTDIR)/usr/sbin/telemetry
 	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
@@ -81,3 +82,5 @@ deinstall:
 	rm $(DESTDIR)/usr/sbin/dialout_client_cli
 	rm $(DESTDIR)/usr/sbin/gnmi_get
 	rm $(DESTDIR)/usr/sbin/gnmi_set
+
+
