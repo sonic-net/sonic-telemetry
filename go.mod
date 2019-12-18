@@ -14,6 +14,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/google/gnxi v0.0.0-20191016182648-6697a080bc2d
 	github.com/jipanyang/gnmi v0.0.0-20180820232453-cb4d464fa018
+	github.com/jipanyang/gnxi v0.0.0-20181221084354-f0a90cca6fd0 // indirect
 	github.com/kylelemons/godebug v1.1.0
 	github.com/onsi/ginkgo v1.10.3 // indirect
 	github.com/onsi/gomega v1.7.1 // indirect
@@ -22,6 +23,7 @@ require (
 	github.com/openconfig/ygot v0.6.1-0.20190723223108-724a6b18a922
 	github.com/pborman/getopt v0.0.0-20190409184431-ee0cd42419d3 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
+	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413 // indirect
 	golang.org/x/lint v0.0.0-20190313153728-d0100b6bd8b3 // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/text v0.3.0
