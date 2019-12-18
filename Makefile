@@ -50,8 +50,8 @@ sonic-telemetry: go.mod
 check:
 	sudo mkdir -p ${DBDIR}
 	sudo cp ./testdata/database_config.json ${DBDIR}
-# 	mkdir -p /usr/models/yang
-# 	find $(GO_MGMT_PATH)/models -name '*.yang' -exec cp {} /usr/models/yang/ \;
+	sudo mkdir -p /usr/models/yang || true
+	sudo find $(GO_MGMT_PATH)/models -name '*.yang' -exec cp {} /usr/models/yang/ \;
 	$(GO) test -mod=vendor -v github.com/Azure/sonic-telemetry/gnmi_server
 	$(GO) test -mod=vendor -v github.com/Azure/sonic-telemetry/dialout/dialout_client
 

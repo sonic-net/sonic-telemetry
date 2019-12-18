@@ -159,6 +159,15 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 
 	var target string
 	prefix := req.GetPrefix()
+	if prefix == nil {
+	       return nil, status.Error(codes.Unimplemented, "No target specified in prefix")
+	} else {
+	       target = prefix.GetTarget()
+	       if target == "" {
+	               return nil, status.Error(codes.Unimplemented, "Empty target data not supported yet")
+	       }
+	}
+
 	paths := req.GetPath()
         target = prefix.GetTarget()
 	log.V(5).Infof("GetRequest paths: %v", paths)
