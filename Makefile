@@ -16,11 +16,13 @@ TEST_FILES=$(wildcard *_test.go)
 TELEMETRY_TEST_DIR = $(GO_MGMT_PATH)/build/tests/gnmi_server
 TELEMETRY_TEST_BIN = $(TELEMETRY_TEST_DIR)/server.test
 
+.phony: mgmt-deps
+
 all: sonic-telemetry $(TELEMETRY_TEST_BIN)
 
 go.mod:
 	/usr/local/go/bin/go mod init github.com/Azure/sonic-telemetry
-sonic-telemetry: go.mod
+mgmt-deps:
 	rm -rf cvl
 	rm -rf translib
 	cp -r ../sonic-mgmt-framework/src/cvl ./
@@ -52,18 +54,17 @@ sonic-telemetry: go.mod
 	patch -d vendor/github.com/openconfig/goyang -p1 < ../sonic-mgmt-framework/goyang-modified-files/goyang.patch
 	patch -d vendor/github.com/openconfig -p1 < ../sonic-mgmt-framework/ygot-modified-files/ygot.patch
 	$(GO) generate github.com/Azure/sonic-telemetry/translib/ocbinds
-	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/telemetry
-	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
-
-	$(GO) install github.com/jipanyang/gnxi/gnmi_get
-	$(GO) install github.com/jipanyang/gnxi/gnmi_set
-	$(GO) install -mod=vendor github.com/openconfig/gnmi/cmd/gnmi_cli
-
-
 	make -C $(GO_MGMT_PATH)/src/cvl/schema
 	make -C $(GO_MGMT_PATH)/models
 	make -C $(GO_MGMT_PATH)/models/yang
 	make -C $(GO_MGMT_PATH)/models/yang/sonic
+
+sonic-telemetry: go.mod mgmt-deps
+	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/telemetry
+	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
+	$(GO) install github.com/jipanyang/gnxi/gnmi_get
+	$(GO) install github.com/jipanyang/gnxi/gnmi_set
+	$(GO) install -mod=vendor github.com/openconfig/gnmi/cmd/gnmi_cli
 
 check:
 	sudo mkdir -p ${DBDIR}
