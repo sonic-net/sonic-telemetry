@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	gnmi "gnmi_server"
-	testcert "testdata/tls"
+	ds "github.com/Azure/sonic-telemetry/dialout/dialout_server"
+	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 )
 
 var (
@@ -58,19 +58,6 @@ func main() {
 	tlsCfg := &tls.Config{
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
-		MinVersion:               tls.VersionTLS12,
-		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
-		PreferServerCipherSuites: true,
-		CipherSuites: []uint16{
-
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		},
-
 	}
 	if *allowNoClientCert {
 		// RequestClientCert will ask client for a certificate but won't
@@ -92,9 +79,9 @@ func main() {
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
-	cfg := &gnmi.Config{}
+	cfg := &ds.Config{}
 	cfg.Port = int64(*port)
-	s, err := gnmi.NewServer(cfg, opts)
+	s, err := ds.NewServer(cfg, opts)
 	if err != nil {
 		log.Errorf("Failed to create gNMI server: %v", err)
 		return

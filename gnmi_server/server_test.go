@@ -1,4 +1,4 @@
-package gnmi_server
+package gnmi
 
 // server_test covers gNMI get, subscribe (stream and poll) test
 // Prerequisite: redis-server should be running.
@@ -6,10 +6,11 @@ package gnmi_server
 import (
 	"crypto/tls"
 	"encoding/json"
-	testcert "testdata/tls"
+	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
 
+	"fmt"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/openconfig/gnmi/client"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -25,10 +26,9 @@ import (
 	"reflect"
 	"testing"
 	"time"
-	"fmt"
 	// Register supported client types.
-	spb "proto"
-	sdc "sonic_data_client"
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
+	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
 	gclient "github.com/jipanyang/gnmi/client/gnmi"
 )
 
@@ -84,10 +84,10 @@ func createServer(t *testing.T) *Server {
 }
 
 // runTestGet requests a path from the server by Get grpc call, and compares if
-// the return code is OK.
+// the return code and response value are expected.
 func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
 	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, valTest bool) {
-        //var retCodeOk bool
+	//var retCodeOk bool
 	// Send request
 
 	var pbPath pb.Path
@@ -103,24 +103,18 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 
 	resp, err := gClient.Get(ctx, req)
 	// Check return code
-	fmt.Println(resp)
 	gotRetStatus, ok := status.FromError(err)
 	if !ok {
 		t.Fatal("got a non-grpc error from grpc call")
 	}
-	// if resp == nil {
-	// 	t.Fatalf("nil response from gNMI")
-	// }
 
 	if gotRetStatus.Code() != wantRetCode {
-		//retCodeOk = false
 		t.Log("err: ", err)
 		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
-	} else  {
-		//retCodeOk = true
 	}
-       // Check response value
-	if (valTest) {
+	
+	// Check response value
+	if valTest {
 		var gotVal interface{}
 		if resp != nil {
 			notifs := resp.GetNotification()
@@ -138,7 +132,7 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 					t.Errorf("got: %v, want a scalar value", gotVal)
 				}
 			} else {
-			// Unmarshal json data to gotVal container for comparison
+				// Unmarshal json data to gotVal container for comparison
 				if err := json.Unmarshal(val.GetJsonIetfVal(), &gotVal); err != nil {
 					t.Fatalf("error in unmarshaling IETF JSON data to json container: %v", err)
 				}
@@ -150,7 +144,6 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 			}
 		}
 
-
 		if !reflect.DeepEqual(gotVal, wantRespVal) {
 			t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
 		}
@@ -158,57 +151,58 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 }
 
 func extractJSON(val string) []byte {
-    jsonBytes, err := ioutil.ReadFile(val)
-    if err == nil {
-        return jsonBytes
-    }
-    return []byte(val)
+	jsonBytes, err := ioutil.ReadFile(val)
+	if err == nil {
+		return jsonBytes
+	}
+	return []byte(val)
 }
 
 type op_t int
+
 const (
-    Delete op_t = 1
-    Replace op_t = 2
+	Delete  op_t = 1
+	Replace op_t = 2
 )
 
 func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTarget string,
-    textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string, op op_t) {
-    // Send request 
-    var pbPath pb.Path
-    if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
-        t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
-    }
-    req := &pb.SetRequest{}
-    switch op {
-        case Replace:
-            //prefix := pb.Path{Target: pathTarget}
-            var v *pb.TypedValue
-            v = &pb.TypedValue{
-                Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
+	textPbPath string, wantRetCode codes.Code, wantRespVal interface{}, attributeData string, op op_t) {
+	// Send request
+	var pbPath pb.Path
+	if err := proto.UnmarshalText(textPbPath, &pbPath); err != nil {
+		t.Fatalf("error in unmarshaling path: %v %v", textPbPath, err)
+	}
+	req := &pb.SetRequest{}
+	switch op {
+	case Replace:
+		//prefix := pb.Path{Target: pathTarget}
+		var v *pb.TypedValue
+		v = &pb.TypedValue{
+			Value: &pb.TypedValue_JsonIetfVal{JsonIetfVal: extractJSON(attributeData)}}
 
-            req = &pb.SetRequest{
-                        Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
-            }
-        case Delete:
-            req = &pb.SetRequest{
-                        Delete: []*pb.Path{&pbPath},
-            }
-    }
-    resp, err := gClient.Set(ctx, req)
-    fmt.Println(resp)
-    gotRetStatus, ok := status.FromError(err)
-    if !ok {
-        t.Fatal("got a non-grpc error from grpc call")
-    }
-    if gotRetStatus.Code() != wantRetCode {
-        t.Log("err: ", err)
-        t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
-    } else  {
-    }
+		req = &pb.SetRequest{
+			Replace: []*pb.Update{&pb.Update{Path: &pbPath, Val: v}},
+		}
+	case Delete:
+		req = &pb.SetRequest{
+			Delete: []*pb.Path{&pbPath},
+		}
+	}
+	resp, err := gClient.Set(ctx, req)
+	fmt.Println(resp)
+	gotRetStatus, ok := status.FromError(err)
+	if !ok {
+		t.Fatal("got a non-grpc error from grpc call")
+	}
+	if gotRetStatus.Code() != wantRetCode {
+		t.Log("err: ", err)
+		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
+	} else {
+	}
 }
 
 func runServer(t *testing.T, s *Server) {
-        //t.Log("Starting RPC server on address:", s.Address())
+	//t.Log("Starting RPC server on address:", s.Address())
 	err := s.Serve() // blocks until close
 	if err != nil {
 		t.Fatalf("gRPC server err: %v", err)
@@ -217,12 +211,11 @@ func runServer(t *testing.T, s *Server) {
 }
 
 func getRedisClient(t *testing.T) *redis.Client {
-	dbn := spb.Target_value["COUNTERS_DB"]
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
-		Addr:        "localhost:6379",
+		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB"),
 		Password:    "", // no password set
-		DB:          int(dbn),
+		DB:          sdcfg.GetDbId("COUNTERS_DB"),
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
@@ -233,12 +226,11 @@ func getRedisClient(t *testing.T) *redis.Client {
 }
 
 func getConfigDbClient(t *testing.T) *redis.Client {
-	dbn := spb.Target_value["CONFIG_DB"]
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
-		Addr:        "localhost:6379",
+		Addr:        sdcfg.GetDbTcpAddr("CONFIG_DB"),
 		Password:    "", // no password set
-		DB:          int(dbn),
+		DB:          sdcfg.GetDbId("CONFIG_DB"),
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
@@ -265,9 +257,9 @@ func loadConfigDB(t *testing.T, rclient *redis.Client, mpi map[string]interface{
 func prepareConfigDb(t *testing.T) {
 	rclient := getConfigDbClient(t)
 	defer rclient.Close()
-	rclient.FlushDb()
+	rclient.FlushDB()
 
-	fileName := "testdata/COUNTERS_PORT_ALIAS_MAP.txt"
+	fileName := "../testdata/COUNTERS_PORT_ALIAS_MAP.txt"
 	countersPortAliasMapByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -275,7 +267,7 @@ func prepareConfigDb(t *testing.T) {
 	mpi_alias_map := loadConfig(t, "", countersPortAliasMapByte)
 	loadConfigDB(t, rclient, mpi_alias_map)
 
-	fileName = "testdata/CONFIG_PFCWD_PORTS.txt"
+	fileName = "../testdata/CONFIG_PFCWD_PORTS.txt"
 	configPfcwdByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -287,7 +279,7 @@ func prepareConfigDb(t *testing.T) {
 func prepareDb(t *testing.T) {
 	rclient := getRedisClient(t)
 	defer rclient.Close()
-	rclient.FlushDb()
+	rclient.FlushDB()
 	//Enable keysapce notification
 	os.Setenv("PATH", "/usr/bin:/sbin:/bin:/usr/local/bin")
 	cmd := exec.Command("redis-cli", "config", "set", "notify-keyspace-events", "KEA")
@@ -296,7 +288,7 @@ func prepareDb(t *testing.T) {
 		t.Fatal("failed to enable redis keyspace notification ", err)
 	}
 
-	fileName := "testdata/COUNTERS_PORT_NAME_MAP.txt"
+	fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
 	countersPortNameMapByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -304,7 +296,7 @@ func prepareDb(t *testing.T) {
 	mpi_name_map := loadConfig(t, "COUNTERS_PORT_NAME_MAP", countersPortNameMapByte)
 	loadDB(t, rclient, mpi_name_map)
 
-	fileName = "testdata/COUNTERS_QUEUE_NAME_MAP.txt"
+	fileName = "../testdata/COUNTERS_QUEUE_NAME_MAP.txt"
 	countersQueueNameMapByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -312,7 +304,7 @@ func prepareDb(t *testing.T) {
 	mpi_qname_map := loadConfig(t, "COUNTERS_QUEUE_NAME_MAP", countersQueueNameMapByte)
 	loadDB(t, rclient, mpi_qname_map)
 
-	fileName = "testdata/COUNTERS:Ethernet68.txt"
+	fileName = "../testdata/COUNTERS:Ethernet68.txt"
 	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -321,7 +313,7 @@ func prepareDb(t *testing.T) {
 	mpi_counter := loadConfig(t, "COUNTERS:oid:0x1000000000039", countersEthernet68Byte)
 	loadDB(t, rclient, mpi_counter)
 
-	fileName = "testdata/COUNTERS:Ethernet1.txt"
+	fileName = "../testdata/COUNTERS:Ethernet1.txt"
 	countersEthernet1Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -331,7 +323,7 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// "Ethernet64:0": "oid:0x1500000000092a"  : queue counter, to work as data noise
-	fileName = "testdata/COUNTERS:oid:0x1500000000092a.txt"
+	fileName = "../testdata/COUNTERS:oid:0x1500000000092a.txt"
 	counters92aByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -340,7 +332,7 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// "Ethernet68:1": "oid:0x1500000000091c"  : queue counter, for COUNTERS/Ethernet68/Queue vpath test
-	fileName = "testdata/COUNTERS:oid:0x1500000000091c.txt"
+	fileName = "../testdata/COUNTERS:oid:0x1500000000091c.txt"
 	countersEeth68_1Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -349,7 +341,7 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// "Ethernet68:3": "oid:0x1500000000091e"  : lossless queue counter, for COUNTERS/Ethernet68/Pfcwd vpath test
-	fileName = "testdata/COUNTERS:oid:0x1500000000091e.txt"
+	fileName = "../testdata/COUNTERS:oid:0x1500000000091e.txt"
 	countersEeth68_3Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -358,7 +350,7 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// "Ethernet68:4": "oid:0x1500000000091f"  : lossless queue counter, for COUNTERS/Ethernet68/Pfcwd vpath test
-	fileName = "testdata/COUNTERS:oid:0x1500000000091f.txt"
+	fileName = "../testdata/COUNTERS:oid:0x1500000000091f.txt"
 	countersEeth68_4Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -390,83 +382,83 @@ func TestGnmiSet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// fileName := "testdata/get_interface.json"
-        // interfaceData, err := ioutil.ReadFile(fileName)
-        // if err != nil {
-           // t.Fatalf("read file %v err: %v", fileName, err)
-        // }
-        var emptyRespVal interface{}
+	// fileName := "../testdata/get_interface.json"
+	// interfaceData, err := ioutil.ReadFile(fileName)
+	// if err != nil {
+	// t.Fatalf("read file %v err: %v", fileName, err)
+	// }
+	var emptyRespVal interface{}
 
-        tds := []struct {
-                desc            string
-                pathTarget      string
-                textPbPath      string
-                wantRetCode     codes.Code
-                wantRespVal     interface{}
-                attributeData   string
-                operation       op_t
-                valTest         bool
+	tds := []struct {
+		desc          string
+		pathTarget    string
+		textPbPath    string
+		wantRetCode   codes.Code
+		wantRespVal   interface{}
+		attributeData string
+		operation     op_t
+		valTest       bool
 	}{
-        {
-                desc: "Set OC Interface MTU",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+		{
+			desc:       "Set OC Interface MTU",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > >
                 `,
-                attributeData: "testdata/set_interface_mtu.json",
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                operation: Replace,
-                valTest:false,
-        },
-	{
-                desc: "Set OC Interface IP",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			attributeData: "../testdata/set_interface_mtu.json",
+			wantRetCode:   codes.OK,
+			wantRespVal:   emptyRespVal,
+			operation:     Replace,
+			valTest:       false,
+		},
+		{
+			desc:       "Set OC Interface IP",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                     elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > >
                 `,
-                attributeData: "testdata/set_interface_ipv4.json",
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                operation: Replace,
-                valTest:false,
-        },
-        // {
-        //         desc:       "Check OC Interface values set",
-        //         pathTarget: "OC_YANG",
-        //         textPbPath: `
-        //                 elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
-        //         `,
-        //         wantRetCode: codes.OK,
-        //         wantRespVal: interfaceData,
-        //         valTest:true,
-        // },
-	{
-                desc: "Delete OC Interface IP",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			attributeData: "../testdata/set_interface_ipv4.json",
+			wantRetCode:   codes.OK,
+			wantRespVal:   emptyRespVal,
+			operation:     Replace,
+			valTest:       false,
+		},
+		// {
+		//         desc:       "Check OC Interface values set",
+		//         pathTarget: "OC_YANG",
+		//         textPbPath: `
+		//                 elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
+		//         `,
+		//         wantRetCode: codes.OK,
+		//         wantRespVal: interfaceData,
+		//         valTest:true,
+		// },
+		{
+			desc:       "Delete OC Interface IP",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                     elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > > elem:<name: "ipv4" > elem:<name: "addresses" > elem:<name:"address" key:<key:"ip" value:"9.9.9.9" > >
                 `,
-                attributeData: "",
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                operation: Delete,
-                valTest:false,
-        },
+			attributeData: "",
+			wantRetCode:   codes.OK,
+			wantRespVal:   emptyRespVal,
+			operation:     Delete,
+			valTest:       false,
+		},
 	}
 
 	for _, td := range tds {
-                if td.valTest == true {
-		    // wait for 2 seconds for change to sync
-		    time.Sleep(2* time.Second)
-                    t.Run(td.desc, func(t *testing.T) {
-                            runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
-                    })
-                } else {
-                    t.Run(td.desc, func(t *testing.T) {
-                            runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal,  td.attributeData, td.operation)
-                    })
-                }
+		if td.valTest == true {
+			// wait for 2 seconds for change to sync
+			time.Sleep(2 * time.Second)
+			t.Run(td.desc, func(t *testing.T) {
+				runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
+			})
+		} else {
+			t.Run(td.desc, func(t *testing.T) {
+				runTestSet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.attributeData, td.operation)
+			})
+		}
 	}
 	s.s.Stop()
 }
@@ -475,6 +467,8 @@ func TestGnmiGet(t *testing.T) {
 	//t.Log("Start server")
 	s := createServer(t)
 	go runServer(t, s)
+
+	prepareDb(t)
 
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -490,12 +484,50 @@ func TestGnmiGet(t *testing.T) {
 	gClient := pb.NewGNMIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	/*fileName := "testdata/interfaces.json"
-        interfaces, err := ioutil.ReadFile(fileName)
-        if err != nil {
-           t.Fatalf("read file %v err: %v", fileName, err)
-        }*/
-        var emptyRespVal interface{}
+
+	fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
+	countersPortNameMapByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet68.txt"
+	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd.txt"
+	countersEthernet68PfcwdByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd_alias.txt"
+	countersEthernet68PfcwdAliasByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
+	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
+	countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
+	countersEthernetWildcardPfcwdByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	var emptyRespVal interface{}
 	tds := []struct {
 		desc        string
 		pathTarget  string
@@ -503,118 +535,223 @@ func TestGnmiGet(t *testing.T) {
 		wantRetCode codes.Code
 		wantRespVal interface{}
 		valTest     bool
-	}{
-      /*  {
-		desc:       "Get OC Interfaces",
-		pathTarget: "OC_YANG",
+	}{{
+		desc:       "Test non-existing path Target",
+		pathTarget: "MY_DB",
 		textPbPath: `
-			elem: <name: "openconfig-interfaces:interfaces" >
+			elem: <name: "MyCounters" >
+		`,
+		wantRetCode: codes.NotFound,
+	}, {
+		desc:       "Test empty path target",
+		pathTarget: "",
+		textPbPath: `
+			elem: <name: "MyCounters" >
+		`,
+		wantRetCode: codes.Unimplemented,
+	}, {
+		desc:       "Get valid but non-existing node",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+			elem: <name: "MyCounters" >
+		`,
+		wantRetCode: codes.NotFound,
+	}, {
+		desc:       "Get COUNTERS_PORT_NAME_MAP",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+			elem: <name: "COUNTERS_PORT_NAME_MAP" >
 		`,
 		wantRetCode: codes.OK,
-		wantRespVal: interfaces,
-                valTest:true,
-	},
-     */ {
-                desc:       "Get OC Platform",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+		wantRespVal: countersPortNameMapByte,
+	}, {
+		desc:       "get COUNTERS:Ethernet68",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68Byte,
+	}, {
+		desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68" >
+					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: "2",
+	}, {
+		desc:       "get COUNTERS:Ethernet68 Pfcwd",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68" >
+					elem: <name: "Pfcwd" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68PfcwdByte,
+	}, {
+		desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68/1" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68Byte,
+	}, {
+		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68/1" >
+					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: "2",
+	}, {
+		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68/1" >
+					elem: <name: "Pfcwd" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68PfcwdAliasByte,
+	}, {
+		desc:       "get COUNTERS:Ethernet*",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet*" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernetWildcardByte,
+	}, {
+		desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet*" >
+					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernetWildcardPfcByte,
+	}, {
+		desc:       "get COUNTERS:Ethernet* Pfcwd",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet*" >
+					elem: <name: "Pfcwd" >
+				`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernetWildcardPfcwdByte,
+	}, {
+		desc:       "Get OC Platform",
+		pathTarget: "OC_YANG",
+		textPbPath: `
                         elem: <name: "openconfig-platform:components" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC System State",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+		wantRetCode: codes.OK,
+		wantRespVal: emptyRespVal,
+		valTest:     false,
+	},
+		{
+			desc:       "Get OC System State",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-system:system" > elem: <name: "state" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC System CPU",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC System CPU",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-system:system" > elem: <name: "cpus" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC System memory",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC System memory",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-system:system" > elem: <name: "memory" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC System processes",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC System processes",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-system:system" > elem: <name: "processes" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-	        {
-                desc:       "Get OC Interfaces",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC Interfaces",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC Interface",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC Interface",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC Interface admin-status",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC Interface admin-status",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "admin-status" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC Interface ifindex",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC Interface ifindex",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "ifindex" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        {
-                desc:       "Get OC Interface mtu",
-                pathTarget: "OC_YANG",
-                textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+		{
+			desc:       "Get OC Interface mtu",
+			pathTarget: "OC_YANG",
+			textPbPath: `
                         elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "mtu" >
                 `,
-                wantRetCode: codes.OK,
-                wantRespVal: emptyRespVal,
-                valTest:false,
-        },
-        }
+			wantRetCode: codes.OK,
+			wantRespVal: emptyRespVal,
+			valTest:     false,
+		},
+	}
 
 	for _, td := range tds {
 		t.Run(td.desc, func(t *testing.T) {
@@ -637,7 +774,7 @@ type tablePathValue struct {
 // runTestSubscribe subscribe DB path in stream mode or poll mode.
 // The return code and response value are compared with expected code and value.
 func runTestSubscribe(t *testing.T) {
-	fileName := "testdata/COUNTERS_PORT_NAME_MAP.txt"
+	fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
 	countersPortNameMapByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -650,7 +787,7 @@ func runTestSubscribe(t *testing.T) {
 	countersPortNameMapJsonUpdate["test_field"] = "test_value"
 
 	// for table key subscription
-	fileName = "testdata/COUNTERS:Ethernet68.txt"
+	fileName = "../testdata/COUNTERS:Ethernet68.txt"
 	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -670,7 +807,7 @@ func runTestSubscribe(t *testing.T) {
 	countersEthernet68JsonPfcUpdate["SAI_PORT_STAT_PFC_7_RX_PKTS"] = "4"
 
 	// for Ethernet68/Pfcwd subscription
-	fileName = "testdata/COUNTERS:Ethernet68:Pfcwd.txt"
+	fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd.txt"
 	countersEthernet68PfcwdByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -688,7 +825,7 @@ func runTestSubscribe(t *testing.T) {
 	countersEthernet68PfcwdPollUpdate := tmp4
 
 	// (use vendor alias) for Ethernet68/1 Pfcwd subscription
-	fileName = "testdata/COUNTERS:Ethernet68:Pfcwd_alias.txt"
+	fileName = "../testdata/COUNTERS:Ethernet68:Pfcwd_alias.txt"
 	countersEthernet68PfcwdAliasByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -705,7 +842,7 @@ func runTestSubscribe(t *testing.T) {
 	tmp5.(map[string]interface{})["Ethernet68/1:3"].(map[string]interface{})["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "1"
 	countersEthernet68PfcwdAliasPollUpdate := tmp5
 
-	fileName = "testdata/COUNTERS:Ethernet_wildcard_alias.txt"
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
 	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -720,7 +857,7 @@ func runTestSubscribe(t *testing.T) {
 	json.Unmarshal(countersEthernetWildcardByte, &countersFieldUpdate)
 	countersFieldUpdate["Ethernet68/1"] = countersEthernet68JsonPfcUpdate
 
-	fileName = "testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_PFC_7_RX_alias.txt"
 	countersEthernetWildcardPfcByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -738,7 +875,7 @@ func runTestSubscribe(t *testing.T) {
 	allPortPfcJsonUpdate["Ethernet68/1"] = pfc7Map
 
 	// for Ethernet*/Pfcwd subscription
-	fileName = "testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
 	countersEthernetWildPfcwdByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -752,7 +889,7 @@ func runTestSubscribe(t *testing.T) {
 	tmp6.(map[string]interface{})["Ethernet68/1:3"].(map[string]interface{})["PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED"] = "1"
 	countersEthernetWildPfcwdUpdate := tmp6
 
-	fileName = "testdata/COUNTERS:Ethernet_wildcard_Queues_alias.txt"
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Queues_alias.txt"
 	countersEthernetWildQueuesByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -760,7 +897,7 @@ func runTestSubscribe(t *testing.T) {
 	var countersEthernetWildQueuesJson interface{}
 	json.Unmarshal(countersEthernetWildQueuesByte, &countersEthernetWildQueuesJson)
 
-	fileName = "testdata/COUNTERS:Ethernet68:Queues.txt"
+	fileName = "../testdata/COUNTERS:Ethernet68:Queues.txt"
 	countersEthernet68QueuesByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -779,7 +916,7 @@ func runTestSubscribe(t *testing.T) {
 	countersEthernet68QueuesJsonUpdate["Ethernet68:1"] = eth68_1
 
 	// Alias translation for query Ethernet68/1:Queues
-	fileName = "testdata/COUNTERS:Ethernet68:Queues_alias.txt"
+	fileName = "../testdata/COUNTERS:Ethernet68:Queues_alias.txt"
 	countersEthernet68QueuesAliasByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
@@ -1513,14 +1650,14 @@ func runTestSubscribe(t *testing.T) {
 	}
 }
 
-// func TestGnmiSubscribe(t *testing.T) {
-// 	s := createServer(t)
-// 	go runServer(t, s)
+func TestGnmiSubscribe(t *testing.T) {
+	s := createServer(t)
+	go runServer(t, s)
 
-// 	runTestSubscribe(t)
+	runTestSubscribe(t)
 
-// 	s.s.Stop()
-// }
+	s.s.Stop()
+}
 
 func TestCapabilities(t *testing.T) {
 	//t.Log("Start server")
@@ -1545,17 +1682,16 @@ func TestCapabilities(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-    var req pb.CapabilityRequest
-    resp,err := gClient.Capabilities(ctx, &req)
-    if err != nil {
-        t.Fatalf("Failed to get Capabilities")
-    }
-    if len(resp.SupportedModels) == 0 {
-        t.Fatalf("No Supported Models found!")
-    }
+	var req pb.CapabilityRequest
+	resp, err := gClient.Capabilities(ctx, &req)
+	if err != nil {
+		t.Fatalf("Failed to get Capabilities")
+	}
+	if len(resp.SupportedModels) == 0 {
+		t.Fatalf("No Supported Models found!")
+	}
 
 }
-
 
 func init() {
 	// Inform gNMI server to use redis tcp localhost connection

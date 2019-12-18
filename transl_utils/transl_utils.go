@@ -7,7 +7,7 @@ import (
 	"fmt"
 	log "github.com/golang/glog"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	"translib"
+	"github.com/Azure/sonic-telemetry/translib"
 )
 
 func GnmiTranslFullPath(prefix, path *gnmipb.Path) *gnmipb.Path {

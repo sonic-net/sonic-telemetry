@@ -1,4 +1,4 @@
-package gnmi_server
+package gnmi
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	sdc "sonic_data_client"
+	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
@@ -159,6 +159,15 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 
 	var target string
 	prefix := req.GetPrefix()
+	if prefix == nil {
+	       return nil, status.Error(codes.Unimplemented, "No target specified in prefix")
+	} else {
+	       target = prefix.GetTarget()
+	       if target == "" {
+	               return nil, status.Error(codes.Unimplemented, "Empty target data not supported yet")
+	       }
+	}
+
 	paths := req.GetPath()
         target = prefix.GetTarget()
 	log.V(5).Infof("GetRequest paths: %v", paths)
