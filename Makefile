@@ -6,7 +6,10 @@ export PATH := $(PATH):$(GOPATH)/bin
 INSTALL := /usr/bin/install
 DBDIR := /var/run/redis/sonic-db/
 GO := /usr/local/go/bin/go
-
+TOP_DIR := $(abspath ..)
+GO_MGMT_PATH=$(TOP_DIR)/sonic-mgmt-framework
+BUILD_DIR := $(GOPATH)/bin
+export CVL_SCHEMA_PATH := $(GO_MGMT_PATH)/src/cvl/schema
 all: sonic-telemetry
 
 go.mod:
@@ -35,23 +38,22 @@ sonic-telemetry: go.mod
 	patch -d vendor/github.com/antchfx/jsonquery -p1 < ../sonic-mgmt-framework/patches/jsonquery.patch
 	patch -d vendor/github.com/openconfig/goyang -p1 < ../sonic-mgmt-framework/goyang-modified-files/goyang.patch
 	patch -d vendor/github.com/openconfig -p1 < ../sonic-mgmt-framework/ygot-modified-files/ygot.patch
-	go generate github.com/Azure/sonic-telemetry/translib/ocbinds
+	$(GO) generate github.com/Azure/sonic-telemetry/translib/ocbinds
 	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/telemetry
 	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
+
+	make -C $(GO_MGMT_PATH)/src/cvl/schema
+	make -C $(GO_MGMT_PATH)/models
+	make -C $(GO_MGMT_PATH)/models/yang
+	make -C $(GO_MGMT_PATH)/models/yang/sonic
 
 check:
 	sudo mkdir -p ${DBDIR}
 	sudo cp ./testdata/database_config.json ${DBDIR}
-	$(GO) test -v github.com/Azure/sonic-telemetry/gnmi_server
-	$(GO) test -v github.com/Azure/sonic-telemetry/dialout/dialout_client
-
-install:
-	$(INSTALL) -D ${GOPATH}/bin/telemetry $(DESTDIR)/usr/sbin/telemetry
-	$(INSTALL) -D ${GOPATH}/bin/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
-
-deinstall:
-	rm $(DESTDIR)/usr/sbin/telemetry
-	rm $(DESTDIR)/usr/sbin/dialout_client_cli
+# 	mkdir -p /usr/models/yang
+# 	find $(GO_MGMT_PATH)/models -name '*.yang' -exec cp {} /usr/models/yang/ \;
+	$(GO) test -mod=vendor -v github.com/Azure/sonic-telemetry/gnmi_server
+	$(GO) test -mod=vendor -v github.com/Azure/sonic-telemetry/dialout/dialout_client
 
 clean:
 	rm -rf cvl
@@ -61,3 +63,21 @@ clean:
 	rm -rf $(GOPATH)
 	rm -f src
 
+
+install:
+	$(INSTALL) -D $(BUILD_DIR)/telemetry $(DESTDIR)/usr/sbin/telemetry
+	$(INSTALL) -D $(BUILD_DIR)/dialout_client_cli $(DESTDIR)/usr/sbin/dialout_client_cli
+# 	$(INSTALL) -D $(BUILD_DIR)/gnmi_get $(DESTDIR)/usr/sbin/gnmi_get
+# 	$(INSTALL) -D $(BUILD_DIR)/gnmi_set $(DESTDIR)/usr/sbin/gnmi_set
+# 	$(INSTALL) -D $(BUILD_DIR)/gnmi_cli $(DESTDIR)/usr/sbin/gnmi_cli
+
+	mkdir -p $(DESTDIR)/usr/bin/
+	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(DESTDIR)/usr/sbin
+	mkdir -p $(DESTDIR)/usr/models/yang
+	find $(GO_MGMT_PATH)/models -name '*.yang' -exec cp {} $(DESTDIR)/usr/models/yang/ \;
+
+deinstall:
+	rm $(DESTDIR)/usr/sbin/telemetry
+	rm $(DESTDIR)/usr/sbin/dialout_client_cli
+	rm $(DESTDIR)/usr/sbin/gnmi_get
+	rm $(DESTDIR)/usr/sbin/gnmi_set
