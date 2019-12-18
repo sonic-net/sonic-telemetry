@@ -10,7 +10,13 @@ TOP_DIR := $(abspath ..)
 GO_MGMT_PATH=$(TOP_DIR)/sonic-mgmt-framework
 BUILD_DIR := $(GOPATH)/bin
 export CVL_SCHEMA_PATH := $(GO_MGMT_PATH)/src/cvl/schema
-all: sonic-telemetry
+
+SRC_FILES=$(shell find . -name '*.go' | grep -v '_test.go' | grep -v '/tests/')
+TEST_FILES=$(wildcard *_test.go)
+TELEMETRY_TEST_DIR = $(GO_MGMT_PATH)/build/tests/gnmi_server
+TELEMETRY_TEST_BIN = $(TELEMETRY_TEST_DIR)/server.test
+
+all: sonic-telemetry $(TELEMETRY_TEST_BIN)
 
 go.mod:
 	/usr/local/go/bin/go mod init github.com/Azure/sonic-telemetry
@@ -75,7 +81,10 @@ clean:
 	rm -rf $(GOPATH)
 	rm -f src
 
-
+$(TELEMETRY_TEST_BIN): $(TEST_FILES) $(SRC_FILES)
+	$(GO) test -mod=vendor -c -cover github.com/Azure/sonic-telemetry/gnmi_server -o $@
+	cp -r testdata $(TELEMETRY_TEST_DIR)
+	cp -r $(GO_MGMT_PATH)/src/cvl/schema $(TELEMETRY_TEST_DIR)
 
 install:
 	$(INSTALL) -D $(BUILD_DIR)/telemetry $(DESTDIR)/usr/sbin/telemetry
