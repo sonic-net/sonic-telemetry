@@ -1,4 +1,4 @@
-package gnmi_server
+package gnmi
 
 // server_test covers gNMI get, subscribe (stream and poll) test
 // Prerequisite: redis-server should be running.
