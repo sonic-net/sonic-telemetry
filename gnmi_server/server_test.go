@@ -10,7 +10,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
 
-	"fmt"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/openconfig/gnmi/client"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -30,6 +29,7 @@ import (
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
 	gclient "github.com/jipanyang/gnmi/client/gnmi"
+
 )
 
 var clientTypes = []string{gclient.Type}
@@ -60,6 +60,15 @@ func loadDB(t *testing.T, rclient *redis.Client, mpi map[string]interface{}) {
 			}
 		default:
 			t.Errorf("Invalid data for db: %v : %v", key, fv)
+		}
+	}
+}
+func loadDBNotStrict(t *testing.T, rclient *redis.Client, mpi map[string]interface{}) {
+	for key, fv := range mpi {
+		switch fv.(type) {
+		case map[string]interface{}:
+			rclient.HMSet(key, fv.(map[string]interface{})).Result()
+
 		}
 	}
 }
@@ -188,8 +197,7 @@ func runTestSet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 			Delete: []*pb.Path{&pbPath},
 		}
 	}
-	resp, err := gClient.Set(ctx, req)
-	fmt.Println(resp)
+	_, err := gClient.Set(ctx, req)
 	gotRetStatus, ok := status.FromError(err)
 	if !ok {
 		t.Fatal("got a non-grpc error from grpc call")
@@ -208,6 +216,21 @@ func runServer(t *testing.T, s *Server) {
 		t.Fatalf("gRPC server err: %v", err)
 	}
 	//t.Log("Exiting RPC server on address", s.Address())
+}
+
+func getRedisClientN(t *testing.T, n int) *redis.Client {
+	rclient := redis.NewClient(&redis.Options{
+		Network:     "tcp",
+		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB"),
+		Password:    "", // no password set
+		DB:          n,
+		DialTimeout: 0,
+	})
+	_, err := rclient.Ping().Result()
+	if err != nil {
+		t.Fatalf("failed to connect to redis server %v", err)
+	}
+	return rclient
 }
 
 func getRedisClient(t *testing.T) *redis.Client {
@@ -362,10 +385,39 @@ func prepareDb(t *testing.T) {
 	prepareConfigDb(t)
 }
 
+func prepareDbTranslib(t *testing.T) {
+	rclient := getRedisClient(t)
+	rclient.FlushDB()
+	rclient.Close()
+	
+	//Enable keysapce notification
+	os.Setenv("PATH", "/usr/bin:/sbin:/bin:/usr/local/bin")
+	cmd := exec.Command("redis-cli", "config", "set", "notify-keyspace-events", "KEA")
+	_, err := cmd.Output()
+	if err != nil {
+		t.Fatal("failed to enable redis keyspace notification ", err)
+	}
+
+	fileName := "../testdata/db_dump.json"
+	countersPortNameMapByte, err := ioutil.ReadFile(fileName)
+	var rj []map[string]interface{}
+	json.Unmarshal(countersPortNameMapByte, &rj)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	for n, v := range rj {
+		rclient := getRedisClientN(t, n)
+		loadDBNotStrict(t, rclient, v)
+		rclient.Close()
+	}
+}
+
 func TestGnmiSet(t *testing.T) {
 	//t.Log("Start server")
 	s := createServer(t)
 	go runServer(t, s)
+
+	prepareDbTranslib(t)
 
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -382,11 +434,6 @@ func TestGnmiSet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// fileName := "../testdata/get_interface.json"
-	// interfaceData, err := ioutil.ReadFile(fileName)
-	// if err != nil {
-	// t.Fatalf("read file %v err: %v", fileName, err)
-	// }
 	var emptyRespVal interface{}
 
 	tds := []struct {
@@ -403,7 +450,7 @@ func TestGnmiSet(t *testing.T) {
 			desc:       "Set OC Interface MTU",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet4" > >
                 `,
 			attributeData: "../testdata/set_interface_mtu.json",
 			wantRetCode:   codes.OK,
@@ -415,7 +462,7 @@ func TestGnmiSet(t *testing.T) {
 			desc:       "Set OC Interface IP",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                    elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > >
+                    elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet4" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > >
                 `,
 			attributeData: "../testdata/set_interface_ipv4.json",
 			wantRetCode:   codes.OK,
@@ -427,7 +474,7 @@ func TestGnmiSet(t *testing.T) {
 		//         desc:       "Check OC Interface values set",
 		//         pathTarget: "OC_YANG",
 		//         textPbPath: `
-		//                 elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
+		//                 elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet4" > >
 		//         `,
 		//         wantRetCode: codes.OK,
 		//         wantRespVal: interfaceData,
@@ -437,7 +484,7 @@ func TestGnmiSet(t *testing.T) {
 			desc:       "Delete OC Interface IP",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                    elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet0" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > > elem:<name: "ipv4" > elem:<name: "addresses" > elem:<name:"address" key:<key:"ip" value:"9.9.9.9" > >
+                    elem:<name:"openconfig-interfaces:interfaces" > elem:<name:"interface" key:<key:"name" value:"Ethernet4" > > elem:<name:"subinterfaces" > elem:<name:"subinterface" key:<key:"index" value:"0" > > elem:<name: "ipv4" > elem:<name: "addresses" > elem:<name:"address" key:<key:"ip" value:"9.9.9.9" > >
                 `,
 			attributeData: "",
 			wantRetCode:   codes.OK,
@@ -462,6 +509,8 @@ func TestGnmiSet(t *testing.T) {
 	}
 	s.s.Stop()
 }
+
+
 
 func TestGnmiGet(t *testing.T) {
 	//t.Log("Start server")
@@ -527,7 +576,6 @@ func TestGnmiGet(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	var emptyRespVal interface{}
 	tds := []struct {
 		desc        string
 		pathTarget  string
@@ -651,56 +699,100 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcwdByte,
-	}, {
-		desc:       "Get OC Platform",
-		pathTarget: "OC_YANG",
-		textPbPath: `
-                        elem: <name: "openconfig-platform:components" >
-                `,
-		wantRetCode: codes.OK,
-		wantRespVal: emptyRespVal,
-		valTest:     false,
 	},
-		{
-			desc:       "Get OC System State",
-			pathTarget: "OC_YANG",
-			textPbPath: `
-                        elem: <name: "openconfig-system:system" > elem: <name: "state" >
-                `,
-			wantRetCode: codes.OK,
-			wantRespVal: emptyRespVal,
-			valTest:     false,
-		},
-		{
-			desc:       "Get OC System CPU",
-			pathTarget: "OC_YANG",
-			textPbPath: `
-                        elem: <name: "openconfig-system:system" > elem: <name: "cpus" >
-                `,
-			wantRetCode: codes.OK,
-			wantRespVal: emptyRespVal,
-			valTest:     false,
-		},
-		{
-			desc:       "Get OC System memory",
-			pathTarget: "OC_YANG",
-			textPbPath: `
-                        elem: <name: "openconfig-system:system" > elem: <name: "memory" >
-                `,
-			wantRetCode: codes.OK,
-			wantRespVal: emptyRespVal,
-			valTest:     false,
-		},
-		{
-			desc:       "Get OC System processes",
-			pathTarget: "OC_YANG",
-			textPbPath: `
-                        elem: <name: "openconfig-system:system" > elem: <name: "processes" >
-                `,
-			wantRetCode: codes.OK,
-			wantRespVal: emptyRespVal,
-			valTest:     false,
-		},
+	}
+
+	for _, td := range tds {
+		t.Run(td.desc, func(t *testing.T) {
+			runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
+		})
+	}
+	s.s.Stop()
+}
+
+func TestGnmiGetTranslib(t *testing.T) {
+	//t.Log("Start server")
+	s := createServer(t)
+	go runServer(t, s)
+
+	prepareDbTranslib(t)
+
+	//t.Log("Start gNMI client")
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
+
+	targetAddr := "127.0.0.1:8081"
+	conn, err := grpc.Dial(targetAddr, opts...)
+	if err != nil {
+		t.Fatalf("Dialing to %q failed: %v", targetAddr, err)
+	}
+	defer conn.Close()
+
+	gClient := pb.NewGNMIClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var emptyRespVal interface{}
+	tds := []struct {
+		desc        string
+		pathTarget  string
+		textPbPath  string
+		wantRetCode codes.Code
+		wantRespVal interface{}
+		valTest     bool
+	}{
+
+		//These tests only work on the real switch platform, since they rely on files in the /proc and another running service
+	// 	{
+	// 	desc:       "Get OC Platform",
+	// 	pathTarget: "OC_YANG",
+	// 	textPbPath: `
+ //                        elem: <name: "openconfig-platform:components" >
+ //                `,
+	// 	wantRetCode: codes.OK,
+	// 	wantRespVal: emptyRespVal,
+	// 	valTest:     false,
+	// },
+	// 	{
+	// 		desc:       "Get OC System State",
+	// 		pathTarget: "OC_YANG",
+	// 		textPbPath: `
+ //                        elem: <name: "openconfig-system:system" > elem: <name: "state" >
+ //                `,
+	// 		wantRetCode: codes.OK,
+	// 		wantRespVal: emptyRespVal,
+	// 		valTest:     false,
+	// 	},
+	// 	{
+	// 		desc:       "Get OC System CPU",
+	// 		pathTarget: "OC_YANG",
+	// 		textPbPath: `
+ //                        elem: <name: "openconfig-system:system" > elem: <name: "cpus" >
+ //                `,
+	// 		wantRetCode: codes.OK,
+	// 		wantRespVal: emptyRespVal,
+	// 		valTest:     false,
+	// 	},
+	// 	{
+	// 		desc:       "Get OC System memory",
+	// 		pathTarget: "OC_YANG",
+	// 		textPbPath: `
+ //                        elem: <name: "openconfig-system:system" > elem: <name: "memory" >
+ //                `,
+	// 		wantRetCode: codes.OK,
+	// 		wantRespVal: emptyRespVal,
+	// 		valTest:     false,
+	// 	},
+	// 	{
+	// 		desc:       "Get OC System processes",
+	// 		pathTarget: "OC_YANG",
+	// 		textPbPath: `
+ //                        elem: <name: "openconfig-system:system" > elem: <name: "processes" >
+ //                `,
+	// 		wantRetCode: codes.OK,
+	// 		wantRespVal: emptyRespVal,
+	// 		valTest:     false,
+	// 	},
 		{
 			desc:       "Get OC Interfaces",
 			pathTarget: "OC_YANG",
@@ -715,7 +807,7 @@ func TestGnmiGet(t *testing.T) {
 			desc:       "Get OC Interface",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet4" > >
                 `,
 			wantRetCode: codes.OK,
 			wantRespVal: emptyRespVal,
@@ -725,7 +817,7 @@ func TestGnmiGet(t *testing.T) {
 			desc:       "Get OC Interface admin-status",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "admin-status" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet4" > > elem: <name: "state" > elem: <name: "admin-status" >
                 `,
 			wantRetCode: codes.OK,
 			wantRespVal: emptyRespVal,
@@ -735,7 +827,7 @@ func TestGnmiGet(t *testing.T) {
 			desc:       "Get OC Interface ifindex",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "ifindex" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet4" > > elem: <name: "state" > elem: <name: "ifindex" >
                 `,
 			wantRetCode: codes.OK,
 			wantRespVal: emptyRespVal,
@@ -745,7 +837,7 @@ func TestGnmiGet(t *testing.T) {
 			desc:       "Get OC Interface mtu",
 			pathTarget: "OC_YANG",
 			textPbPath: `
-                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet0" > > elem: <name: "state" > elem: <name: "mtu" >
+                        elem: <name: "openconfig-interfaces:interfaces" > elem: <name: "interface" key:<key:"name" value:"Ethernet4" > > elem: <name: "state" > elem: <name: "mtu" >
                 `,
 			wantRetCode: codes.OK,
 			wantRespVal: emptyRespVal,
