@@ -409,10 +409,11 @@ func TestGNMIDialOutPublish(t *testing.T) {
 		updates: []tablePathValue{{
 			dbName:    "COUNTERS_DB",
 			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+			tableKey:  "oid:0x1000000000003", // "Ethernet1": "oid:0x100000000003",
+			//tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
 			delimitor: ":",
 			field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-			value:     "3", // be changed to 3 from 2
+			value:     "1", // be changed to 3 from 2
 		}, {
 			dbName:    "COUNTERS_DB",
 			tableName: "COUNTERS",
