@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"os"
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
@@ -39,6 +40,14 @@ type Config struct {
 	// Port for the Server to listen on. If 0 or unset the Server will pick a port
 	// for this Server.
 	Port int64
+	ReadOnly bool
+}
+
+func CheckReadOnlyFile() bool {
+	if _, err := os.Stat("/etc/sonic/telemetry_readonly"); err == nil {
+		return true
+	}
+	return false
 }
 
 // New returns an initialized Server.
@@ -49,6 +58,10 @@ func NewServer(config *Config, opts []grpc.ServerOption) (*Server, error) {
 
 	s := grpc.NewServer(opts...)
 	reflection.Register(s)
+
+	if CheckReadOnlyFile() {
+		config.ReadOnly = true
+	}
 
 	srv := &Server{
 		s:       s,
@@ -208,8 +221,10 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	return &gnmipb.GetResponse{Notification: notifications}, nil
 }
 
-// Set method is not implemented. Refer to gnxi for examples with openconfig integration
 func (srv *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
+		if srv.config.ReadOnly {
+			return nil, grpc.Errorf(codes.Unimplemented, "Telemetry is in read-only mode")
+		}
 		var results []*gnmipb.UpdateResult
 		var err error
 
