@@ -1,5 +1,5 @@
-// +build !readonly
+// +build !readwrite
 
 package gnmi
 
-const READ_ONLY_MODE = false
+const READ_WRITE_MODE = false

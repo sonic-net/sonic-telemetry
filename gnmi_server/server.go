@@ -64,7 +64,7 @@ func NewServer(config *Config, opts []grpc.ServerOption) (*Server, error) {
 		return nil, fmt.Errorf("failed to open listener port %d: %v", srv.config.Port, err)
 	}
 	gnmipb.RegisterGNMIServer(srv.s, srv)
-	log.V(1).Infof("Created Server on %s", srv.Address())
+	log.V(1).Infof("Created Server on %s, read-only: %t", srv.Address(), !READ_WRITE_MODE)
 	return srv, nil
 }
 
@@ -209,7 +209,7 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 }
 
 func (srv *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
-		if READ_ONLY_MODE {
+		if !READ_WRITE_MODE {
 			return nil, grpc.Errorf(codes.Unimplemented, "Telemetry is in read-only mode")
 		}
 		var results []*gnmipb.UpdateResult
