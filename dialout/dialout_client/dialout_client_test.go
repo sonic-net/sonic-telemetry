@@ -194,6 +194,14 @@ func prepareDb(t *testing.T) {
 	mpi_name_map := loadConfig(t, "COUNTERS_PORT_NAME_MAP", countersPortNameMapByte)
 	loadDB(t, rclient, mpi_name_map)
 
+	fileName = "../../testdata/COUNTERS_QUEUE_NAME_MAP.txt"
+	countersQueueNameMapByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	mpi_qname_map := loadConfig(t, "COUNTERS_QUEUE_NAME_MAP", countersQueueNameMapByte)
+	loadDB(t, rclient, mpi_qname_map)
+
 	fileName = "../../testdata/COUNTERS:Ethernet68.txt"
 	countersEthernet68Byte, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -219,6 +227,33 @@ func prepareDb(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 	mpi_counter = loadConfig(t, "COUNTERS:oid:0x1500000000092a", counters92aByte)
+	loadDB(t, rclient, mpi_counter)
+
+	// "Ethernet68:1": "oid:0x1500000000091c"  : queue counter, for COUNTERS/Ethernet68/Queue vpath test
+	fileName = "../../testdata/COUNTERS:oid:0x1500000000091c.txt"
+	countersEeth68_1Byte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	mpi_counter = loadConfig(t, "COUNTERS:oid:0x1500000000091c", countersEeth68_1Byte)
+	loadDB(t, rclient, mpi_counter)
+
+	// "Ethernet68:3": "oid:0x1500000000091e"  : lossless queue counter, for COUNTERS/Ethernet68/Pfcwd vpath test
+	fileName = "../../testdata/COUNTERS:oid:0x1500000000091e.txt"
+	countersEeth68_3Byte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	mpi_counter = loadConfig(t, "COUNTERS:oid:0x1500000000091e", countersEeth68_3Byte)
+	loadDB(t, rclient, mpi_counter)
+
+	// "Ethernet68:4": "oid:0x1500000000091f"  : lossless queue counter, for COUNTERS/Ethernet68/Pfcwd vpath test
+	fileName = "../../testdata/COUNTERS:oid:0x1500000000091f.txt"
+	countersEeth68_4Byte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+	mpi_counter = loadConfig(t, "COUNTERS:oid:0x1500000000091f", countersEeth68_4Byte)
 	loadDB(t, rclient, mpi_counter)
 
 	// Load CONFIG_DB for alias translation
@@ -271,6 +306,37 @@ func compareUpdateValue(t *testing.T, want *pb.Notification, got *pb.Notificatio
 
 	if !reflect.DeepEqual(gotVal, wantRespVal) {
 		t.Errorf("got: %v (%T),\nwant %v (%T)", gotVal, gotVal, wantRespVal, wantRespVal)
+	}
+
+}
+
+func compareUpdatePath(t *testing.T, want *pb.Notification, got *pb.Notification) {
+	gotUpdates := got.GetUpdate()
+	if len(gotUpdates) != 1 {
+		t.Fatalf("got %d updates in the notification, want 1", len(gotUpdates))
+	}
+
+	wantUpdates := want.GetUpdate()
+	if len(wantUpdates) != 1 {
+		t.Fatalf("got %d updates in the notification, want 1", len(wantUpdates))
+	}
+
+	gotPath := gotUpdates[0].GetPath().GetElem()
+	wantPath := wantUpdates[0].GetPath().GetElem()
+
+	if len(gotPath) != len(wantPath) {
+		t.Errorf("got path: %v,\nwant path %v", gotPath, wantPath)
+		return
+	}
+	for i := range gotPath {
+		if gotPath[i].GetName() != wantPath[i].GetName() {
+			t.Errorf("got path: %v,\nwant path %v", gotPath, wantPath)
+			return
+		}
+		if !reflect.DeepEqual(gotPath[i].GetKey(), wantPath[i].GetKey()) {
+			t.Errorf("got path: %v,\nwant path %v", gotPath, wantPath)
+			return
+		}
 	}
 
 }
@@ -341,6 +407,14 @@ func TestGNMIDialOutPublish(t *testing.T) {
 
 	_ = countersEthernetWildcardPfcByte
 
+	fileName = "../../testdata/COUNTERS:Ethernet68:Queues.txt"
+	countersEthernet68QueuesByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	_ = countersEthernet68QueuesByte
+
 	clientCfg := ClientConfig{
 		SrcIp:          "",
 		RetryInterval:  5 * time.Second,
@@ -368,6 +442,8 @@ func TestGNMIDialOutPublish(t *testing.T) {
 		wantErr     bool
 		collector   string
 		wantRespVal interface{}
+
+		comparePath bool
 	}{{
 		desc: "DialOut to first collector in stream mode and synced",
 		cmds: []string{
@@ -442,6 +518,180 @@ func TestGNMIDialOutPublish(t *testing.T) {
 				},
 			},
 		},
+	}, {
+		desc: "DialOut to first collector in periodic mode (COUNTERS_PORT_NAME_MAP)",
+		cmds: []string{
+			"redis-cli -n 4 hset TELEMETRY_CLIENT|DestinationGroup_HS dst_addr 127.0.0.1:8080,127.0.0.1:8081",
+			"redis-cli -n 4 hmset TELEMETRY_CLIENT|Subscription_HS_RDMA path_target COUNTERS_DB dst_group HS report_type periodic report_interval 1000 paths COUNTERS_PORT_NAME_MAP",
+		},
+		collector: "s1",
+		waitTime:  time.Second*2,
+		wantRespVal: []*pb.SubscribeResponse{
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						//Timestamp: GetTimestamp(),
+						//Prefix:    prefix,
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: countersPortNameMapByte,
+								}},
+							//Path: GetPath(),
+							},
+						},
+					},
+				},
+			},
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						//Timestamp: GetTimestamp(),
+						//Prefix:    prefix,
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: countersPortNameMapByte,
+								}},
+							//Path: GetPath(),
+							},
+						},
+					},
+				},
+			},
+		},
+	}, {
+		desc: "DialOut to first collector in periodic mode (COUNTERS/Ethernet*)",
+		cmds: []string{
+			"redis-cli -n 4 hset TELEMETRY_CLIENT|DestinationGroup_HS dst_addr 127.0.0.1:8080,127.0.0.1:8081",
+			"redis-cli -n 4 hmset TELEMETRY_CLIENT|Subscription_HS_RDMA path_target COUNTERS_DB dst_group HS report_type periodic report_interval 1000 paths COUNTERS/Ethernet*",
+		},
+		collector: "s1",
+		waitTime:  time.Second*2,
+		wantRespVal: []*pb.SubscribeResponse{
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: countersEthernetWildcardByte,
+								}},
+							},
+						},
+					},
+				},
+			},
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: countersEthernetWildcardByte,
+								}},
+							},
+						},
+					},
+				},
+			},
+		},
+	}, {
+		desc: "DialOut to second collector in periodic mode upon failure of first collector (COUNTERS/Ethernet68/Queues)",
+		cmds: []string{
+			"redis-cli -n 4 hset TELEMETRY_CLIENT|DestinationGroup_HS dst_addr 127.0.0.1:8080,127.0.0.1:8081",
+			"redis-cli -n 4 hmset TELEMETRY_CLIENT|Subscription_HS_RDMA path_target COUNTERS_DB dst_group HS report_type periodic report_interval 1000 paths COUNTERS/Ethernet68/Queues",
+		},
+		collector: "s2",
+		sop:       S1Stop,
+		waitTime:  clientCfg.RetryInterval + time.Second*2,
+		wantRespVal: []*pb.SubscribeResponse{
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: countersEthernet68QueuesByte,
+								}},
+							},
+						},
+					},
+				},
+			},
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: countersEthernet68QueuesByte,
+								}},
+							},
+						},
+					},
+				},
+			},
+		},
+	},  {
+		desc: "DialOut to second collector in periodic mode upon failure of first collector (platform/cpu)",
+		cmds: []string{
+			"redis-cli -n 4 hset TELEMETRY_CLIENT|DestinationGroup_HS dst_addr 127.0.0.1:8080,127.0.0.1:8081",
+			"redis-cli -n 4 hmset TELEMETRY_CLIENT|Subscription_HS_RDMA path_target OTHERS dst_group HS report_type periodic report_interval 1000 paths platform/cpu",
+		},
+		collector: "s2",
+		sop:       S1Stop,
+		waitTime:  clientCfg.RetryInterval + time.Second*2,
+		wantRespVal: []*pb.SubscribeResponse{
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						Update: []*pb.Update{
+							{Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: make([]uint8, 0),
+								}},
+								Path: &pb.Path{
+									Elem: []*pb.PathElem{
+										&pb.PathElem{
+											Name: "platform",
+										},
+										&pb.PathElem{
+											Name: "cpu",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			&pb.SubscribeResponse{
+				Response: &pb.SubscribeResponse_Update{
+					Update: &pb.Notification{
+						Update: []*pb.Update{
+							{
+								Val: &pb.TypedValue{
+								Value: &pb.TypedValue_JsonIetfVal{
+									JsonIetfVal: make([]uint8, 0),
+								}},
+								Path: &pb.Path{
+									Elem: []*pb.PathElem{
+										&pb.PathElem{
+											Name: "platform",
+										},
+										&pb.PathElem{
+											Name: "cpu",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		comparePath: true,
 	}}
 
 	rclient := getRedisClient(t)
@@ -490,8 +740,11 @@ func TestGNMIDialOutPublish(t *testing.T) {
 						t.Fatalf("Expecting %v, got SyncResponse", resp.GetResponse())
 					}
 				case *pb.SubscribeResponse_Update:
-					compareUpdateValue(t, resp.GetUpdate(), store[idx].GetUpdate())
-
+					if tt.comparePath{
+						compareUpdatePath(t, resp.GetUpdate(), store[slen-wlen+idx].GetUpdate())
+					} else {
+						compareUpdateValue(t, resp.GetUpdate(), store[slen-wlen+idx].GetUpdate())
+					}
 				}
 			}
 		})

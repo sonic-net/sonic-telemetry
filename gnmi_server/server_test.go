@@ -558,6 +558,18 @@ func TestGnmiGet(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
+	fileName = "../testdata/COUNTERS:Ethernet68:Queues.txt"
+	countersEthernet68QueuesByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet68:Queues_alias.txt"
+	countersEthernet68QueuesAliasByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
 	fileName = "../testdata/COUNTERS:Ethernet_wildcard_alias.txt"
 	countersEthernetWildcardByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -572,6 +584,12 @@ func TestGnmiGet(t *testing.T) {
 
 	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Pfcwd_alias.txt"
 	countersEthernetWildcardPfcwdByte, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("read file %v err: %v", fileName, err)
+	}
+
+	fileName = "../testdata/COUNTERS:Ethernet_wildcard_Queues_alias.txt"
+	countersEthernetWildcardQueuesByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
@@ -612,6 +630,7 @@ func TestGnmiGet(t *testing.T) {
 		`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersPortNameMapByte,
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS:Ethernet68",
 		pathTarget: "COUNTERS_DB",
@@ -621,6 +640,7 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68Byte,
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
@@ -631,6 +651,7 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: "2",
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS:Ethernet68 Pfcwd",
 		pathTarget: "COUNTERS_DB",
@@ -641,6 +662,18 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68PfcwdByte,
+		valTest: true,
+	}, {
+		desc:       "Get COUNTERS:Ethernet68 Queues",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+							elem: <name: "COUNTERS" >
+							elem: <name: "Ethernet68" >
+							elem: <name: "Queues" >
+						`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68QueuesByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
 		pathTarget: "COUNTERS_DB",
@@ -650,6 +683,7 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68Byte,
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
@@ -660,6 +694,7 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: "2",
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
 		pathTarget: "COUNTERS_DB",
@@ -670,6 +705,18 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68PfcwdAliasByte,
+		valTest: true,
+	}, {
+		desc:       "Get COUNTERS (use vendor alias):Ethernet68/1 Queues",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+							elem: <name: "COUNTERS" >
+							elem: <name: "Ethernet68/1" >
+							elem: <name: "Queues" >
+						`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernet68QueuesAliasByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet*",
 		pathTarget: "COUNTERS_DB",
@@ -679,6 +726,7 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardByte,
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
@@ -689,6 +737,7 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcByte,
+		valTest: true,
 	}, {
 		desc:       "get COUNTERS:Ethernet* Pfcwd",
 		pathTarget: "COUNTERS_DB",
@@ -699,6 +748,26 @@ func TestGnmiGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcwdByte,
+		valTest: true,
+	}, {
+		desc:       "Get COUNTERS:Ethernet* Queues",
+		pathTarget: "COUNTERS_DB",
+		textPbPath: `
+							elem: <name: "COUNTERS" >
+							elem: <name: "Ethernet*" >
+							elem: <name: "Queues" >
+						`,
+		wantRetCode: codes.OK,
+		wantRespVal: countersEthernetWildcardQueuesByte,
+		valTest:     true,
+	}, {
+		desc:       "get non-db platform cpu",
+		pathTarget: "OTHERS",
+		textPbPath: `
+					elem: <name: "platform" >
+					elem: <name: "cpu" >
+				`,
+		wantRetCode: codes.OK,
 	},
 	}
 
@@ -1020,6 +1089,8 @@ func runTestSubscribe(t *testing.T) {
 	json.Unmarshal(countersEthernet68QueuesAliasByte, &countersEthernet68QueuesAliasJsonUpdate)
 	countersEthernet68QueuesAliasJsonUpdate["Ethernet68/1:1"] = eth68_1
 
+	var emptyVal = make(map[string]string)
+
 	tests := []struct {
 		desc     string
 		q        client.Query
@@ -1030,6 +1101,8 @@ func runTestSubscribe(t *testing.T) {
 
 		poll        int
 		wantPollErr string
+
+		comparePath bool
 	}{{
 		desc: "stream query for table COUNTERS_PORT_NAME_MAP with new test_field field",
 		q: client.Query{
@@ -1658,6 +1731,31 @@ func runTestSubscribe(t *testing.T) {
 					TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
 				client.Sync{},
 			},
+		}, {
+			desc: "poll query for platform/cpu",
+			poll: 3,
+			q: client.Query{
+				Target:  "OTHERS",
+				Type:    client.Poll,
+				Queries: []client.Path{{"platform", "cpu"}},
+				TLS:     &tls.Config{InsecureSkipVerify: true},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"platform", "cpu"},
+					TS: time.Unix(0, 200), Val: emptyVal},
+				client.Sync{},
+				client.Update{Path: []string{"platform", "cpu"},
+					TS: time.Unix(0, 200), Val: emptyVal},
+				client.Sync{},
+				client.Update{Path: []string{"platform", "cpu"},
+					TS: time.Unix(0, 200), Val: emptyVal},
+				client.Sync{},
+				client.Update{Path: []string{"platform", "cpu"},
+					TS: time.Unix(0, 200), Val: emptyVal},
+				client.Sync{},
+			},
+			comparePath: true,
 		}}
 
 	rclient := getRedisClient(t)
@@ -1684,6 +1782,9 @@ func runTestSubscribe(t *testing.T) {
 				//t.Logf("reflect.TypeOf(n) %v :  %v", reflect.TypeOf(n), n)
 				if nn, ok := n.(client.Update); ok {
 					nn.TS = time.Unix(0, 200)
+					if tt.comparePath {
+						nn.Val = emptyVal
+					}
 					gotNoti = append(gotNoti, nn)
 				} else {
 					gotNoti = append(gotNoti, n)
