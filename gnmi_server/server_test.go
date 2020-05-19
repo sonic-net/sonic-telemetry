@@ -667,10 +667,10 @@ func TestGnmiGet(t *testing.T) {
 		desc:       "Get COUNTERS:Ethernet68 Queues",
 		pathTarget: "COUNTERS_DB",
 		textPbPath: `
-							elem: <name: "COUNTERS" >
-							elem: <name: "Ethernet68" >
-							elem: <name: "Queues" >
-						`,
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68" >
+					elem: <name: "Queues" >
+				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68QueuesByte,
 		valTest:     true,
@@ -710,10 +710,10 @@ func TestGnmiGet(t *testing.T) {
 		desc:       "Get COUNTERS (use vendor alias):Ethernet68/1 Queues",
 		pathTarget: "COUNTERS_DB",
 		textPbPath: `
-							elem: <name: "COUNTERS" >
-							elem: <name: "Ethernet68/1" >
-							elem: <name: "Queues" >
-						`,
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68/1" >
+					elem: <name: "Queues" >
+				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68QueuesAliasByte,
 		valTest:     true,
@@ -753,10 +753,10 @@ func TestGnmiGet(t *testing.T) {
 		desc:       "Get COUNTERS:Ethernet* Queues",
 		pathTarget: "COUNTERS_DB",
 		textPbPath: `
-							elem: <name: "COUNTERS" >
-							elem: <name: "Ethernet*" >
-							elem: <name: "Queues" >
-						`,
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet*" >
+					elem: <name: "Queues" >
+				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardQueuesByte,
 		valTest:     true,

@@ -530,14 +530,11 @@ func TestGNMIDialOutPublish(t *testing.T) {
 			&pb.SubscribeResponse{
 				Response: &pb.SubscribeResponse_Update{
 					Update: &pb.Notification{
-						//Timestamp: GetTimestamp(),
-						//Prefix:    prefix,
 						Update: []*pb.Update{
 							{Val: &pb.TypedValue{
 								Value: &pb.TypedValue_JsonIetfVal{
 									JsonIetfVal: countersPortNameMapByte,
 								}},
-							//Path: GetPath(),
 							},
 						},
 					},
@@ -546,14 +543,11 @@ func TestGNMIDialOutPublish(t *testing.T) {
 			&pb.SubscribeResponse{
 				Response: &pb.SubscribeResponse_Update{
 					Update: &pb.Notification{
-						//Timestamp: GetTimestamp(),
-						//Prefix:    prefix,
 						Update: []*pb.Update{
 							{Val: &pb.TypedValue{
 								Value: &pb.TypedValue_JsonIetfVal{
 									JsonIetfVal: countersPortNameMapByte,
 								}},
-							//Path: GetPath(),
 							},
 						},
 					},
