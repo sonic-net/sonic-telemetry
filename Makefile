@@ -9,7 +9,7 @@ GO ?= /usr/local/go/bin/go
 TOP_DIR := $(abspath ..)
 MGMT_COMMON_DIR := $(TOP_DIR)/sonic-mgmt-common
 BUILD_DIR := build/bin
-export CVL_SCHEMA_PATH := $(MGMT_COMMON_DIR)/cvl/schema
+export CVL_SCHEMA_PATH := $(MGMT_COMMON_DIR)/build/cvl/schema
 export GOBIN := $(abspath $(BUILD_DIR))
 
 SRC_FILES=$(shell find . -name '*.go' | grep -v '_test.go' | grep -v '/tests/')
@@ -22,6 +22,7 @@ endif
 
 GO_DEPS := vendor/.done
 PATCHES := $(wildcard patches/*.patch)
+PATCHES += $(shell find $(MGMT_COMMON_DIR)/patches -type f)
 
 all: sonic-telemetry $(TELEMETRY_TEST_BIN)
 
@@ -31,12 +32,12 @@ go.mod:
 $(GO_DEPS): go.mod $(PATCHES)
 	# FIXME temporary workaround for crypto not downloading..
 	$(GO) get golang.org/x/crypto/ssh/terminal@e9b2fee46413
-	
 	$(GO) mod vendor
 	$(MGMT_COMMON_DIR)/patches/apply.sh vendor
 	cp -r $(GOPATH)/pkg/mod/golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413 vendor/golang.org/x/crypto
 	chmod -R u+w vendor
 	patch -d vendor -p0 <patches/gnmi_cli.all.patch
+	touch $@
 
 go-deps: $(GO_DEPS)
 
