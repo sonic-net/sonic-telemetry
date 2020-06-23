@@ -15,7 +15,7 @@ SRC_FILES=$(shell find . -name '*.go' | grep -v '_test.go' | grep -v '/tests/')
 TEST_FILES=$(wildcard *_test.go)
 TELEMETRY_TEST_DIR = $(GO_MGMT_PATH)/build/tests/gnmi_server
 TELEMETRY_TEST_BIN = $(TELEMETRY_TEST_DIR)/server.test
-ifeq ($(SONIC_TELEMETRY_WRITABLE),y)
+ifeq ($(TELEMETRY_WRITABLE),y)
 BLD_FLAGS := -tags readwrite
 endif
 
