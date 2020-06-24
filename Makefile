@@ -50,6 +50,7 @@ sonic-telemetry: $(GO_DEPS)
 	$(GO) install github.com/jipanyang/gnxi/gnmi_get
 	$(GO) install github.com/jipanyang/gnxi/gnmi_set
 	$(GO) install -mod=vendor github.com/openconfig/gnmi/cmd/gnmi_cli
+	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/gnoi_client
 
 check:
 	sudo mkdir -p ${DBDIR}
@@ -74,6 +75,7 @@ install:
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_get $(DESTDIR)/usr/sbin/gnmi_get
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_set $(DESTDIR)/usr/sbin/gnmi_set
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_cli $(DESTDIR)/usr/sbin/gnmi_cli
+	$(INSTALL) -D $(BUILD_DIR)/gnoi_client $(DESTDIR)/usr/sbin/gnoi_client
 
 
 deinstall:
@@ -81,5 +83,6 @@ deinstall:
 	rm $(DESTDIR)/usr/sbin/dialout_client_cli
 	rm $(DESTDIR)/usr/sbin/gnmi_get
 	rm $(DESTDIR)/usr/sbin/gnmi_set
+	rm $(DESTDIR)/usr/sbin/gnoi_client
 
 
