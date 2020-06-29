@@ -10,7 +10,7 @@ require (
 	github.com/c9s/goprocinfo v0.0.0-20191125144613-4acdd056c72d
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-redis/redis v6.15.6+incompatible
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.3.2
 	github.com/google/gnxi v0.0.0-20191016182648-6697a080bc2d
