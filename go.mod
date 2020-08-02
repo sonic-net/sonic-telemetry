@@ -16,6 +16,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.0-rc.4.0.20200313231945-b860323f09d0
 	github.com/google/gnxi v0.0.0-20191016182648-6697a080bc2d
+	github.com/google/protobuf v3.11.4+incompatible // indirect
 	github.com/jipanyang/gnmi v0.0.0-20180820232453-cb4d464fa018
 	github.com/jipanyang/gnxi v0.0.0-20181221084354-f0a90cca6fd0 // indirect
 	github.com/kylelemons/godebug v1.1.0
@@ -30,6 +31,7 @@ require (
 	golang.org/x/sys v0.0.0-20190412213103-97732733099d // indirect
 	google.golang.org/genproto v0.0.0-20200319113533-08878b785e9c // indirect
 	google.golang.org/grpc v1.28.0
+	google.golang.org/protobuf v1.21.0 // indirect
 )
 
 replace github.com/Azure/sonic-mgmt-common => ../sonic-mgmt-common
