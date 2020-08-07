@@ -1,0 +1,95 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    
+    "tasks": [
+        {
+            "label": "Make",
+            "type": "shell",
+            "command": "make",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [
+                "$go"
+            ],
+
+        },
+        {
+            "label": "export",
+            "type": "shell",
+            "command": "export",
+            "args": ["CVL_SCHEMA_PATH=/usr/sbin/schema"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [
+                "$go"
+            ],
+
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/bin/dialout_client_cli",
+            "args": ["insecure -logtostderr -v 7"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [
+                "$go"
+            ],
+
+        },
+        {
+            "label": "install",
+            "type": "shell",
+            "command": "echo 'devbox' | sudo -S install testdata/database_config.json -t /var/run/redis/sonic-db",
+            "args": [""],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [
+                "$go"
+            ],
+
+        },
+        {
+            "label": "buildrun",
+            "type": "shell",
+            "command": "echo Done",
+            "problemMatcher": [
+                "$go"
+            ],
+            "group": "build",
+            "dependsOrder": "sequence",
+            "dependsOn":["Make", "export", "install", "run" ]
+        }
+
+    ]
+}

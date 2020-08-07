@@ -16,15 +16,15 @@ import (
 
 	spb "github.com/Azure/sonic-telemetry/proto"
 	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
+	"github.com/Workiva/go-datastructures/queue"
 	"github.com/go-redis/redis"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/Workiva/go-datastructures/queue"
 )
 
 const (
 	// indentString represents the default indentation string used for
 	// JSON. Two spaces are used here.
-	indentString                 string = "  "
+	indentString string = "  "
 )
 
 // Client defines a set of methods which every client must implement.
@@ -45,9 +45,9 @@ type Client interface {
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
 	// Set data based on path and value
-	Set(path *gnmipb.Path,  t *gnmipb.TypedValue, op int) error
+	Set(path *gnmipb.Path, t *gnmipb.TypedValue, op int) error
 	// Capabilities of the switch
-	Capabilities() ([]gnmipb.ModelData)
+	Capabilities() []gnmipb.ModelData
 
 	// Close provides implemenation for explicit cleanup of Client
 	Close() error
@@ -121,24 +121,29 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	if prefix.GetTarget() == "COUNTERS_DB" {
 		err = initCountersPortNameMap()
 		if err != nil {
+			log.V(7).Infof("124")
 			return nil, err
 		}
 		err = initCountersQueueNameMap()
 		if err != nil {
+			log.V(7).Infof("129")
 			return nil, err
 		}
 		err = initAliasMap()
 		if err != nil {
+			log.V(7).Infof("134")
 			return nil, err
 		}
 		err = initCountersPfcwdNameMap()
 		if err != nil {
+			log.V(7).Infof("139, error: %v", err)
 			return nil, err
 		}
 	}
 
 	client.prefix = prefix
 	client.pathG2S = make(map[*gnmipb.Path][]tablePath)
+	log.V(7).Infof("Prefix %v, paths %v", prefix, paths)
 	err = populateAllDbtablePath(prefix, paths, &client.pathG2S)
 
 	if err != nil {
@@ -162,8 +167,11 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	c.channel = stop
 
 	for gnmiPath, tblPaths := range c.pathG2S {
+		log.V(7).Infof("tblPaths %s", tblPaths)
+		log.V(7).Infof("WaitGroup %s", c.w)
 		if tblPaths[0].field != "" {
 			c.w.Add(1)
+			log.V(7).Infof("Past c.w.Add(1) %s", c.w)
 			c.synced.Add(1)
 			if len(tblPaths) > 1 {
 				go dbFieldMultiSubscribe(gnmiPath, c)
@@ -1012,10 +1020,9 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 	}
 }
 
-func  (c *DbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
+func (c *DbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
 	return nil
 }
-func (c *DbClient) Capabilities() ([]gnmipb.ModelData) {
+func (c *DbClient) Capabilities() []gnmipb.ModelData {
 	return nil
 }
-

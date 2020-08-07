@@ -2,8 +2,9 @@ package client
 
 import (
 	"fmt"
-	log "github.com/golang/glog"
 	"strings"
+
+	log "github.com/golang/glog"
 )
 
 // virtual db is to Handle
@@ -130,8 +131,10 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		return nil, err
 	}
 
-	keyName := fmt.Sprintf("PFC_WD_TABLE%v*", separator)
+	keyName := fmt.Sprintf("PFC_WD%v*", separator)
+	log.V(7).Infof("Get Pfcwd Key Name %v", keyName)
 	resp, err := redisDb.Keys(keyName).Result()
+	log.V(7).Infof("Database response %v", resp)
 	if err != nil {
 		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
 		return nil, err
@@ -144,10 +147,12 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 	}
 
 	for _, key := range resp {
-		name := key[13:]
-		pfcwdName_map[name] = make(map[string]string)
+		if len(key) > 15 && strings.EqualFold(key[:15], "PFC_WD|Ethernet") { //Need to be long enough so that we know it is a port not PFC_WD|Global and so we don't go beyond the end of the string.
+			name := key[7:] //Should be 7, but is there a more resilient way to do this?
+			pfcwdName_map[name] = make(map[string]string)
+			log.V(7).Infof("key 8: %v ,key: %v name: %v , pfcwdName_map: %v", key[8:8], key, name, pfcwdName_map[name])
+		}
 	}
-
 	// Get Queue indexes that are enabled with PFC-WD
 	keyName = "PORT_QOS_MAP*"
 	resp, err = redisDb.Keys(keyName).Result()
@@ -160,6 +165,7 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		return nil, nil
 	}
 	qos_key := resp[0]
+	log.V(7).Infof("Line 165 %v", resp)
 
 	fieldName := "pfc_enable"
 	priorities, err := redisDb.HGet(qos_key, fieldName).Result()
@@ -189,6 +195,9 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		log.V(1).Infof("COUNTERS_QUEUE_NAME_MAP is empty")
 		return nil, nil
 	}
+
+	log.V(7).Infof("COUNTERS_QUEUE_NAME_MAP: %v", countersQueueNameMap)
+	log.V(7).Infof("Ports: %v", pfcwdName_map)
 
 	var queue_key string
 	queue_separator, _ := GetTableKeySeparator("COUNTERS_DB")
@@ -253,7 +262,7 @@ func getCountersMap(tableName string) (map[string]string, error) {
 		log.V(2).Infof("redis HGetAll failed for COUNTERS_DB, tableName: %s", tableName)
 		return nil, err
 	}
-	log.V(6).Infof("tableName: %s, map %v", tableName, fv)
+	//log.V(6).Infof("tableName: %s, map %v", tableName, fv)
 	return fv, nil
 }
 
