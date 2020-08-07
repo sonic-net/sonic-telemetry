@@ -9,30 +9,38 @@ This repository contains implementation for the sonic system telemetry services:
 
 ### Prerequisites
 
-Install __go__ in your system https://golang.org/doc/install. Requires golang1.8+.
+* Install __go__ in your system https://golang.org/doc/install. Requires golang1.8+.
+* Install Git
+* Install Libpcre3-dev using: sudo apt install -y libpcre3-dev
+* Install Customized version of libyang. These can obtained from a local sonic-buildimage folder and installed using the command sudo dpkg -i ${buildimage}/target/debs/stretch/libyang*.deb, or the can be download from Jenkins and installed individually. Libyang, Libyang-cpp, Libyang-dbg, and Libyang-dev all need to be installed. https://sonic-jenkins.westus2.cloudapp.azure.com/job/mellanox/job/buildimage-mlnx-all/lastSuccessfulBuild/artifact/target/debs/stretch/
+* Install PCRE http://www.pcre.org/ compiled with --enable-unicode-properties. A compiling guide can be found https://mac-dev-env.patrickbougie.com/pcre/
 
 ## Installing
 
-To install dial-in mode system telemetry server, run
-
-    go get -u github.com/Azure/sonic-telemetry/telemetry
-
-To install dial-out mode system telemetry client, run
-
-    go get -u github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
-
-There is also a test program dialout_server_cli for collecting data from dial-out mode system telemetry client. _Note_: it is for testing purpose only.
+There is a test program dialout_server_cli for collecting data from dial-out mode system telemetry client. _Note_: it is for testing purpose only. Only go is a prerequisite.
 
     go get -u github.com/Azure/sonic-telemetry/dialout/dialout_server_cli
 
 The binaries will be installed under $GOPATH/bin/, they may be copied to any SONiC switch and run there.
 
-You can also build a debian package and install it:
+You can build SONiC-telemetry into a debian package and install it:
 
+    git clone https://github.com/Azure/sonic-mgmt-common.git
     git clone https://github.com/Azure/sonic-telemetry.git
-    pushd sonic-telemetry
-    dpkg-buildpackage -rfakeroot -b -us -uc
-    popd
+
+    cd sonic-mgmt-common
+    make
+    sudo dh_install -psonic-mgmt-common -P/-v
+ 
+    cd sonic-telemetry
+    make
+    sudo install testdata/database_config.json -t /var/run/redis/sonic-db      <- sometimes the sonic-db folder must be created manually.
+    export CVL_SCHEMA_PATH=/usr/sbin/schema     <- This must be performed everytime it is run.
+
+    To test that it worked:
+    ./build/bin/telemetry --help
+
+
 
 ### Running
 * See [SONiC gRPC telemetry](./doc/grpc_telemetry.md) for how to run dial-in mode system telemetry server
