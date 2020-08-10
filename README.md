@@ -16,7 +16,7 @@ This repository contains implementation for the sonic system telemetry services:
 
         sudo dpkg -i ${buildimage}/target/debs/stretch/libyang*.deb
 
-    or the can be download from Jenkins and installed individually. Libyang, Libyang-cpp, Libyang-dbg, and Libyang-dev all need to be installed. https://sonic-jenkins.westus2.cloudapp.azure.com/job/generic/job/buildimage-baseimage/lastSuccessfulBuild/artifact/sonic-buildimage/target/debs/buster/
+    or they can be downloaded from Jenkins and installed individually. Libyang, Libyang-cpp, Libyang-dbg, and Libyang-dev all need to be installed. https://sonic-jenkins.westus2.cloudapp.azure.com/job/generic/job/buildimage-baseimage/lastSuccessfulBuild/artifact/sonic-buildimage/target/debs/buster/
 * Install PCRE http://www.pcre.org/ compiled with --enable-unicode-properties. A compiling guide can be found https://mac-dev-env.patrickbougie.com/pcre/
 
 ## Installing
