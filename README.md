@@ -21,13 +21,13 @@ This repository contains implementation for the sonic system telemetry services:
 
 ## Installing
 
-There is a test program dialout_server_cli for collecting data from dial-out mode system telemetry client. _Note_: it is for testing purpose only. Only go is a prerequisite.
+There is a test program dialout_server_cli for collecting data from dial-out mode system telemetry client. _Note_: it is for testing purpose only. Only Go is a prerequisite.
 
     go get -u github.com/Azure/sonic-telemetry/dialout/dialout_server_cli
 
 The binaries will be installed under $GOPATH/bin/, they may be copied to any SONiC switch and run there.
 
-You can build SONiC-telemetry into a debian package and install it:
+To use the telemetry server or dial-out client dou can build SONiC-telemetry into a debian package and install it using the following steps:
 
     git clone https://github.com/Azure/sonic-mgmt-common.git
     git clone https://github.com/Azure/sonic-telemetry.git
