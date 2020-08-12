@@ -21,8 +21,7 @@ var (
 		Encoding:       gpb.Encoding_JSON_IETF,
 		Unidirectional: true,
 	}
-	tlsCfg = tls.Config{}
-
+	tlsCfg     = tls.Config{}
 	tlsDisable bool
 )
 
