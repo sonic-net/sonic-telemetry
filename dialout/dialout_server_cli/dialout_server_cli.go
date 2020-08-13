@@ -19,7 +19,8 @@ var (
 	caCert            = flag.String("ca_crt", "", "CA certificate for client certificate validation. Optional.")
 	serverCert        = flag.String("server_crt", "", "TLS server certificate")
 	serverKey         = flag.String("server_key", "", "TLS server private key")
-	insecure          = flag.Bool("insecure", false, "Without TLS, for testing only!")
+	insecure          = flag.Bool("insecure", false, "Skip providing TLS cert and key, for testing only!")
+	tls_disable       = flag.Bool("tls_disable", false, "Without TLS, for testing only!")
 	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, telemetry server will request but not require a client certificate.")
 )
 

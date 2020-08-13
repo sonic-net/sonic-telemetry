@@ -27,8 +27,8 @@ var (
 
 func init() {
 	flag.StringVar(&tlsCfg.ServerName, "server_name", "", "When set, use this hostname to verify server certificate during TLS handshake.")
-	flag.BoolVar(&tlsCfg.InsecureSkipVerify, "skip_verify", false, "When set, client will not verify the server certificate during TLS handshake.")
-	flag.BoolVar(&tlsDisable, "insecure", false, "Without TLS, only for testing")
+	flag.BoolVar(&tlsCfg.InsecureSkipVerify, "insecure", false, "When set, client will not verify the server certificate during TLS handshake.")
+	flag.BoolVar(&tlsDisable, "tls_disable", false, "Without TLS, only for testing")
 	flag.DurationVar(&clientCfg.RetryInterval, "retry_interval", 30*time.Second, "Interval at which client tries to reconnect to destination servers")
 	flag.BoolVar(&clientCfg.Unidirectional, "unidirectional", true, "No repesponse from server is expected")
 }
