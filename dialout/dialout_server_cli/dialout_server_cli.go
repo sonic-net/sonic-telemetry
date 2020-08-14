@@ -35,7 +35,8 @@ func main() {
 	var certificate tls.Certificate
 	var err error
 
-	if *insecure {
+	var opts []grpc.ServerOption
+	if !*insecure {
 		switch {
 		case *serverCert == "":
 			log.Errorf("serverCert must be set.")
