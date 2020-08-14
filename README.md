@@ -11,7 +11,10 @@ This repository contains implementation for the sonic system telemetry services:
 
 * Install __go__ in your system https://golang.org/doc/install. Requires golang1.8+.
 * Install Git
-* Install Libpcre3-dev using: sudo apt install -y libpcre3-dev
+* Install Libpcre3-dev using: 
+        
+        sudo apt install -y libpcre3-dev
+        
 * Install Customized version of libyang. These can obtained from a local sonic-buildimage folder and installed using the command:
 
         sudo dpkg -i ${buildimage}/target/debs/stretch/libyang*.deb
