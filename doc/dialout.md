@@ -4,7 +4,8 @@
    * [SONiC system telemetry software architecture](#sonic-system-telemetry-software-architecture)
    * [Services provided in dialout mode](#services-provided-in-dialout-mode)
    * [Configurations for dialout mode](#configurations-for-dialout-mode)
-   * [dialout_client_cli and dialout_server_cli](#dialout_client_cli-and-dialout_server_cli)
+   * [dialout_client_cli and dialout_server_cli examples](#dialout_client_cli-and-dialout_server_cli-examples)
+   * [dialout_client_cli and dialout_server_cli command line arguments](#dialout_client_cli-and-dialout_server_cli-command-line-arguments)
    * [AutoTest](#autotest)
    * [Performance and Scale Test](#performance-and-scale-test)
 
@@ -54,7 +55,7 @@ message PublishResponse {
 ```
 
 # Configurations for dialout mode
-The configuration of dialout telemetry in SONiC is implemented with reference to openconfig [telemetry yang model](https://github.com/openconfig/public/blob/master/release/models/telemetry/openconfig-telemetry.yang)
+The configuration of dialout telemetry in SONiC is implemented with reference to openconfig [telemetry yang model](https://github.com/openconfig/public/blob/master/release/models/telemetry/openconfig-telemetry.yang). The configuration goes in the CONFIG_DB and is split across 3 keys. One for TELEMETRY_CLIENT|Global, one for TELEMETRY_CLIENT|DestinationGroup, and one for TELEMETRY_CLIENT|Subscription. The values can be set and updated in the redis database using the [HSET](https://redis.io/commands/hset) command. Already set values can be viewed using [HGETALL](https://redis.io/commands/hgetall).
 
 There are three categories of configuration:
 * Global
@@ -63,13 +64,13 @@ There are three categories of configuration:
   * retry_interval: When connection to collector is down, how long dialout client should wait before retry. 30 seconds by default.
   * unidirectional: Whether to make the Publish RPC one directly only, no PublishResponse is expected by default.
 * DestinationGroup
-  * dst_addr: Multiple IP address plus port number of the collectors may be specified. dialout client will try the next one in a DesistinationGroup if current one got disconnected due to failure.
+  * dst_addr: Multiple IP address plus port number of the collectors may be specified. Dialout client will try the next one in a DesistinationGroup if current one got disconnected due to failure.
   Number of DestinationGroups is not limited.
 * Subscription
   * dst_group: The DestinationGroup to be used by this subscription.
-  * path_target: The DB target for this subscription
+  * path_target: The DB target for this subscription.
   * paths:  The list of paths subscribed to in this instance of subscription.
-  * report_type: May be one of "periodic", "stream" or "once". "periodic" is the default value
+  * report_type: May be one of "periodic", "stream" or "once". "periodic" is the default value.
   * report_interval:  How frequent the data for all paths should be sent to collector, in millisecond, default value is "5000".
 
 One example configuration:
@@ -96,7 +97,7 @@ One example configuration:
 }
 ```
 
-# dialout_client_cli and dialout_server_cli
+# dialout_client_cli and dialout_server_cli examples
 dialout_client_cli is the program running inside SONiC system to collect telemetry data based on the configuration and stream data to collectors. The service has been integrated as part of SONiC.
 
 In case some development testing is wanted, it may be manually started with command "/usr/sbin/dialout_client_cli -insecure -logtostderr -v 1".
@@ -156,6 +157,81 @@ update: <
     >
   >
 >
+```
+
+# dialout_client_cli and dialout_server_cli command line arguments
+This information can be obtained by running either command with the -help argument
+```
+root@ASW:/tmp# ./dialout_server_cli -help
+or
+root@sonic:/# /usr/sbin/dialout_client_cli -help
+```
+dialout_client_cli:
+```
+Usage of ./build/bin/dialout_client_cli:
+  -alsologtostderr
+        log to standard error as well as files
+  -insecure
+        Without TLS, only for testing
+  -log_backtrace_at value
+        when logging hits line file:N, emit a stack trace
+  -log_dir string
+        If non-empty, write log files in this directory
+  -logtostderr
+        log to standard error instead of files
+  -retry_interval duration
+        Interval at which client tries to reconnect to destination servers (default 30s)
+  -server_name string
+        When set, use this hostname to verify server certificate during TLS handshake.
+  -skip_verify
+        When set, client will not verify the server certificate during TLS handshake.
+  -stderrthreshold value
+        logs at or above this threshold go to stderr
+  -unidirectional
+        No repesponse from server is expected (default true)
+  -v value
+        log level for V logs
+  -vmodule value
+        comma-separated list of pattern=N settings for file-filtered logging
+```
+
+dialout_server_cli:
+```
+Usage of ./bin/dialout_server_cli:
+  -allow_no_client_auth
+    	When set, telemetry server will request but not require a client certificate.
+  -alsologtostderr
+    	log to standard error as well as files
+  -ca_crt string
+    	CA certificate for client certificate validation. Optional.
+  -insecure
+    	Skip providing TLS cert and key, for testing only!
+  -log_backtrace_at value
+    	when logging hits line file:N, emit a stack trace
+  -log_dir string
+    	If non-empty, write log files in this directory
+  -log_proto
+    	If true it prints all sent and received PROTO messages
+  -logtostderr
+    	log to standard error instead of files
+  -port int
+    	port to listen on (default -1)
+  -pretty
+    	Shows PROTOs using Pretty package instead of PROTO Text Marshal
+  -print_progress
+    	Prints progress periodically of file transfer.
+  -server_crt string
+    	TLS server certificate
+  -server_key string
+    	TLS server private key
+  -stderrthreshold value
+    	logs at or above this threshold go to stderr
+  -tls_disable
+    	Without TLS, for testing only!
+  -v value
+    	log level for V logs
+  -vmodule value
+    	comma-separated list of pattern=N settings for file-filtered logging
 ```
 
 # AutoTest
