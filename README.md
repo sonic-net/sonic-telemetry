@@ -27,7 +27,7 @@ There is a test program dialout_server_cli for collecting data from dial-out mod
 
 The binaries will be installed under $GOPATH/bin/, they may be copied to any SONiC switch and run there.
 
-To use the telemetry server or dial-out client dou can build SONiC-telemetry into a debian package and install it using the following steps:
+To use the telemetry server or dial-out client you can build SONiC-telemetry into a debian package and install it using the following steps:
 
     git clone https://github.com/Azure/sonic-mgmt-common.git
     git clone https://github.com/Azure/sonic-telemetry.git
