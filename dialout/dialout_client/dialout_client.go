@@ -199,7 +199,6 @@ func (cs *clientSubscription) NewInstance(ctx context.Context) error {
 	if target == "OTHERS" {
 		dc, err = sdc.NewNonDbClient(cs.paths, cs.prefix)
 	} else {
-		log.V(7).Infof("Paths %v, Prefix %v", cs.paths, cs.prefix)
 		dc, err = sdc.NewDbClient(cs.paths, cs.prefix)
 	}
 	if err != nil {
@@ -327,7 +326,6 @@ restart: //Remote server might go down, in that case we restart with next destin
 	}
 
 	log.V(1).Infof("Dialout service connected to %v successfully for %v", dest, cs.name)
-	log.V(7).Infof("CTX is %v", ctx)
 	pub, err := c.client.Publish(ctx)
 	if err != nil {
 		log.V(1).Infof("Publish to %v for %v failed: %v, retrying", dest, cs.name, err)
@@ -346,7 +344,6 @@ restart: //Remote server might go down, in that case we restart with next destin
 		return
 	}
 	cs.cMu.Unlock()
-	log.V(7).Infof("Before switch 346 %v", cs)
 
 	switch cs.reportType {
 	case Periodic:
@@ -400,16 +397,13 @@ restart: //Remote server might go down, in that case we restart with next destin
 		select {
 		default:
 			cs.w.Add(1)
-			log.V(7).Infof("Before stream run %v", cs.w)
 			go cs.dc.StreamRun(cs.q, cs.stop, &cs.w, nil)
-			log.V(7).Infof("After stream run %v", cs)
 			time.Sleep(100 * time.Millisecond)
 			err = cs.send(pub)
 			if err != nil {
 				log.V(1).Infof("Client %v pub Send error:%v, cs.conTryCnt %v", cs.name, err, cs.conTryCnt)
 			}
 			cs.Close()
-			log.V(7).Infof("Line 409 %v", cs)
 			cs.w.Wait()
 			// Don't restart immediatly
 			time.Sleep(clientCfg.RetryInterval)

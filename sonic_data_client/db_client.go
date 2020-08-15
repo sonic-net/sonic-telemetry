@@ -121,29 +121,24 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	if prefix.GetTarget() == "COUNTERS_DB" {
 		err = initCountersPortNameMap()
 		if err != nil {
-			log.V(7).Infof("124")
 			return nil, err
 		}
 		err = initCountersQueueNameMap()
 		if err != nil {
-			log.V(7).Infof("129")
 			return nil, err
 		}
 		err = initAliasMap()
 		if err != nil {
-			log.V(7).Infof("134")
 			return nil, err
 		}
 		err = initCountersPfcwdNameMap()
 		if err != nil {
-			log.V(7).Infof("139, error: %v", err)
 			return nil, err
 		}
 	}
 
 	client.prefix = prefix
 	client.pathG2S = make(map[*gnmipb.Path][]tablePath)
-	log.V(7).Infof("Prefix %v, paths %v", prefix, paths)
 	err = populateAllDbtablePath(prefix, paths, &client.pathG2S)
 
 	if err != nil {
@@ -167,11 +162,8 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	c.channel = stop
 
 	for gnmiPath, tblPaths := range c.pathG2S {
-		log.V(7).Infof("tblPaths %s", tblPaths)
-		log.V(7).Infof("WaitGroup %s", c.w)
 		if tblPaths[0].field != "" {
 			c.w.Add(1)
-			log.V(7).Infof("Past c.w.Add(1) %s", c.w)
 			c.synced.Add(1)
 			if len(tblPaths) > 1 {
 				go dbFieldMultiSubscribe(gnmiPath, c)
