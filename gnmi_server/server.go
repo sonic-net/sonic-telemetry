@@ -6,7 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
-
+	"github.com/Azure/sonic-telemetry/common_utils"
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -17,6 +17,7 @@ import (
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	"bytes"
 )
 
 var (
@@ -33,13 +34,81 @@ type Server struct {
 	cMu     sync.Mutex
 	clients map[string]*Client
 }
-
+type AuthTypes map[string]bool
 // Config is a collection of values for Server
 type Config struct {
 	// Port for the Server to listen on. If 0 or unset the Server will pick a port
 	// for this Server.
 	Port int64
+	UserAuth AuthTypes
 }
+
+var AuthLock sync.Mutex
+
+func (i AuthTypes) String() string {
+        if i["none"] {
+                return ""
+        }
+        b := new(bytes.Buffer)
+        for key, value := range i {
+                if value {
+                        fmt.Fprintf(b, "%s ", key)
+                }
+        }
+        return b.String()
+}
+
+func (i AuthTypes) Any() bool {
+        if i["none"] {
+                return false
+        }
+        for _, value := range i {
+                if value {
+                        return true
+                }
+        }
+        return false
+}
+
+func (i AuthTypes) Enabled(mode string) bool {
+        if i["none"] {
+                return false
+        }
+        if value, exist := i[mode]; exist && value {
+                return true
+        }
+        return false
+}
+
+func (i AuthTypes) Set(mode string) error {
+        modes := strings.Split(mode, ",")
+        for _, m := range modes {
+                m = strings.Trim(m, " ")
+                if m == "none" || m == "" {
+                        i["none"] = true
+                        return nil
+                }
+
+                if _, exist := i[m]; !exist {
+                        return fmt.Errorf("Expecting one or more of 'cert', 'password' or 'jwt'")
+                }
+                i[m] = true
+        }
+        return nil
+}
+
+func (i AuthTypes) Unset(mode string) error {
+        modes := strings.Split(mode, ",")
+        for _, m := range modes {
+                m = strings.Trim(m, " ")
+                if _, exist := i[m]; !exist {
+                        return fmt.Errorf("Expecting one or more of 'cert', 'password' or 'jwt'")
+                }
+                i[m] = false
+        }
+        return nil
+}
+
 
 // New returns an initialized Server.
 func NewServer(config *Config, opts []grpc.ServerOption) (*Server, error) {
@@ -89,6 +158,32 @@ func (srv *Server) Address() string {
 // Port returns the port the Server is listening to.
 func (srv *Server) Port() int64 {
 	return srv.config.Port
+}
+
+func authenticate(UserAuth AuthTypes, ctx context.Context) (context.Context,error) {
+	var err error
+	success := false
+	rc, ctx := common_utils.GetContext(ctx)
+	if !UserAuth.Any() {
+		//No Auth enabled
+		rc.Auth.AuthEnabled = false
+		return ctx, nil
+	}
+	rc.Auth.AuthEnabled = true
+	if UserAuth.Enabled("password") {
+		ctx, err = BasicAuthenAndAuthor(ctx)
+		if err == nil {
+			success = true
+		}
+	}
+
+	//Allow for future authentication mechanisms here...
+
+	if !success {
+		return ctx,status.Error(codes.Unauthenticated, "Unauthenticated")
+	} 
+
+	return ctx,nil
 }
 
 // Subscribe implements the gNMI Subscribe RPC.
@@ -150,7 +245,10 @@ func (s *Server) checkEncodingAndModel(encoding gnmipb.Encoding, models []*gnmip
 
 // Get implements the Get RPC in gNMI spec.
 func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetResponse, error) {
-	var err error
+        ctx, err := authenticate(s.config.UserAuth, ctx)
+        if err != nil {
+                return nil, err
+        }
 
 	if req.GetType() != gnmipb.GetRequest_ALL {
 		return nil, status.Errorf(codes.Unimplemented, "unsupported request type: %s", gnmipb.GetRequest_DataType_name[int32(req.GetType())])
@@ -211,12 +309,15 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	return &gnmipb.GetResponse{Notification: notifications}, nil
 }
 
-func (srv *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
+func (s *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetResponse, error) {
 		if !READ_WRITE_MODE {
 			return nil, grpc.Errorf(codes.Unimplemented, "Telemetry is in read-only mode")
 		}
+		ctx, err := authenticate(s.config.UserAuth, ctx)
+		if err != nil {
+		        return nil, err
+		}
 		var results []*gnmipb.UpdateResult
-		var err error
 
 		/* Fetch the prefix. */
 		prefix := req.GetPrefix()
@@ -290,8 +391,11 @@ func (srv *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetR
 }
 
 // Capabilities method is not implemented. Refer to gnxi for examples with openconfig integration
-func (srv *Server) Capabilities(context.Context, *gnmipb.CapabilityRequest) (*gnmipb.CapabilityResponse, error) {
-
+func (s *Server) Capabilities(ctx context.Context, req *gnmipb.CapabilityRequest) (*gnmipb.CapabilityResponse, error) {
+	ctx, err := authenticate(s.config.UserAuth, ctx)
+	if err != nil {
+	        return nil, err
+	}
 	dc, _ := sdc.NewTranslClient(nil , nil)
 
 		/* Fetch the client capabitlities. */
