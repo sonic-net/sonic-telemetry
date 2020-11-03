@@ -28,13 +28,13 @@ var (
 
 func main() {
 	flag.Var(userAuth, "client_auth", "Client auth mode(s) - none,password")
+	flag.Parse()
         if isFlagPassed("client_auth") {
                 log.V(1).Infof("client_auth provided")
         }else {
                 log.V(1).Infof("client_auth not provided, using defaults.")
                 userAuth = defUserAuth
         }
-	flag.Parse()
 
 	switch {
 	case *port <= 0:
@@ -103,6 +103,7 @@ func main() {
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
 	cfg := &gnmi.Config{}
 	cfg.Port = int64(*port)
+	cfg.UserAuth = userAuth
 	s, err := gnmi.NewServer(cfg, opts)
 	if err != nil {
 		log.Errorf("Failed to create gNMI server: %v", err)

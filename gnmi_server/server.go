@@ -187,8 +187,13 @@ func authenticate(UserAuth AuthTypes, ctx context.Context) (context.Context,erro
 }
 
 // Subscribe implements the gNMI Subscribe RPC.
-func (srv *Server) Subscribe(stream gnmipb.GNMI_SubscribeServer) error {
+func (s *Server) Subscribe(stream gnmipb.GNMI_SubscribeServer) error {
 	ctx := stream.Context()
+        ctx, err := authenticate(s.config.UserAuth, ctx)
+        if err != nil {
+                return err
+        }
+
 
 	pr, ok := peer.FromContext(ctx)
 	if !ok {
@@ -209,19 +214,19 @@ func (srv *Server) Subscribe(stream gnmipb.GNMI_SubscribeServer) error {
 
 	c := NewClient(pr.Addr)
 
-	srv.cMu.Lock()
-	if oc, ok := srv.clients[c.String()]; ok {
+	s.cMu.Lock()
+	if oc, ok := s.clients[c.String()]; ok {
 		log.V(2).Infof("Delete duplicate client %s", oc)
 		oc.Close()
-		delete(srv.clients, c.String())
+		delete(s.clients, c.String())
 	}
-	srv.clients[c.String()] = c
-	srv.cMu.Unlock()
+	s.clients[c.String()] = c
+	s.cMu.Unlock()
 
-	err := c.Run(stream)
-	srv.cMu.Lock()
-	delete(srv.clients, c.String())
-	srv.cMu.Unlock()
+	err = c.Run(stream)
+	s.cMu.Lock()
+	delete(s.clients, c.String())
+	s.cMu.Unlock()
 
 	log.Flush()
 	return err
