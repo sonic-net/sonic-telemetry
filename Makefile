@@ -34,7 +34,7 @@ $(GO_DEPS): go.mod $(PATCHES)
 	$(GO) get golang.org/x/crypto/ssh/terminal@e9b2fee46413
 	$(GO) mod vendor
 	$(MGMT_COMMON_DIR)/patches/apply.sh vendor
-	cp -r $(GOPATH)/pkg/mod/golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413 vendor/golang.org/x/crypto
+	cp -r $(GOPATH)/pkg/mod/golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413/* vendor/golang.org/x/crypto/
 	chmod -R u+w vendor
 	patch -d vendor -p0 <patches/gnmi_cli.all.patch
 	touch $@
