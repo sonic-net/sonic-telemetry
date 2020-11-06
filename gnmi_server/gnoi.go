@@ -10,37 +10,71 @@ import (
 )
 
 func (srv *Server) Reboot(ctx context.Context, req *gnoi_system_pb.RebootRequest) (*gnoi_system_pb.RebootResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
 	log.V(1).Info("gNOI: Reboot")
 	return nil, status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) RebootStatus(ctx context.Context, req *gnoi_system_pb.RebootStatusRequest) (*gnoi_system_pb.RebootStatusResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
 	log.V(1).Info("gNOI: RebootStatus")
 	return nil, status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) CancelReboot(ctx context.Context, req *gnoi_system_pb.CancelRebootRequest) (*gnoi_system_pb.CancelRebootResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
 	log.V(1).Info("gNOI: CancelReboot")
 	return nil, status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) Ping(req *gnoi_system_pb.PingRequest, rs gnoi_system_pb.System_PingServer) error {
+	ctx := rs.Context()
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return err
+	}
 	log.V(1).Info("gNOI: Ping")
 	return status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) Traceroute(req *gnoi_system_pb.TracerouteRequest, rs gnoi_system_pb.System_TracerouteServer) error {
+	ctx := rs.Context()
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return err
+	}
 	log.V(1).Info("gNOI: Traceroute")
 	return status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) SetPackage(rs gnoi_system_pb.System_SetPackageServer) error {
+	ctx := rs.Context()
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return err
+	}
 	log.V(1).Info("gNOI: SetPackage")
 	return status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) SwitchControlProcessor(ctx context.Context, req *gnoi_system_pb.SwitchControlProcessorRequest) (*gnoi_system_pb.SwitchControlProcessorResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
 	log.V(1).Info("gNOI: SwitchControlProcessor")
 	return nil, status.Errorf(codes.Unimplemented, "")
 }
 func (srv *Server) Time(ctx context.Context, req *gnoi_system_pb.TimeRequest) (*gnoi_system_pb.TimeResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
 	log.V(1).Info("gNOI: Time")
 	var tm gnoi_system_pb.TimeResponse
 	tm.Time = uint64(time.Now().UnixNano())
 	return &tm, nil
 }
-
