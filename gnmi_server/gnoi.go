@@ -135,3 +135,35 @@ func (srv *Server) Refresh(ctx context.Context, req *spb.RefreshRequest) (*spb.R
 	return &spb.RefreshResponse{Token: tokenResp(claims.Username, claims.Roles)}, nil
 
 }
+
+func (srv *Server) ShowTechsupport(ctx context.Context, req *spb.TechsupportRequest) (*spb.TechsupportResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.V(1).Info("gNOI: Sonic ShowTechsupport")
+	
+	resp := &spb.TechsupportResponse{
+		Output: &spb.TechsupportResponse_Output {
+
+		},
+	}
+
+	reqstr, err := json.Marshal(req)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	jsresp, err:= transutil.TranslProcessAction("/sonic-show-techsupport:sonic-show-techsupport-info", []byte(reqstr), ctx)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	
+	err = json.Unmarshal(jsresp, resp)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	
+	
+	return resp, nil
+}
