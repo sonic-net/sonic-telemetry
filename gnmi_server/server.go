@@ -176,6 +176,12 @@ func authenticate(UserAuth AuthTypes, ctx context.Context) (context.Context,erro
 			success = true
 		}
 	}
+	if !success && UserAuth.Enabled("cert") {
+		ctx,err = ClientCertAuthenAndAuthor(ctx)
+		if err == nil {
+			success = true
+		}
+	}
 
 	//Allow for future authentication mechanisms here...
 

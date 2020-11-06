@@ -15,8 +15,8 @@ import (
 )
 
 var (
-        defUserAuth = gnmi.AuthTypes{"password": true}
-        userAuth = gnmi.AuthTypes{"password": false}
+        defUserAuth = gnmi.AuthTypes{"password": true, "cert": false}
+        userAuth = gnmi.AuthTypes{"password": false, "cert": false}
 	port = flag.Int("port", -1, "port to listen on")
 	// Certificate files.
 	caCert            = flag.String("ca_crt", "", "CA certificate for client certificate validation. Optional.")
@@ -26,7 +26,7 @@ var (
 )
 
 func main() {
-	flag.Var(userAuth, "client_auth", "Client auth mode(s) - none,password")
+	flag.Var(userAuth, "client_auth", "Client auth mode(s) - none,cert,password")
 	flag.Parse()
         if isFlagPassed("client_auth") {
                 log.V(1).Infof("client_auth provided")
@@ -92,6 +92,11 @@ func main() {
 			log.Exit("failed to append CA certificate")
 		}
 		tlsCfg.ClientCAs = certPool
+	} else {
+		if userAuth.Enabled("cert") {
+			userAuth.Unset("cert")
+			log.Warning("client_auth mode cert requires ca_crt option. Disabling cert mode authentication.")
+		}
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
