@@ -5,8 +5,11 @@ import (
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
 	log "github.com/golang/glog"
 	"time"
+	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"os/user"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 func (srv *Server) Reboot(ctx context.Context, req *gnoi_system_pb.RebootRequest) (*gnoi_system_pb.RebootResponse, error) {
@@ -77,4 +80,58 @@ func (srv *Server) Time(ctx context.Context, req *gnoi_system_pb.TimeRequest) (*
 	var tm gnoi_system_pb.TimeResponse
 	tm.Time = uint64(time.Now().UnixNano())
 	return &tm, nil
+}
+
+func (srv *Server) Authenticate(ctx context.Context, req *spb.AuthenticateRequest) (*spb.AuthenticateResponse, error) {
+	// Can't enforce normal authentication here.. maybe only enforce client cert auth if enabled?
+	// ctx,err := authenticate(srv.config.UserAuth, ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	log.V(1).Info("gNOI: Sonic Authenticate")
+
+
+	if !srv.config.UserAuth.Enabled("jwt") {
+		return nil, status.Errorf(codes.Unimplemented, "")
+	}
+	auth_success, _ := UserPwAuth(req.Username, req.Password)
+	if  auth_success {
+		usr, err := user.Lookup(req.Username)
+		if err == nil {
+			roles, err := GetUserRoles(usr)
+			if err == nil {
+				return &spb.AuthenticateResponse{Token: tokenResp(req.Username, roles)}, nil
+			}
+		}
+		
+	}
+	return nil, status.Errorf(codes.PermissionDenied, "Invalid Username or Password")
+
+}
+func (srv *Server) Refresh(ctx context.Context, req *spb.RefreshRequest) (*spb.RefreshResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.V(1).Info("gNOI: Sonic Refresh")
+
+	if !srv.config.UserAuth.Enabled("jwt") {
+		return nil, status.Errorf(codes.Unimplemented, "")
+	}
+
+	token, ctx, err := JwtAuthenAndAuthor(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	claims := &Claims{}
+	jwt.ParseWithClaims(token.AccessToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return hmacSampleSecret, nil
+	})
+	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > JwtRefreshInt {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid JWT Token")
+	}
+	
+	return &spb.RefreshResponse{Token: tokenResp(claims.Username, claims.Roles)}, nil
+
 }

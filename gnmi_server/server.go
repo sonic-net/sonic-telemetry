@@ -176,6 +176,12 @@ func authenticate(UserAuth AuthTypes, ctx context.Context) (context.Context,erro
 			success = true
 		}
 	}
+	if !success && UserAuth.Enabled("jwt") {
+		_,ctx,err = JwtAuthenAndAuthor(ctx)
+		if err == nil {
+			success = true
+		}
+	}
 	if !success && UserAuth.Enabled("cert") {
 		ctx,err = ClientCertAuthenAndAuthor(ctx)
 		if err == nil {
