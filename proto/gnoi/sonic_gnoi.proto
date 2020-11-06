@@ -9,7 +9,21 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 
 service SonicService {
+  rpc ShowTechsupport (TechsupportRequest) returns (TechsupportResponse) {}
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
+}
+
+message TechsupportRequest {
+    message Input {
+        string date = 1;
+    }
+    Input input = 1 [(gogoproto.jsontag) = "sonic-show-techsupport:input", (gogoproto.moretags) = "xml:\",comment\""];
+}
+message TechsupportResponse {
+    message Output {
+        string output_filename = 1 [(gogoproto.jsontag) = "output-filename", (gogoproto.moretags) = "xml:\",comment\""];
+    }
+    Output output = 1 [(gogoproto.jsontag) = "sonic-show-techsupport:output", (gogoproto.moretags) = "xml:\",comment\""];
 }
 
 message JwtToken {

@@ -6,9 +6,11 @@ import (
 	log "github.com/golang/glog"
 	"time"
 	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
+	transutil "github.com/Azure/sonic-telemetry/transl_utils"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"os/user"
+	"encoding/json"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
