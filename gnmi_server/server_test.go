@@ -6,30 +6,37 @@ package gnmi
 import (
 	"crypto/tls"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"strings"
+
 	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
 
-	"github.com/kylelemons/godebug/pretty"
-	"github.com/openconfig/gnmi/client"
-	pb "github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/openconfig/gnmi/value"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/kylelemons/godebug/pretty"
+	"github.com/openconfig/gnmi/client"
+	pb "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/gnmi/value"
+	"github.com/openconfig/ygot/ygot"
+
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
+
 	// Register supported client types.
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
 	gclient "github.com/jipanyang/gnmi/client/gnmi"
-
 )
 
 var clientTypes = []string{gclient.Type}
@@ -121,7 +128,7 @@ func runTestGet(t *testing.T, ctx context.Context, gClient pb.GNMIClient, pathTa
 		t.Log("err: ", err)
 		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
 	}
-	
+
 	// Check response value
 	if valTest {
 		var gotVal interface{}
@@ -389,7 +396,7 @@ func prepareDbTranslib(t *testing.T) {
 	rclient := getRedisClient(t)
 	rclient.FlushDB()
 	rclient.Close()
-	
+
 	//Enable keysapce notification
 	os.Setenv("PATH", "/usr/bin:/sbin:/bin:/usr/local/bin")
 	cmd := exec.Command("redis-cli", "config", "set", "notify-keyspace-events", "KEA")
@@ -410,6 +417,167 @@ func prepareDbTranslib(t *testing.T) {
 		loadDBNotStrict(t, rclient, v)
 		rclient.Close()
 	}
+}
+
+// subscriptionQuery represent the input to create an gnmi.Subscription instance.
+type subscriptionQuery struct {
+	Query          []string
+	SubMode        pb.SubscriptionMode
+	SampleInterval uint64
+}
+
+func pathToString(q client.Path) string {
+	qq := make(client.Path, len(q))
+	copy(qq, q)
+	// Escape all slashes within a path element. ygot.StringToPath will handle
+	// these escapes.
+	for i, e := range qq {
+		qq[i] = strings.Replace(e, "/", "\\/", -1)
+	}
+	return strings.Join(qq, "/")
+}
+
+// createQuery creates a client.Query with the given args. It assigns query.SubReq.
+func createQuery(subListMode pb.SubscriptionList_Mode, target string, queries []subscriptionQuery, updatesOnly bool) (*client.Query, error) {
+	s := &pb.SubscribeRequest_Subscribe{
+		Subscribe: &pb.SubscriptionList{
+			Mode:   subListMode,
+			Prefix: &pb.Path{Target: target},
+		},
+	}
+	if updatesOnly {
+		s.Subscribe.UpdatesOnly = true
+	}
+
+	for _, qq := range queries {
+		pp, err := ygot.StringToPath(pathToString(qq.Query), ygot.StructuredPath, ygot.StringSlicePath)
+		if err != nil {
+			return nil, fmt.Errorf("invalid query path %q: %v", qq, err)
+		}
+		s.Subscribe.Subscription = append(
+			s.Subscribe.Subscription,
+			&pb.Subscription{
+				Path:           pp,
+				Mode:           qq.SubMode,
+				SampleInterval: qq.SampleInterval,
+			})
+	}
+
+	subReq := &pb.SubscribeRequest{Request: s}
+	query, err := client.NewQuery(subReq)
+	query.TLS = &tls.Config{InsecureSkipVerify: true}
+	return &query, err
+}
+
+// createQueryOrFail creates a query, in case of a failure it fails the test.
+func createQueryOrFail(t *testing.T, subListMode pb.SubscriptionList_Mode, target string, queries []subscriptionQuery, updatesOnly bool) client.Query {
+	q, err := createQuery(subListMode, target, queries, updatesOnly)
+	if err != nil {
+		t.Fatalf("failed to create query: %v", err)
+	}
+
+	return *q
+}
+
+// createCountersDbQueryOnChangeMode creates a query with ON_CHANGE mode.
+func createCountersDbQueryOnChangeMode(t *testing.T, paths ...string) client.Query {
+	return createQueryOrFail(t,
+		pb.SubscriptionList_STREAM,
+		"COUNTERS_DB",
+		[]subscriptionQuery{
+			{
+				Query:   paths,
+				SubMode: pb.SubscriptionMode_ON_CHANGE,
+			},
+		},
+		false)
+}
+
+// createCountersDbQuerySampleMode creates a query with SAMPLE mode.
+func createCountersDbQuerySampleMode(t *testing.T, interval time.Duration, updateOnly bool, paths ...string) client.Query {
+	return createQueryOrFail(t,
+		pb.SubscriptionList_STREAM,
+		"COUNTERS_DB",
+		[]subscriptionQuery{
+			{
+				Query:          paths,
+				SubMode:        pb.SubscriptionMode_SAMPLE,
+				SampleInterval: uint64(interval.Nanoseconds()),
+			},
+		},
+		updateOnly)
+}
+
+// createCountersTableSetUpdate creates a HSET request on the COUNTERS table.
+func createCountersTableSetUpdate(tableKey string, fieldName string, fieldValue string) tablePathValue {
+	return tablePathValue{
+		dbName:    "COUNTERS_DB",
+		tableName: "COUNTERS",
+		tableKey:  tableKey,
+		delimitor: ":",
+		field:     fieldName,
+		value:     fieldValue,
+	}
+}
+
+// createCountersTableDeleteUpdate creates a DEL request on the COUNTERS table.
+func createCountersTableDeleteUpdate(tableKey string, fieldName string) tablePathValue {
+	return tablePathValue{
+		dbName:    "COUNTERS_DB",
+		tableName: "COUNTERS",
+		tableKey:  tableKey,
+		delimitor: ":",
+		field:     fieldName,
+		value:     "",
+		op:        "hdel",
+	}
+}
+
+// createIntervalTickerUpdate creates a request for triggering the interval clock.
+func createIntervalTickerUpdate() tablePathValue {
+	return tablePathValue{
+		op: "intervaltick",
+	}
+}
+
+// cloneObject clones a given object via JSON serialize/deserialize
+func cloneObject(obj interface{}) interface{} {
+	objData, err := json.Marshal(obj)
+	if err != nil {
+		panic(fmt.Errorf("marshal failed, %v", err))
+	}
+
+	var cloneObj interface{}
+	err = json.Unmarshal(objData, &cloneObj)
+	if err != nil {
+		panic(fmt.Errorf("unmarshal failed, %v", err))
+	}
+
+	return cloneObj
+}
+
+// mergeStrMaps merges given maps where they are keyed with string.
+func mergeStrMaps(sourceOrigin interface{}, updateOrigin interface{}) interface{} {
+	// Clone the maps so that the originals are not changed during the merge.
+	source := cloneObject(sourceOrigin)
+	update := cloneObject(updateOrigin)
+
+	// Check if both are string keyed maps
+	sourceStrMap, okSrcMap := source.(map[string]interface{})
+	updateStrMap, okUpdateMap := update.(map[string]interface{})
+	if okSrcMap && okUpdateMap {
+		for itemKey, updateItem := range updateStrMap {
+			sourceItem, sourceItemOk := sourceStrMap[itemKey]
+			if sourceItemOk {
+				sourceStrMap[itemKey] = updateItem
+			} else {
+				sourceStrMap[itemKey] = mergeStrMaps(sourceItem, updateItem)
+			}
+		}
+		return sourceStrMap
+	}
+
+	return update
 }
 
 func TestGnmiSet(t *testing.T) {
@@ -511,8 +679,6 @@ func TestGnmiSet(t *testing.T) {
 	}
 	s.s.Stop()
 }
-
-
 
 func TestGnmiGet(t *testing.T) {
 	//t.Log("Start server")
@@ -745,56 +911,56 @@ func TestGnmiGetTranslib(t *testing.T) {
 	}{
 
 		//These tests only work on the real switch platform, since they rely on files in the /proc and another running service
-	// 	{
-	// 	desc:       "Get OC Platform",
-	// 	pathTarget: "OC_YANG",
-	// 	textPbPath: `
- //                        elem: <name: "openconfig-platform:components" >
- //                `,
-	// 	wantRetCode: codes.OK,
-	// 	wantRespVal: emptyRespVal,
-	// 	valTest:     false,
-	// },
-	// 	{
-	// 		desc:       "Get OC System State",
-	// 		pathTarget: "OC_YANG",
-	// 		textPbPath: `
- //                        elem: <name: "openconfig-system:system" > elem: <name: "state" >
- //                `,
-	// 		wantRetCode: codes.OK,
-	// 		wantRespVal: emptyRespVal,
-	// 		valTest:     false,
-	// 	},
-	// 	{
-	// 		desc:       "Get OC System CPU",
-	// 		pathTarget: "OC_YANG",
-	// 		textPbPath: `
- //                        elem: <name: "openconfig-system:system" > elem: <name: "cpus" >
- //                `,
-	// 		wantRetCode: codes.OK,
-	// 		wantRespVal: emptyRespVal,
-	// 		valTest:     false,
-	// 	},
-	// 	{
-	// 		desc:       "Get OC System memory",
-	// 		pathTarget: "OC_YANG",
-	// 		textPbPath: `
- //                        elem: <name: "openconfig-system:system" > elem: <name: "memory" >
- //                `,
-	// 		wantRetCode: codes.OK,
-	// 		wantRespVal: emptyRespVal,
-	// 		valTest:     false,
-	// 	},
-	// 	{
-	// 		desc:       "Get OC System processes",
-	// 		pathTarget: "OC_YANG",
-	// 		textPbPath: `
- //                        elem: <name: "openconfig-system:system" > elem: <name: "processes" >
- //                `,
-	// 		wantRetCode: codes.OK,
-	// 		wantRespVal: emptyRespVal,
-	// 		valTest:     false,
-	// 	},
+		// 	{
+		// 	desc:       "Get OC Platform",
+		// 	pathTarget: "OC_YANG",
+		// 	textPbPath: `
+		//                        elem: <name: "openconfig-platform:components" >
+		//                `,
+		// 	wantRetCode: codes.OK,
+		// 	wantRespVal: emptyRespVal,
+		// 	valTest:     false,
+		// },
+		// 	{
+		// 		desc:       "Get OC System State",
+		// 		pathTarget: "OC_YANG",
+		// 		textPbPath: `
+		//                        elem: <name: "openconfig-system:system" > elem: <name: "state" >
+		//                `,
+		// 		wantRetCode: codes.OK,
+		// 		wantRespVal: emptyRespVal,
+		// 		valTest:     false,
+		// 	},
+		// 	{
+		// 		desc:       "Get OC System CPU",
+		// 		pathTarget: "OC_YANG",
+		// 		textPbPath: `
+		//                        elem: <name: "openconfig-system:system" > elem: <name: "cpus" >
+		//                `,
+		// 		wantRetCode: codes.OK,
+		// 		wantRespVal: emptyRespVal,
+		// 		valTest:     false,
+		// 	},
+		// 	{
+		// 		desc:       "Get OC System memory",
+		// 		pathTarget: "OC_YANG",
+		// 		textPbPath: `
+		//                        elem: <name: "openconfig-system:system" > elem: <name: "memory" >
+		//                `,
+		// 		wantRetCode: codes.OK,
+		// 		wantRespVal: emptyRespVal,
+		// 		valTest:     false,
+		// 	},
+		// 	{
+		// 		desc:       "Get OC System processes",
+		// 		pathTarget: "OC_YANG",
+		// 		textPbPath: `
+		//                        elem: <name: "openconfig-system:system" > elem: <name: "processes" >
+		//                `,
+		// 		wantRetCode: codes.OK,
+		// 		wantRespVal: emptyRespVal,
+		// 		valTest:     false,
+		// 	},
 		{
 			desc:       "Get OC Interfaces",
 			pathTarget: "OC_YANG",
@@ -1023,288 +1189,272 @@ func runTestSubscribe(t *testing.T) {
 	countersEthernet68QueuesAliasJsonUpdate["Ethernet68/1:1"] = eth68_1
 
 	tests := []struct {
-		desc     string
-		q        client.Query
-		prepares []tablePathValue
-		updates  []tablePathValue
-		wantErr  bool
-		wantNoti []client.Notification
+		desc       string
+		q          client.Query
+		prepares   []tablePathValue
+		updates    []tablePathValue
+		wantErr    bool
+		wantNoti   []client.Notification
+		wantSubErr error
 
 		poll        int
 		wantPollErr string
-	}{{
-		desc: "stream query for table COUNTERS_PORT_NAME_MAP with new test_field field",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS_PORT_NAME_MAP"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
+
+		generateIntervals bool
+	}{
+		{
+			desc: "stream query for table COUNTERS_PORT_NAME_MAP with new test_field field",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS_PORT_NAME_MAP"),
+			updates: []tablePathValue{{
+				dbName:    "COUNTERS_DB",
+				tableName: "COUNTERS_PORT_NAME_MAP",
+				field:     "test_field",
+				value:     "test_value",
+			}},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS_PORT_NAME_MAP"}, TS: time.Unix(0, 200), Val: countersPortNameMapJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS_PORT_NAME_MAP"}, TS: time.Unix(0, 200), Val: countersPortNameMapJsonUpdate},
+			},
 		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS_PORT_NAME_MAP",
-			field:     "test_field",
-			value:     "test_value",
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS_PORT_NAME_MAP"}, TS: time.Unix(0, 200), Val: countersPortNameMapJson},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS_PORT_NAME_MAP"}, TS: time.Unix(0, 200), Val: countersPortNameMapJsonUpdate},
+		{
+			desc: "stream query for table key Ethernet68 with new test_field field",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet68"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "test_field",
+					value:     "test_value",
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "test_field",
+					value:     "test_value",
+				},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+			},
 		},
-	}, {
-		desc: "stream query for table key Ethernet68 with new test_field field",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS", "Ethernet68"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
+		{
+			desc: "(use vendor alias) stream query for table key Ethernet68/1 with new test_field field",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet68/1"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "test_field",
+					value:     "test_value",
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "test_field",
+					value:     "test_value",
+				},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+			},
 		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "test_field",
-			value:     "test_value",
-		}, { //Same value set should not trigger multiple updates
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "test_field",
-			value:     "test_value",
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+		{
+			desc: "stream query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with update of field value",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "3", // be changed to 3 from 2
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "3", // be changed to 3 from 2
+				},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
+			},
 		},
-	}, {
-		desc: "(use vendor alias) stream query for table key Ethernet68/1 with new test_field field",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS", "Ethernet68/1"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
+		{
+			desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with update of field value",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "3", // be changed to 3 from 2
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "3", // be changed to 3 from 2
+				},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
+			},
 		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "test_field",
-			value:     "test_value",
-		}, { //Same value set should not trigger multiple updates
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "test_field",
-			value:     "test_value",
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+		{
+			desc: "stream query for COUNTERS/Ethernet68/Pfcwd with update of field value",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet68", "Pfcwd"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // be changed to 1 from 0
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e"
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // be changed to 1 from 1
+				},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJsonUpdate},
+			},
 		},
-	}, {
-		desc: "stream query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with update of field value",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
+		{
+			desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/Pfcwd with update of field value",
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet68/1", "Pfcwd"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // be changed to 1 from 0
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e"
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // be changed to 1 from 1
+				},
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJsonUpdate},
+			},
 		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-			value:     "3", // be changed to 3 from 2
-		}, { //Same value set should not trigger multiple updates
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-			value:     "3", // be changed to 3 from 2
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
-		},
-	}, {
-		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with update of field value",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
-		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-			value:     "3", // be changed to 3 from 2
-		}, { //Same value set should not trigger multiple updates
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-			delimitor: ":",
-			field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-			value:     "3", // be changed to 3 from 2
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
-		},
-	}, {
-		desc: "stream query for COUNTERS/Ethernet68/Pfcwd with update of field value",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS", "Ethernet68", "Pfcwd"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
-		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
-			delimitor: ":",
-			field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-			value:     "1", // be changed to 1 from 0
-		}, { //Same value set should not trigger multiple updates
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e"
-			delimitor: ":",
-			field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-			value:     "1", // be changed to 1 from 1
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJson},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJsonUpdate},
-		},
-	}, {
-		desc: "(use vendor alias) stream query for COUNTERS/[Ethernet68/1]/Pfcwd with update of field value",
-		q: client.Query{
-			Target:  "COUNTERS_DB",
-			Type:    client.Stream,
-			Queries: []client.Path{{"COUNTERS", "Ethernet68/1", "Pfcwd"}},
-			TLS:     &tls.Config{InsecureSkipVerify: true},
-		},
-		updates: []tablePathValue{{
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
-			delimitor: ":",
-			field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-			value:     "1", // be changed to 1 from 0
-		}, { //Same value set should not trigger multiple updates
-			dbName:    "COUNTERS_DB",
-			tableName: "COUNTERS",
-			tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e"
-			delimitor: ":",
-			field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-			value:     "1", // be changed to 1 from 1
-		}},
-		wantNoti: []client.Notification{
-			client.Connected{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJson},
-			client.Sync{},
-			client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJsonUpdate},
-		},
-	},
 		{
 			desc: "stream query for table key Ethernet* with new test_field field on Ethernet68",
-			q: client.Query{
-				Target:  "COUNTERS_DB",
-				Type:    client.Stream,
-				Queries: []client.Path{{"COUNTERS", "Ethernet*"}},
-				TLS:     &tls.Config{InsecureSkipVerify: true},
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet*"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "test_field",
+					value:     "test_value",
+				},
+				{ //Same value set should not trigger multiple updates
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "test_field",
+					value:     "test_value",
+				},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "test_field",
-				value:     "test_value",
-			}, { //Same value set should not trigger multiple updates
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "test_field",
-				value:     "test_value",
-			}},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*"},
-					TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*"},
-					TS: time.Unix(0, 200), Val: countersEtherneWildcardJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEtherneWildcardJsonUpdate},
 			},
-		}, {
+		},
+		{
 			desc: "stream query for table key Ethernet*/SAI_PORT_STAT_PFC_7_RX_PKTS with field value update",
-			q: client.Query{
-				Target:  "COUNTERS_DB",
-				Type:    client.Stream,
-				Queries: []client.Path{{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}},
-				TLS:     &tls.Config{InsecureSkipVerify: true},
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "4", // being changed to 4 from 2
+				},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-				value:     "4", // being changed to 4 from 2
-			}},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: countersEthernetWildcardPfcJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardPfcJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: singlePortPfcJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: singlePortPfcJsonUpdate},
 			},
-		}, {
+		},
+		{
 			desc: "stream query for table key Ethernet*/Pfcwd with field value update",
-			q: client.Query{
-				Target:  "COUNTERS_DB",
-				Type:    client.Stream,
-				Queries: []client.Path{{"COUNTERS", "Ethernet*", "Pfcwd"}},
-				TLS:     &tls.Config{InsecureSkipVerify: true},
+			q:    createCountersDbQueryOnChangeMode(t, "COUNTERS", "Ethernet*", "Pfcwd"),
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // being changed to 1 from 0
+				},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
-				delimitor: ":",
-				field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-				value:     "1", // being changed to 1 from 0
-			}},
 			wantNoti: []client.Notification{
 				client.Connected{},
 				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernetWildPfcwdJson},
 				client.Sync{},
 				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJsonUpdate},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for table COUNTERS_PORT_NAME_MAP with new field test_field",
 			poll: 3,
 			q: client.Query{
@@ -1331,7 +1481,8 @@ func runTestSubscribe(t *testing.T) {
 				client.Update{Path: []string{"COUNTERS_PORT_NAME_MAP"}, TS: time.Unix(0, 200), Val: countersPortNameMapJsonUpdate},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for table COUNTERS_PORT_NAME_MAP with test_field delete",
 			poll: 3,
 			q: client.Query{
@@ -1340,18 +1491,22 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS_PORT_NAME_MAP"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			prepares: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS_PORT_NAME_MAP",
-				field:     "test_field",
-				value:     "test_value",
-			}},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS_PORT_NAME_MAP",
-				field:     "test_field",
-				op:        "hdel",
-			}},
+			prepares: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS_PORT_NAME_MAP",
+					field:     "test_field",
+					value:     "test_value",
+				},
+			},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS_PORT_NAME_MAP",
+					field:     "test_field",
+					op:        "hdel",
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
 				// We are starting from the result data of "stream query for table with update of new field",
@@ -1364,7 +1519,8 @@ func runTestSubscribe(t *testing.T) {
 				client.Update{Path: []string{"COUNTERS_PORT_NAME_MAP"}, TS: time.Unix(0, 200), Val: countersPortNameMapJson},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with field value change",
 			poll: 3,
 			q: client.Query{
@@ -1373,30 +1529,29 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-				value:     "4", // being changed to 4 from 2
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "4", // being changed to 4 from 2
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "2"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "4"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "4"},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "4"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "4"},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "4"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "4"},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "(use vendor alias) poll query for COUNTERS/[Ethernet68/1]/SAI_PORT_STAT_PFC_7_RX_PKTS with field value change",
 			poll: 3,
 			q: client.Query{
@@ -1405,30 +1560,29 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-				value:     "4", // being changed to 4 from 2
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "4", // being changed to 4 from 2
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "2"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "4"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "4"},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "4"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "4"},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: "4"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "4"},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for COUNTERS/Ethernet68/Pfcwd with field value change",
 			poll: 3,
 			q: client.Query{
@@ -1437,14 +1591,16 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet68", "Pfcwd"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
-				delimitor: ":",
-				field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-				value:     "1", // be changed to 1 from 0
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // be changed to 1 from 0
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
 				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJson},
@@ -1456,7 +1612,8 @@ func runTestSubscribe(t *testing.T) {
 				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdPollUpdate},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "(use vendor alias) poll query for COUNTERS/[Ethernet68/1]/Pfcwd with field value change",
 			poll: 3,
 			q: client.Query{
@@ -1465,14 +1622,16 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet68/1", "Pfcwd"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
-				delimitor: ":",
-				field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-				value:     "1", // be changed to 1 from 0
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // be changed to 1 from 0
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
 				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJson},
@@ -1494,30 +1653,29 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet*"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-				value:     "4", // being changed to 4 from 2
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "4", // being changed to 4 from 2
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*"},
-					TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*"},
-					TS: time.Unix(0, 200), Val: countersFieldUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersFieldUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*"},
-					TS: time.Unix(0, 200), Val: countersFieldUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersFieldUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*"},
-					TS: time.Unix(0, 200), Val: countersFieldUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersFieldUpdate},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for table key field Ethernet*/SAI_PORT_STAT_PFC_7_RX_PKTS with Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS field value change",
 			poll: 3,
 			q: client.Query{
@@ -1526,30 +1684,29 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
-				delimitor: ":",
-				field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
-				value:     "4", // being changed to 4 from 2
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1000000000039", // "Ethernet68": "oid:0x1000000000039",
+					delimitor: ":",
+					field:     "SAI_PORT_STAT_PFC_7_RX_PKTS",
+					value:     "4", // being changed to 4 from 2
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: countersEthernetWildcardPfcJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardPfcJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: allPortPfcJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: allPortPfcJsonUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: allPortPfcJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: allPortPfcJsonUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"},
-					TS: time.Unix(0, 200), Val: allPortPfcJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: allPortPfcJsonUpdate},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for table key field Etherenet*/Pfcwd with Ethernet68:3/PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED field value change",
 			poll: 3,
 			q: client.Query{
@@ -1558,14 +1715,16 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet*", "Pfcwd"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
-				delimitor: ":",
-				field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
-				value:     "1", // being changed to 1 from 0
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091e", // "Ethernet68:3": "oid:0x1500000000091e",
+					delimitor: ":",
+					field:     "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED",
+					value:     "1", // being changed to 1 from 0
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
 				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernetWildPfcwdJson},
@@ -1589,14 +1748,13 @@ func runTestSubscribe(t *testing.T) {
 			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernetWildQueuesJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernetWildQueuesJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernetWildQueuesJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernetWildQueuesJson},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "poll query for COUNTERS/Ethernet68/Queues with field value change",
 			poll: 3,
 			q: client.Query{
@@ -1605,30 +1763,29 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet68", "Queues"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1500000000091c", // "Ethernet68:1": "oid:0x1500000000091c",
-				delimitor: ":",
-				field:     "SAI_QUEUE_STAT_DROPPED_PACKETS",
-				value:     "4", // being changed to 0 from 4
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091c", // "Ethernet68:1": "oid:0x1500000000091c",
+					delimitor: ":",
+					field:     "SAI_QUEUE_STAT_DROPPED_PACKETS",
+					value:     "4", // being changed to 0 from 4
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesJsonUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesJsonUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesJsonUpdate},
 				client.Sync{},
 			},
-		}, {
+		},
+		{
 			desc: "(use vendor alias) poll query for COUNTERS/Ethernet68/Queues with field value change",
 			poll: 3,
 			q: client.Query{
@@ -1637,30 +1794,211 @@ func runTestSubscribe(t *testing.T) {
 				Queries: []client.Path{{"COUNTERS", "Ethernet68/1", "Queues"}},
 				TLS:     &tls.Config{InsecureSkipVerify: true},
 			},
-			updates: []tablePathValue{{
-				dbName:    "COUNTERS_DB",
-				tableName: "COUNTERS",
-				tableKey:  "oid:0x1500000000091c", // "Ethernet68:1": "oid:0x1500000000091c",
-				delimitor: ":",
-				field:     "SAI_QUEUE_STAT_DROPPED_PACKETS",
-				value:     "4", // being changed to 0 from 4
-			}},
+			updates: []tablePathValue{
+				{
+					dbName:    "COUNTERS_DB",
+					tableName: "COUNTERS",
+					tableKey:  "oid:0x1500000000091c", // "Ethernet68:1": "oid:0x1500000000091c",
+					delimitor: ":",
+					field:     "SAI_QUEUE_STAT_DROPPED_PACKETS",
+					value:     "4", // being changed to 0 from 4
+				},
+			},
 			wantNoti: []client.Notification{
 				client.Connected{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJson},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJson},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
 				client.Sync{},
-				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"},
-					TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Queues"}, TS: time.Unix(0, 200), Val: countersEthernet68QueuesAliasJsonUpdate},
 				client.Sync{},
 			},
-		}}
+		},
+		{
+			desc:       "use invalid sample interval",
+			q:          createCountersDbQuerySampleMode(t, 10*time.Millisecond, false, "COUNTERS", "Ethernet1"),
+			updates:    []tablePathValue{},
+			wantSubErr: fmt.Errorf("rpc error: code = InvalidArgument desc = invalid interval: 10ms. It cannot be less than %v", sdc.MinSampleInterval),
+			wantNoti:   []client.Notification{},
+		},
+		{
+			desc:              "sample stream query for table key Ethernet68 with new test_field field",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet68"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1000000000039", "test_field", "test_value"),
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+			},
+		},
+		{
+			desc:              "sample stream query for COUNTERS/Ethernet68/SAI_PORT_STAT_PFC_7_RX_PKTS with 2 updates",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1000000000039", "SAI_PORT_STAT_PFC_7_RX_PKTS", "3"), // be changed to 3 from 2
+				createIntervalTickerUpdate(), // no value change but imitate interval ticker
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "2"},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: "3"},
+			},
+		},
+		{
+			desc:              "(use vendor alias) sample stream query for table key Ethernet68/1 with new test_field field",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet68/1"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1000000000039", "test_field", "test_value"),
+				createIntervalTickerUpdate(), // no value change but imitate interval ticker
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68Json},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1"}, TS: time.Unix(0, 200), Val: countersEthernet68JsonUpdate},
+			},
+		},
+		{
+			desc:              "sample stream query for COUNTERS/Ethernet68/Pfcwd with update of field value",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet68", "Pfcwd"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1"),
+				createIntervalTickerUpdate(), // no value change but imitate interval ticker
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernet68PfcwdJson, countersEthernet68PfcwdJsonUpdate)},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68", "Pfcwd"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernet68PfcwdJson, countersEthernet68PfcwdJsonUpdate)},
+			},
+		},
+		{
+			desc:              "(use vendor alias) sample stream query for COUNTERS/[Ethernet68/1]/Pfcwd with update of field value",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet68/1", "Pfcwd"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1"),
+				createCountersTableSetUpdate("oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "0"), // change back to 0
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernet68PfcwdAliasJson, countersEthernet68PfcwdAliasJsonUpdate)},
+				client.Update{Path: []string{"COUNTERS", "Ethernet68/1", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJson},
+			},
+		},
+		{
+			desc:              "sample stream query for table key Ethernet* with new test_field field on Ethernet68",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet*"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1000000000039", "test_field", "test_value"),
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernetWildcardJson, countersEtherneWildcardJsonUpdate)},
+			},
+		},
+		{
+			desc:              "(updates only) sample stream query for table key Ethernet* with new test_field field on Ethernet68",
+			q:                 createCountersDbQuerySampleMode(t, 0, true, "COUNTERS", "Ethernet*"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createIntervalTickerUpdate(), // no value change but imitate interval ticker
+				createCountersTableSetUpdate("oid:0x1000000000039", "test_field", "test_value"),
+				createIntervalTickerUpdate(),
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: map[string]interface{}{}}, //empty update
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEtherneWildcardJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: map[string]interface{}{}}, //empty update
+			},
+		},
+		/*
+			// deletion of field from table is not supported. It'd keep sending the last value before the deletion.
+				{
+					desc:              "sample stream query for table key Ethernet* with new test_field field deleted from Ethernet68",
+					q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet*"),
+					generateIntervals: true,
+					updates: []tablePathValue{
+						createCountersTableSetUpdate("oid:0x1000000000039", "test_field", "test_value"),
+						createCountersTableDeleteUpdate("oid:0x1000000000039", "test_field"),
+					},
+					wantNoti: []client.Notification{
+						client.Connected{},
+						client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardJson},
+						client.Sync{},
+						client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernetWildcardJson, countersEtherneWildcardJsonUpdate)},
+						client.Update{Path: []string{"COUNTERS", "Ethernet*"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardJson}, //go back to original after deletion of test_field
+					},
+				},
+		*/
+		{
+			desc:              "sample stream query for table key Ethernet*/SAI_PORT_STAT_PFC_7_RX_PKTS with field value update",
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"),
+			generateIntervals: true,
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1000000000039", "SAI_PORT_STAT_PFC_7_RX_PKTS", "4"),
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: countersEthernetWildcardPfcJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "SAI_PORT_STAT_PFC_7_RX_PKTS"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernetWildcardPfcJson, singlePortPfcJsonUpdate)},
+			},
+		},
+		{
+			desc:              "sample stream query for table key Ethernet*/Pfcwd with field value update",
+			generateIntervals: true,
+			q:                 createCountersDbQuerySampleMode(t, 0, false, "COUNTERS", "Ethernet*", "Pfcwd"),
+			updates: []tablePathValue{
+				createCountersTableSetUpdate("oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1"),
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernetWildPfcwdJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: mergeStrMaps(countersEthernetWildPfcwdJson, countersEthernet68PfcwdAliasJsonUpdate)},
+			},
+		},
+		{
+			desc:              "(update only) sample stream query for table key Ethernet*/Pfcwd with field value update",
+			generateIntervals: true,
+			q:                 createCountersDbQuerySampleMode(t, 0, true, "COUNTERS", "Ethernet*", "Pfcwd"),
+			updates: []tablePathValue{
+				createIntervalTickerUpdate(),
+				createCountersTableSetUpdate("oid:0x1500000000091e", "PFC_WD_QUEUE_STATS_DEADLOCK_DETECTED", "1"),
+				createIntervalTickerUpdate(),
+			},
+			wantNoti: []client.Notification{
+				client.Connected{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernetWildPfcwdJson},
+				client.Sync{},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: map[string]interface{}{}}, //empty update
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: countersEthernet68PfcwdAliasJsonUpdate},
+				client.Update{Path: []string{"COUNTERS", "Ethernet*", "Pfcwd"}, TS: time.Unix(0, 200), Val: map[string]interface{}{}}, //empty update
+			},
+		},
+	}
 
 	rclient := getRedisClient(t)
 	defer rclient.Close()
@@ -1675,6 +2013,14 @@ func runTestSubscribe(t *testing.T) {
 				rclient.HSet(prepare.tableName+prepare.delimitor+prepare.tableKey, prepare.field, prepare.value)
 			}
 		}
+
+		intervalTickerChan := make(chan time.Time)
+		if tt.generateIntervals {
+			sdc.IntervalTicker = func(interval time.Duration) <-chan time.Time {
+				return intervalTickerChan
+			}
+		}
+
 		time.Sleep(time.Millisecond * 1000)
 		t.Run(tt.desc, func(t *testing.T) {
 			q := tt.q
@@ -1683,7 +2029,6 @@ func runTestSubscribe(t *testing.T) {
 			defer c.Close()
 			var gotNoti []client.Notification
 			q.NotificationHandler = func(n client.Notification) error {
-				//t.Logf("reflect.TypeOf(n) %v :  %v", reflect.TypeOf(n), n)
 				if nn, ok := n.(client.Update); ok {
 					nn.TS = time.Unix(0, 200)
 					gotNoti = append(gotNoti, nn)
@@ -1694,7 +2039,10 @@ func runTestSubscribe(t *testing.T) {
 				return nil
 			}
 			go func() {
-				c.Subscribe(context.Background(), q)
+				err := c.Subscribe(context.Background(), q)
+				if tt.wantSubErr != nil && tt.wantSubErr.Error() != err.Error() {
+					t.Errorf("c.Subscribe expected %v, got %v", tt.wantSubErr, err)
+				}
 				/*
 					err := c.Subscribe(context.Background(), q)
 					t.Log("c.Subscribe err:", err)
@@ -1714,10 +2062,17 @@ func runTestSubscribe(t *testing.T) {
 				switch update.op {
 				case "hdel":
 					rclient.HDel(update.tableName+update.delimitor+update.tableKey, update.field)
+				case "intervaltick":
+					// This is not a DB update but a request to trigger sample interval
 				default:
 					rclient.HSet(update.tableName+update.delimitor+update.tableKey, update.field, update.value)
 				}
+
 				time.Sleep(time.Millisecond * 1000)
+
+				if tt.generateIntervals {
+					intervalTickerChan <- time.Now()
+				}
 			}
 			// wait for half second for change to sync
 			time.Sleep(time.Millisecond * 500)
@@ -1788,6 +2143,10 @@ func TestCapabilities(t *testing.T) {
 }
 
 func init() {
+	// Enable logs at UT setup
+	flag.Lookup("v").Value.Set("10")
+	flag.Lookup("log_dir").Value.Set("/tmp/telemetrytest")
+
 	// Inform gNMI server to use redis tcp localhost connection
 	sdc.UseRedisLocalTcpPort = true
 }

@@ -3,13 +3,14 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
+
 	spb "github.com/Azure/sonic-telemetry/proto"
+	"github.com/Workiva/go-datastructures/queue"
 	linuxproc "github.com/c9s/goprocinfo/linux"
 	log "github.com/golang/glog"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/Workiva/go-datastructures/queue"
-	"sync"
-	"time"
 )
 
 // Non db client is to Handle
@@ -332,7 +333,107 @@ func (c *NonDbClient) String() string {
 
 // To be implemented
 func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
-	return
+	c.w = w
+	defer c.w.Done()
+	c.q = q
+
+	validatedSubs := make(map[*gnmipb.Subscription]time.Duration)
+
+	// Validate all subs
+	for _, sub := range subscribe.GetSubscription() {
+		gnmiPath := sub.GetPath()
+		_, ok := c.path2Getter[gnmiPath]
+		if !ok {
+			log.V(3).Infof("Cannot find getter for the path: %v", gnmiPath)
+			continue
+		}
+
+		subMode := sub.GetMode()
+		if subMode != gnmipb.SubscriptionMode_SAMPLE {
+			putFatalMsg(c.q, fmt.Sprintf("Unsupported subscription mode: %v.", subMode))
+			return
+		}
+
+		interval, err := validateSampleInterval(sub)
+		if err != nil {
+			putFatalMsg(c.q, err.Error())
+			return
+		}
+
+		validatedSubs[sub] = interval
+	}
+
+	if len(validatedSubs) == 0 {
+		log.V(3).Infof("No valid sub for stream subsription.")
+		return
+	}
+
+	for sub := range validatedSubs {
+		gnmiPath := sub.GetPath()
+		getter, _ := c.path2Getter[gnmiPath]
+		runGetterAndSend(c, gnmiPath, getter)
+	}
+
+	c.q.Put(Value{
+		&spb.Value{
+			Timestamp:    time.Now().UnixNano(),
+			SyncResponse: true,
+		},
+	})
+
+	// Start a GO routine for each sub as they might have different intervals
+	for sub, interval := range validatedSubs {
+		go sampledStream(c, stop, sub, interval)
+	}
+
+	log.V(1).Infof("Started non-db sampling routines for %s ", c)
+	<-stop
+	log.V(1).Infof("Stopping NonDbClient.StreamRun routine for Client %s ", c)
+}
+
+// sampledStream implements the sampling loop for a streaming subscription.
+func sampledStream(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription, interval time.Duration) {
+	log.V(1).Infof("Starting sampling routine sub: '%s' client: '%s'", sub, c)
+
+	gnmiPath := sub.GetPath()
+	getter, _ := c.path2Getter[gnmiPath] // this is already a validated sub, getter should be there.
+
+	for {
+		select {
+		case <-stop:
+			log.V(1).Infof("Stopping NonDbClient.sampledStream routine for sub '%s'", sub)
+			return
+		case <-time.After(interval):
+			runGetterAndSend(c, gnmiPath, getter)
+		}
+	}
+}
+
+// runGetterAndSend runs a given getter method and puts the result to client queue.
+func runGetterAndSend(c *NonDbClient, gnmiPath *gnmipb.Path, getter dataGetFunc) error {
+	v, err := getter()
+	if err != nil {
+		log.V(3).Infof("PollRun getter error %v, %v", gnmiPath, err)
+	}
+
+	spbv := &spb.Value{
+		Prefix:       c.prefix,
+		Path:         gnmiPath,
+		Timestamp:    time.Now().UnixNano(),
+		SyncResponse: false,
+		Val: &gnmipb.TypedValue{
+			Value: &gnmipb.TypedValue_JsonIetfVal{
+				JsonIetfVal: v,
+			}},
+	}
+
+	err = c.q.Put(Value{spbv})
+	if err != nil {
+		log.V(3).Infof("Failed to put for %v, %v", gnmiPath, err)
+	} else {
+		log.V(6).Infof("Added spbv #%v", spbv)
+	}
+	return err
 }
 
 func (c *NonDbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
@@ -349,23 +450,7 @@ func (c *NonDbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *syn
 		}
 		t1 := time.Now()
 		for gnmiPath, getter := range c.path2Getter {
-			v, err := getter()
-			if err != nil {
-				log.V(3).Infof("PollRun getter error %v for %v", err, v)
-			}
-			spbv := &spb.Value{
-				Prefix:       c.prefix,
-				Path:         gnmiPath,
-				Timestamp:    time.Now().UnixNano(),
-				SyncResponse: false,
-				Val: &gnmipb.TypedValue{
-					Value: &gnmipb.TypedValue_JsonIetfVal{
-						JsonIetfVal: v,
-					}},
-			}
-
-			c.q.Put(Value{spbv})
-			log.V(6).Infof("Added spbv #%v", spbv)
+			runGetterAndSend(c, gnmiPath, getter)
 		}
 
 		c.q.Put(Value{
@@ -411,10 +496,9 @@ func (c *NonDbClient) Close() error {
 	return nil
 }
 
-func  (c *NonDbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
+func (c *NonDbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
 	return nil
 }
-func (c *NonDbClient) Capabilities() ([]gnmipb.ModelData) {
+func (c *NonDbClient) Capabilities() []gnmipb.ModelData {
 	return nil
 }
-

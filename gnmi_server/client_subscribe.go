@@ -153,6 +153,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	log.V(1).Infof("Client %s running", c)
 	go c.recv(stream)
 	err = c.send(stream)
+
 	c.Close()
 	// Wait until all child go routines exited
 	c.w.Wait()
@@ -188,6 +189,7 @@ func (c *Client) recv(stream gnmipb.GNMI_SubscribeServer) {
 
 	for {
 		log.V(5).Infof("Client %s blocking on stream.Recv()", c)
+
 		event, err := stream.Recv()
 		c.recvMsg++
 

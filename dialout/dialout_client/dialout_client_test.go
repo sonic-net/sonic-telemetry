@@ -6,7 +6,10 @@ package telemetry_dialout
 import (
 	"crypto/tls"
 	"encoding/json"
+	"flag"
+
 	"github.com/go-redis/redis"
+
 	//"github.com/golang/protobuf/proto"
 	testcert "github.com/Azure/sonic-telemetry/testdata/tls"
 
@@ -16,6 +19,7 @@ import (
 	"github.com/openconfig/gnmi/value"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+
 	//"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	//"google.golang.org/grpc/status"
@@ -503,6 +507,10 @@ func TestGNMIDialOutPublish(t *testing.T) {
 }
 
 func init() {
+	// Enable logs at UT setup
+	flag.Lookup("v").Value.Set("10")
+	flag.Lookup("log_dir").Value.Set("/tmp/telemetrytest")
+
 	// Inform gNMI server to use redis tcp localhost connection
 	sdc.UseRedisLocalTcpPort = true
 }
