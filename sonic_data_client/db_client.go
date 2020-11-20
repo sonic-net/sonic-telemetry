@@ -222,7 +222,7 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	log.V(1).Infof("Exiting StreamRun routine for Client %v", c)
 }
 
-// streamOnChangeSubscription implemets Subscription "ON_CHANGE STREAM" mode
+// streamOnChangeSubscription implements Subscription "ON_CHANGE STREAM" mode
 func streamOnChangeSubscription(c *DbClient, gnmiPath *gnmipb.Path) {
 	tblPaths := c.pathG2S[gnmiPath]
 	log.V(2).Infof("streamOnChangeSubscription gnmiPath: %v", gnmiPath)
@@ -239,7 +239,7 @@ func streamOnChangeSubscription(c *DbClient, gnmiPath *gnmipb.Path) {
 	}
 }
 
-// streamSampleSubscription implemets Subscription "SAMPLE STREAM" mode
+// streamSampleSubscription implements Subscription "SAMPLE STREAM" mode
 func streamSampleSubscription(c *DbClient, sub *gnmipb.Subscription, updateOnly bool) {
 	samplingInterval, err := validateSampleInterval(sub)
 	if err != nil {

@@ -331,7 +331,7 @@ func (c *NonDbClient) String() string {
 		c.prefix.GetTarget(), c.sendMsg, c.recvMsg)
 }
 
-// To be implemented
+// StreamRun implements stream subscription for non-DB queries. It supports SAMPLE mode only.
 func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	c.w = w
 	defer c.w.Done()
@@ -364,7 +364,7 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 	}
 
 	if len(validatedSubs) == 0 {
-		log.V(3).Infof("No valid sub for stream subsription.")
+		log.V(3).Infof("No valid sub for stream subscription.")
 		return
 	}
 
@@ -383,7 +383,7 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 
 	// Start a GO routine for each sub as they might have different intervals
 	for sub, interval := range validatedSubs {
-		go sampledStream(c, stop, sub, interval)
+		go streamSample(c, stop, sub, interval)
 	}
 
 	log.V(1).Infof("Started non-db sampling routines for %s ", c)
@@ -391,8 +391,8 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 	log.V(1).Infof("Stopping NonDbClient.StreamRun routine for Client %s ", c)
 }
 
-// sampledStream implements the sampling loop for a streaming subscription.
-func sampledStream(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription, interval time.Duration) {
+// streamSample implements the sampling loop for a streaming subscription.
+func streamSample(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription, interval time.Duration) {
 	log.V(1).Infof("Starting sampling routine sub: '%s' client: '%s'", sub, c)
 
 	gnmiPath := sub.GetPath()
@@ -401,7 +401,7 @@ func sampledStream(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription,
 	for {
 		select {
 		case <-stop:
-			log.V(1).Infof("Stopping NonDbClient.sampledStream routine for sub '%s'", sub)
+			log.V(1).Infof("Stopping NonDbClient.streamSample routine for sub '%s'", sub)
 			return
 		case <-time.After(interval):
 			runGetterAndSend(c, gnmiPath, getter)
@@ -413,7 +413,7 @@ func sampledStream(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription,
 func runGetterAndSend(c *NonDbClient, gnmiPath *gnmipb.Path, getter dataGetFunc) error {
 	v, err := getter()
 	if err != nil {
-		log.V(3).Infof("PollRun getter error %v, %v", gnmiPath, err)
+		log.V(3).Infof("runGetterAndSend getter error %v, %v", gnmiPath, err)
 	}
 
 	spbv := &spb.Value{
