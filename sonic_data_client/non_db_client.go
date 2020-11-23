@@ -102,7 +102,6 @@ type sysUptime struct {
     Total   uint64 `json:"total"`
 }
 
-
 func getCpuUtilPercents(cur, last *linuxproc.CPUStat) uint64 {
 	curTotal := (cur.User + cur.Nice + cur.System + cur.Idle + cur.IOWait + cur.IRQ + cur.SoftIRQ + cur.Steal + cur.Guest + cur.GuestNice)
 	lastTotal := (last.User + last.Nice + last.System + last.Idle + last.IOWait + last.IRQ + last.SoftIRQ + last.Steal + last.Guest + last.GuestNice)
@@ -261,15 +260,14 @@ func getSysUptime() ([]byte, error) {
     uptime := sysUptime{}
     uptime.Total = uint64(timeInfo.Total)
     b, err := json.Marshal(uptime)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return b, err
-	}
+    if err != nil {
+        log.V(2).Infof("%v", err)
+        return b, err
+    }
 
-	log.V(4).Infof("getSysUptime, output %v", string(b))
-	return b, nil
+    log.V(4).Infof("getSysUptime, output %v", string(b))
+    return b, nil
 }
-
 
 func pollStats() {
 	for {
