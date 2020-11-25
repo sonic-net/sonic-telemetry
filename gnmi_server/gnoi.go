@@ -201,4 +201,98 @@ func (srv *Server) ShowTechsupport(ctx context.Context, req *spb.TechsupportRequ
 	return resp, nil
 }
 
+func (srv *Server) ImageInstall(ctx context.Context, req *spb.ImageInstallRequest) (*spb.ImageInstallResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.V(1).Info("gNOI: Sonic ImageInstall")
+	
+	resp := &spb.ImageInstallResponse{
+		Output: &spb.SonicOutput {
 
+		},
+	}
+
+	reqstr, err := json.Marshal(req)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	jsresp, err:= transutil.TranslProcessAction("/sonic-image-management:image-install", []byte(reqstr), ctx)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	
+	err = json.Unmarshal(jsresp, resp)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	
+	return resp, nil
+}
+
+func (srv *Server) ImageRemove(ctx context.Context, req *spb.ImageRemoveRequest) (*spb.ImageRemoveResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.V(1).Info("gNOI: Sonic ImageRemove")
+	
+	resp := &spb.ImageRemoveResponse{
+		Output: &spb.SonicOutput {
+
+		},
+	}
+
+	reqstr, err := json.Marshal(req)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	jsresp, err:= transutil.TranslProcessAction("/sonic-image-management:image-remove", []byte(reqstr), ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	
+	err = json.Unmarshal(jsresp, resp)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	
+	return resp, nil
+}
+
+func (srv *Server) ImageDefault(ctx context.Context, req *spb.ImageDefaultRequest) (*spb.ImageDefaultResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.V(1).Info("gNOI: Sonic ImageDefault")
+	
+	resp := &spb.ImageDefaultResponse{
+		Output: &spb.SonicOutput {
+
+		},
+	}
+
+	reqstr, err := json.Marshal(req)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	jsresp, err:= transutil.TranslProcessAction("/sonic-image-management:image-default", []byte(reqstr), ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	err = json.Unmarshal(jsresp, resp)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	
+	return resp, nil
+}

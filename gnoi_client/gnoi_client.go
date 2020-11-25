@@ -62,6 +62,12 @@ func main() {
 			copyConfig(sc, ctx)
 		case "authenticate":
 			authenticate(sc, ctx)
+		case "imageInstall":
+			imageInstall(sc, ctx)
+		case "imageDefault":
+			imageDefault(sc, ctx)
+		case "imageRemove":
+			imageRemove(sc, ctx)
 		case "refresh":
 			refresh(sc, ctx)
 		default:
@@ -118,6 +124,64 @@ func copyConfig(sc spb.SonicServiceClient, ctx context.Context) {
 	json.Unmarshal([]byte(*args), req)
 
 	resp,err := sc.CopyConfig(ctx, req)
+
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+func imageInstall(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic ImageInstall")
+	ctx = setUserCreds(ctx)
+	req := &spb.ImageInstallRequest{
+		Input: &spb.ImageInstallRequest_Input{},
+	}
+	json.Unmarshal([]byte(*args), req)
+
+	resp,err := sc.ImageInstall(ctx, req)
+
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+func imageRemove(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic ImageRemove")
+	ctx = setUserCreds(ctx)
+	req := &spb.ImageRemoveRequest{
+		Input: &spb.ImageRemoveRequest_Input{},
+	}
+	json.Unmarshal([]byte(*args), req)
+
+	resp,err := sc.ImageRemove(ctx, req)
+
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+
+func imageDefault(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic ImageDefault")
+	ctx = setUserCreds(ctx)
+	req := &spb.ImageDefaultRequest{
+		Input: &spb.ImageDefaultRequest_Input{},
+	}
+	json.Unmarshal([]byte(*args), req)
+
+	resp,err := sc.ImageDefault(ctx, req)
 
 	if err != nil {
 		panic(err.Error())
