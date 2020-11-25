@@ -56,6 +56,8 @@ func main() {
 	case "Sonic":
 		sc := spb.NewSonicServiceClient(conn)
 		switch *rpc {
+		case "showtechsupport":
+			sonicShowTechSupport(sc, ctx)
 		case "authenticate":
 			authenticate(sc, ctx)
 		case "refresh":
@@ -73,6 +75,28 @@ func systemTime(sc gnoi_system_pb.SystemClient, ctx context.Context) {
 	fmt.Println("System Time")
 	ctx = setUserCreds(ctx)
 	resp,err := sc.Time(ctx, new(gnoi_system_pb.TimeRequest))
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+
+func sonicShowTechSupport(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic ShowTechsupport")
+	ctx = setUserCreds(ctx)
+	req := &spb.TechsupportRequest {
+		Input: &spb.TechsupportRequest_Input{
+			
+		},
+	}
+
+	json.Unmarshal([]byte(*args), req)
+	
+	resp,err := sc.ShowTechsupport(ctx, req)
 	if err != nil {
 		panic(err.Error())
 	}
