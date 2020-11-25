@@ -3,6 +3,7 @@ package main
 import (
 	"google.golang.org/grpc"
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
+	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
 	"context"
 	"os"
 	"os/signal"
@@ -52,6 +53,16 @@ func main() {
 		default:
 			panic("Invalid RPC Name")
 		}
+	case "Sonic":
+		sc := spb.NewSonicServiceClient(conn)
+		switch *rpc {
+		case "authenticate":
+			authenticate(sc, ctx)
+		case "refresh":
+			refresh(sc, ctx)
+		default:
+			panic("Invalid RPC Name")
+		}
 	default:
 		panic("Invalid Module Name")
 	}
@@ -71,3 +82,40 @@ func systemTime(sc gnoi_system_pb.SystemClient, ctx context.Context) {
 	}
 	fmt.Println(string(respstr))
 }
+
+func authenticate(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic Authenticate")
+	ctx = setUserCreds(ctx)
+	req := &spb.AuthenticateRequest {}
+	
+	json.Unmarshal([]byte(*args), req)
+	
+	resp,err := sc.Authenticate(ctx, req)
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+
+func refresh(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic Refresh")
+	ctx = setUserCreds(ctx)
+	req := &spb.RefreshRequest {}
+	
+	json.Unmarshal([]byte(*args), req)
+
+	resp,err := sc.Refresh(ctx, req)
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+
