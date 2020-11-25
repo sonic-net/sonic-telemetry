@@ -11,6 +11,7 @@ option (gogoproto.unmarshaler_all) = true;
 service SonicService {
   rpc ShowTechsupport (TechsupportRequest) returns (TechsupportResponse) {}
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
 }
 
 message TechsupportRequest {
