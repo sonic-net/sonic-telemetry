@@ -43,6 +43,10 @@ var (
 			path:    []string{"OTHERS", "platform", "cpu"},
 			getFunc: dataGetFunc(getCpuUtil),
 		},
+		{ // Get host uptime
+			path:    []string{"OTHERS", "platform", "sysuptime"},
+			getFunc: dataGetFunc(getSysUptime),
+		},
 		{ // Get proc meminfo
 			path:    []string{"OTHERS", "proc", "meminfo"},
 			getFunc: dataGetFunc(getProcMeminfo),
@@ -62,10 +66,6 @@ var (
 		{ // Get proc stat
 			path:    []string{"OTHERS", "proc", "stat"},
 			getFunc: dataGetFunc(getProcStat),
-		},
-		{ // Get host uptime
-			path:    []string{"OTHERS", "platform", "sysuptime"},
-			getFunc: dataGetFunc(getSysUptime),
 		},
 	}
 )
