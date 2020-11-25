@@ -138,6 +138,38 @@ func (srv *Server) Refresh(ctx context.Context, req *spb.RefreshRequest) (*spb.R
 
 }
 
+func (srv *Server) ClearNeighbors(ctx context.Context, req *spb.ClearNeighborsRequest) (*spb.ClearNeighborsResponse, error) {
+    ctx,err := authenticate(srv.config.UserAuth, ctx)
+    if err != nil {
+        return nil, err
+    }
+    log.V(1).Info("gNOI: Sonic ClearNeighbors")
+    log.V(1).Info("Request: ", req)
+
+    resp := &spb.ClearNeighborsResponse{
+		Output: &spb.ClearNeighborsResponse_Output {
+        },
+    }
+
+    reqstr, err := json.Marshal(req)
+    if err != nil {
+        return nil, status.Error(codes.Unknown, err.Error())
+    }
+
+    jsresp, err:= transutil.TranslProcessAction("/sonic-neighbor:clear-neighbors", []byte(reqstr), ctx)
+
+    if err != nil {
+        return nil, status.Error(codes.Unknown, err.Error())
+    }
+
+    err = json.Unmarshal(jsresp, resp)
+    if err != nil {
+        return nil, status.Error(codes.Unknown, err.Error())
+    }
+
+    return resp, nil
+}
+
 func (srv *Server) CopyConfig(ctx context.Context, req *spb.CopyConfigRequest) (*spb.CopyConfigResponse, error) {
 	ctx,err := authenticate(srv.config.UserAuth, ctx)
 	if err != nil {

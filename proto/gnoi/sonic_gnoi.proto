@@ -16,6 +16,7 @@ service SonicService {
   rpc ImageDefault(ImageDefaultRequest) returns (ImageDefaultResponse) {}
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
   rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
+  rpc ClearNeighbors(ClearNeighborsRequest) returns (ClearNeighborsResponse) {}
 }
 
 message SonicOutput {
@@ -34,6 +35,23 @@ message TechsupportResponse {
         string output_filename = 1 [(gogoproto.jsontag) = "output-filename", (gogoproto.moretags) = "xml:\",comment\""];
     }
     Output output = 1 [(gogoproto.jsontag) = "sonic-show-techsupport:output", (gogoproto.moretags) = "xml:\",comment\""];
+}
+
+message ClearNeighborsRequest {
+    message Input {
+        bool force = 1;
+        string family = 2;
+        string ip = 3;
+        string ifname = 4;
+    }
+    Input input = 1 [(gogoproto.jsontag) = "sonic-neighbor:input", (gogoproto.moretags) = "xml:\",comment\""];
+}
+
+message ClearNeighborsResponse {
+    message Output {
+        string response = 1;
+    }
+    Output output = 1 [(gogoproto.jsontag) = "sonic-neighbor:output", (gogoproto.moretags) = "xml:\",comment\""];
 }
 
 message CopyConfigRequest {

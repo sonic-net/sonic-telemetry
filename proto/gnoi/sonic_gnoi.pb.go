@@ -270,6 +270,218 @@ func (m *TechsupportResponse_Output) GetOutputFilename() string {
 	return ""
 }
 
+type ClearNeighborsRequest struct {
+	Input                *ClearNeighborsRequest_Input `protobuf:"bytes,1,opt,name=input,proto3" json:"sonic-neighbor:input" xml:",comment"`
+	XXX_NoUnkeyedLiteral struct{}                     `json:"-"`
+	XXX_unrecognized     []byte                       `json:"-"`
+	XXX_sizecache        int32                        `json:"-"`
+}
+
+func (m *ClearNeighborsRequest) Reset()         { *m = ClearNeighborsRequest{} }
+func (m *ClearNeighborsRequest) String() string { return proto.CompactTextString(m) }
+func (*ClearNeighborsRequest) ProtoMessage()    {}
+func (*ClearNeighborsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{3}
+}
+func (m *ClearNeighborsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ClearNeighborsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ClearNeighborsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ClearNeighborsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClearNeighborsRequest.Merge(m, src)
+}
+func (m *ClearNeighborsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *ClearNeighborsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClearNeighborsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClearNeighborsRequest proto.InternalMessageInfo
+
+func (m *ClearNeighborsRequest) GetInput() *ClearNeighborsRequest_Input {
+	if m != nil {
+		return m.Input
+	}
+	return nil
+}
+
+type ClearNeighborsRequest_Input struct {
+	Force                bool     `protobuf:"varint,1,opt,name=force,proto3" json:"force,omitempty"`
+	Family               string   `protobuf:"bytes,2,opt,name=family,proto3" json:"family,omitempty"`
+	Ip                   string   `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
+	Ifname               string   `protobuf:"bytes,4,opt,name=ifname,proto3" json:"ifname,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ClearNeighborsRequest_Input) Reset()         { *m = ClearNeighborsRequest_Input{} }
+func (m *ClearNeighborsRequest_Input) String() string { return proto.CompactTextString(m) }
+func (*ClearNeighborsRequest_Input) ProtoMessage()    {}
+func (*ClearNeighborsRequest_Input) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{3, 0}
+}
+func (m *ClearNeighborsRequest_Input) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ClearNeighborsRequest_Input) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ClearNeighborsRequest_Input.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ClearNeighborsRequest_Input) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClearNeighborsRequest_Input.Merge(m, src)
+}
+func (m *ClearNeighborsRequest_Input) XXX_Size() int {
+	return m.Size()
+}
+func (m *ClearNeighborsRequest_Input) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClearNeighborsRequest_Input.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClearNeighborsRequest_Input proto.InternalMessageInfo
+
+func (m *ClearNeighborsRequest_Input) GetForce() bool {
+	if m != nil {
+		return m.Force
+	}
+	return false
+}
+
+func (m *ClearNeighborsRequest_Input) GetFamily() string {
+	if m != nil {
+		return m.Family
+	}
+	return ""
+}
+
+func (m *ClearNeighborsRequest_Input) GetIp() string {
+	if m != nil {
+		return m.Ip
+	}
+	return ""
+}
+
+func (m *ClearNeighborsRequest_Input) GetIfname() string {
+	if m != nil {
+		return m.Ifname
+	}
+	return ""
+}
+
+type ClearNeighborsResponse struct {
+	Output               *ClearNeighborsResponse_Output `protobuf:"bytes,1,opt,name=output,proto3" json:"sonic-neighbor:output" xml:",comment"`
+	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
+	XXX_unrecognized     []byte                         `json:"-"`
+	XXX_sizecache        int32                          `json:"-"`
+}
+
+func (m *ClearNeighborsResponse) Reset()         { *m = ClearNeighborsResponse{} }
+func (m *ClearNeighborsResponse) String() string { return proto.CompactTextString(m) }
+func (*ClearNeighborsResponse) ProtoMessage()    {}
+func (*ClearNeighborsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{4}
+}
+func (m *ClearNeighborsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ClearNeighborsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ClearNeighborsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ClearNeighborsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClearNeighborsResponse.Merge(m, src)
+}
+func (m *ClearNeighborsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *ClearNeighborsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClearNeighborsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClearNeighborsResponse proto.InternalMessageInfo
+
+func (m *ClearNeighborsResponse) GetOutput() *ClearNeighborsResponse_Output {
+	if m != nil {
+		return m.Output
+	}
+	return nil
+}
+
+type ClearNeighborsResponse_Output struct {
+	Response             string   `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ClearNeighborsResponse_Output) Reset()         { *m = ClearNeighborsResponse_Output{} }
+func (m *ClearNeighborsResponse_Output) String() string { return proto.CompactTextString(m) }
+func (*ClearNeighborsResponse_Output) ProtoMessage()    {}
+func (*ClearNeighborsResponse_Output) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{4, 0}
+}
+func (m *ClearNeighborsResponse_Output) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ClearNeighborsResponse_Output) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ClearNeighborsResponse_Output.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ClearNeighborsResponse_Output) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClearNeighborsResponse_Output.Merge(m, src)
+}
+func (m *ClearNeighborsResponse_Output) XXX_Size() int {
+	return m.Size()
+}
+func (m *ClearNeighborsResponse_Output) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClearNeighborsResponse_Output.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClearNeighborsResponse_Output proto.InternalMessageInfo
+
+func (m *ClearNeighborsResponse_Output) GetResponse() string {
+	if m != nil {
+		return m.Response
+	}
+	return ""
+}
+
 type CopyConfigRequest struct {
 	Input                *CopyConfigRequest_Input `protobuf:"bytes,1,opt,name=input,proto3" json:"sonic-config-mgmt:input" xml:",comment"`
 	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
@@ -281,7 +493,7 @@ func (m *CopyConfigRequest) Reset()         { *m = CopyConfigRequest{} }
 func (m *CopyConfigRequest) String() string { return proto.CompactTextString(m) }
 func (*CopyConfigRequest) ProtoMessage()    {}
 func (*CopyConfigRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{3}
+	return fileDescriptor_75b35b752d70e98f, []int{5}
 }
 func (m *CopyConfigRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -330,7 +542,7 @@ func (m *CopyConfigRequest_Input) Reset()         { *m = CopyConfigRequest_Input
 func (m *CopyConfigRequest_Input) String() string { return proto.CompactTextString(m) }
 func (*CopyConfigRequest_Input) ProtoMessage()    {}
 func (*CopyConfigRequest_Input) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{3, 0}
+	return fileDescriptor_75b35b752d70e98f, []int{5, 0}
 }
 func (m *CopyConfigRequest_Input) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -391,7 +603,7 @@ func (m *CopyConfigResponse) Reset()         { *m = CopyConfigResponse{} }
 func (m *CopyConfigResponse) String() string { return proto.CompactTextString(m) }
 func (*CopyConfigResponse) ProtoMessage()    {}
 func (*CopyConfigResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{4}
+	return fileDescriptor_75b35b752d70e98f, []int{6}
 }
 func (m *CopyConfigResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -438,7 +650,7 @@ func (m *ImageInstallRequest) Reset()         { *m = ImageInstallRequest{} }
 func (m *ImageInstallRequest) String() string { return proto.CompactTextString(m) }
 func (*ImageInstallRequest) ProtoMessage()    {}
 func (*ImageInstallRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{5}
+	return fileDescriptor_75b35b752d70e98f, []int{7}
 }
 func (m *ImageInstallRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -485,7 +697,7 @@ func (m *ImageInstallRequest_Input) Reset()         { *m = ImageInstallRequest_I
 func (m *ImageInstallRequest_Input) String() string { return proto.CompactTextString(m) }
 func (*ImageInstallRequest_Input) ProtoMessage()    {}
 func (*ImageInstallRequest_Input) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{5, 0}
+	return fileDescriptor_75b35b752d70e98f, []int{7, 0}
 }
 func (m *ImageInstallRequest_Input) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -532,7 +744,7 @@ func (m *ImageInstallResponse) Reset()         { *m = ImageInstallResponse{} }
 func (m *ImageInstallResponse) String() string { return proto.CompactTextString(m) }
 func (*ImageInstallResponse) ProtoMessage()    {}
 func (*ImageInstallResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{6}
+	return fileDescriptor_75b35b752d70e98f, []int{8}
 }
 func (m *ImageInstallResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -579,7 +791,7 @@ func (m *ImageRemoveRequest) Reset()         { *m = ImageRemoveRequest{} }
 func (m *ImageRemoveRequest) String() string { return proto.CompactTextString(m) }
 func (*ImageRemoveRequest) ProtoMessage()    {}
 func (*ImageRemoveRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{7}
+	return fileDescriptor_75b35b752d70e98f, []int{9}
 }
 func (m *ImageRemoveRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -626,7 +838,7 @@ func (m *ImageRemoveRequest_Input) Reset()         { *m = ImageRemoveRequest_Inp
 func (m *ImageRemoveRequest_Input) String() string { return proto.CompactTextString(m) }
 func (*ImageRemoveRequest_Input) ProtoMessage()    {}
 func (*ImageRemoveRequest_Input) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{7, 0}
+	return fileDescriptor_75b35b752d70e98f, []int{9, 0}
 }
 func (m *ImageRemoveRequest_Input) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -673,7 +885,7 @@ func (m *ImageRemoveResponse) Reset()         { *m = ImageRemoveResponse{} }
 func (m *ImageRemoveResponse) String() string { return proto.CompactTextString(m) }
 func (*ImageRemoveResponse) ProtoMessage()    {}
 func (*ImageRemoveResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{8}
+	return fileDescriptor_75b35b752d70e98f, []int{10}
 }
 func (m *ImageRemoveResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -720,7 +932,7 @@ func (m *ImageDefaultRequest) Reset()         { *m = ImageDefaultRequest{} }
 func (m *ImageDefaultRequest) String() string { return proto.CompactTextString(m) }
 func (*ImageDefaultRequest) ProtoMessage()    {}
 func (*ImageDefaultRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{9}
+	return fileDescriptor_75b35b752d70e98f, []int{11}
 }
 func (m *ImageDefaultRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -767,7 +979,7 @@ func (m *ImageDefaultRequest_Input) Reset()         { *m = ImageDefaultRequest_I
 func (m *ImageDefaultRequest_Input) String() string { return proto.CompactTextString(m) }
 func (*ImageDefaultRequest_Input) ProtoMessage()    {}
 func (*ImageDefaultRequest_Input) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{9, 0}
+	return fileDescriptor_75b35b752d70e98f, []int{11, 0}
 }
 func (m *ImageDefaultRequest_Input) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -814,7 +1026,7 @@ func (m *ImageDefaultResponse) Reset()         { *m = ImageDefaultResponse{} }
 func (m *ImageDefaultResponse) String() string { return proto.CompactTextString(m) }
 func (*ImageDefaultResponse) ProtoMessage()    {}
 func (*ImageDefaultResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{10}
+	return fileDescriptor_75b35b752d70e98f, []int{12}
 }
 func (m *ImageDefaultResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -863,7 +1075,7 @@ func (m *JwtToken) Reset()         { *m = JwtToken{} }
 func (m *JwtToken) String() string { return proto.CompactTextString(m) }
 func (*JwtToken) ProtoMessage()    {}
 func (*JwtToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{11}
+	return fileDescriptor_75b35b752d70e98f, []int{13}
 }
 func (m *JwtToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -925,7 +1137,7 @@ func (m *AuthenticateRequest) Reset()         { *m = AuthenticateRequest{} }
 func (m *AuthenticateRequest) String() string { return proto.CompactTextString(m) }
 func (*AuthenticateRequest) ProtoMessage()    {}
 func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{12}
+	return fileDescriptor_75b35b752d70e98f, []int{14}
 }
 func (m *AuthenticateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -979,7 +1191,7 @@ func (m *AuthenticateResponse) Reset()         { *m = AuthenticateResponse{} }
 func (m *AuthenticateResponse) String() string { return proto.CompactTextString(m) }
 func (*AuthenticateResponse) ProtoMessage()    {}
 func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{13}
+	return fileDescriptor_75b35b752d70e98f, []int{15}
 }
 func (m *AuthenticateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1025,7 +1237,7 @@ func (m *RefreshRequest) Reset()         { *m = RefreshRequest{} }
 func (m *RefreshRequest) String() string { return proto.CompactTextString(m) }
 func (*RefreshRequest) ProtoMessage()    {}
 func (*RefreshRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{14}
+	return fileDescriptor_75b35b752d70e98f, []int{16}
 }
 func (m *RefreshRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1065,7 +1277,7 @@ func (m *RefreshResponse) Reset()         { *m = RefreshResponse{} }
 func (m *RefreshResponse) String() string { return proto.CompactTextString(m) }
 func (*RefreshResponse) ProtoMessage()    {}
 func (*RefreshResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{15}
+	return fileDescriptor_75b35b752d70e98f, []int{17}
 }
 func (m *RefreshResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1107,6 +1319,10 @@ func init() {
 	proto.RegisterType((*TechsupportRequest_Input)(nil), "gnoi.sonic.TechsupportRequest.Input")
 	proto.RegisterType((*TechsupportResponse)(nil), "gnoi.sonic.TechsupportResponse")
 	proto.RegisterType((*TechsupportResponse_Output)(nil), "gnoi.sonic.TechsupportResponse.Output")
+	proto.RegisterType((*ClearNeighborsRequest)(nil), "gnoi.sonic.ClearNeighborsRequest")
+	proto.RegisterType((*ClearNeighborsRequest_Input)(nil), "gnoi.sonic.ClearNeighborsRequest.Input")
+	proto.RegisterType((*ClearNeighborsResponse)(nil), "gnoi.sonic.ClearNeighborsResponse")
+	proto.RegisterType((*ClearNeighborsResponse_Output)(nil), "gnoi.sonic.ClearNeighborsResponse.Output")
 	proto.RegisterType((*CopyConfigRequest)(nil), "gnoi.sonic.CopyConfigRequest")
 	proto.RegisterType((*CopyConfigRequest_Input)(nil), "gnoi.sonic.CopyConfigRequest.Input")
 	proto.RegisterType((*CopyConfigResponse)(nil), "gnoi.sonic.CopyConfigResponse")
@@ -1129,61 +1345,70 @@ func init() {
 func init() { proto.RegisterFile("sonic_gnoi.proto", fileDescriptor_75b35b752d70e98f) }
 
 var fileDescriptor_75b35b752d70e98f = []byte{
-	// 860 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x41, 0x6f, 0xeb, 0x44,
-	0x10, 0xae, 0x79, 0x4d, 0x68, 0x26, 0xa1, 0x2d, 0xdb, 0x8a, 0x17, 0xf9, 0xb5, 0x71, 0xf0, 0xa3,
-	0xe8, 0x09, 0xe1, 0x54, 0x4a, 0x6f, 0x95, 0x38, 0x90, 0x56, 0x88, 0x20, 0x15, 0x90, 0x93, 0x03,
-	0xb7, 0xe0, 0x3a, 0x1b, 0xc7, 0x22, 0xf6, 0x1a, 0xef, 0xba, 0x69, 0x05, 0x3f, 0x84, 0x2b, 0x67,
-	0xc4, 0xff, 0x40, 0x9c, 0xf8, 0x05, 0x16, 0x2a, 0x9c, 0x72, 0xe4, 0x17, 0xa0, 0xec, 0xae, 0x1d,
-	0xbb, 0x76, 0x9a, 0x72, 0xa0, 0xb7, 0xdd, 0x99, 0x6f, 0x67, 0x66, 0xbf, 0xf9, 0x66, 0x6d, 0xd8,
-	0xa7, 0xc4, 0x77, 0xed, 0x91, 0xe3, 0x13, 0xb7, 0x13, 0x84, 0x84, 0x11, 0x04, 0x7c, 0xcd, 0xcd,
-	0xaa, 0xe1, 0xb8, 0x6c, 0x1a, 0x5d, 0x77, 0x6c, 0xe2, 0x9d, 0x3a, 0xc4, 0x21, 0xa7, 0x1c, 0x72,
-	0x1d, 0x4d, 0xf8, 0x8e, 0x6f, 0xf8, 0x4a, 0x1c, 0xd5, 0x09, 0xd4, 0x07, 0xcb, 0x73, 0x5f, 0x45,
-	0x2c, 0x88, 0x18, 0x7a, 0x0f, 0xaa, 0x94, 0x59, 0x2c, 0xa2, 0x4d, 0xa5, 0xad, 0xbc, 0xa9, 0x98,
-	0x72, 0x87, 0x3e, 0x87, 0x77, 0xc4, 0x6a, 0x34, 0xc6, 0xcc, 0x72, 0x67, 0xcd, 0xb7, 0xda, 0xca,
-	0x9b, 0x5a, 0xef, 0xf5, 0x22, 0xd6, 0xa4, 0xc3, 0x10, 0x8e, 0x7f, 0x62, 0x6d, 0xf7, 0xd6, 0x9b,
-	0x9d, 0xeb, 0x1f, 0xdb, 0xc4, 0xf3, 0xb0, 0xcf, 0x74, 0xb3, 0x21, 0x00, 0x97, 0xdc, 0xaf, 0xff,
-	0xac, 0x00, 0x1a, 0x62, 0x7b, 0x4a, 0xa3, 0x20, 0x20, 0x21, 0x33, 0xf1, 0xf7, 0x11, 0xa6, 0x0c,
-	0xf9, 0x50, 0x71, 0xfd, 0x20, 0x62, 0x3c, 0x6f, 0xbd, 0xfb, 0x41, 0x67, 0x75, 0xa5, 0x4e, 0x11,
-	0xde, 0xe9, 0x2f, 0xb1, 0xbd, 0xee, 0x22, 0xd6, 0x8e, 0x38, 0xc6, 0xa0, 0x53, 0x32, 0x37, 0xd8,
-	0x0a, 0x78, 0xce, 0xa3, 0x95, 0x54, 0x23, 0xd2, 0xa8, 0xaf, 0xa0, 0xc2, 0x63, 0x20, 0x04, 0xdb,
-	0x63, 0x8b, 0x61, 0x9e, 0xb7, 0x66, 0xf2, 0xb5, 0xfe, 0xb7, 0x02, 0x07, 0xb9, 0xa4, 0x34, 0x20,
-	0x3e, 0xc5, 0x88, 0x42, 0x95, 0x70, 0x9e, 0x64, 0x95, 0x1f, 0xae, 0xad, 0x52, 0x1c, 0xe8, 0x08,
-	0x56, 0x7b, 0x67, 0x8b, 0x58, 0x3b, 0x5e, 0x53, 0xa7, 0x08, 0x58, 0x52, 0xa8, 0x4c, 0xa5, 0x7e,
-	0x03, 0x55, 0xd9, 0x9c, 0x2f, 0x61, 0x4f, 0xd8, 0x46, 0x13, 0x77, 0x86, 0x7d, 0xcb, 0x93, 0x55,
-	0xf7, 0x4e, 0x16, 0xb1, 0x26, 0x5d, 0x46, 0xe2, 0x2a, 0x89, 0xb8, 0x2b, 0x20, 0x9f, 0x49, 0x84,
-	0x1e, 0x2b, 0xf0, 0xee, 0x05, 0x09, 0xee, 0x2e, 0x88, 0x3f, 0x71, 0x9d, 0xa4, 0x13, 0xd3, 0x7c,
-	0x27, 0x5e, 0x67, 0xef, 0x58, 0x40, 0xcb, 0x46, 0x18, 0x8b, 0x58, 0x7b, 0x29, 0x2e, 0x68, 0x73,
-	0xb7, 0xe1, 0x39, 0xde, 0xc6, 0x1e, 0x8c, 0x92, 0x1e, 0x2c, 0x55, 0x47, 0xa2, 0xd0, 0x4e, 0xba,
-	0x20, 0x77, 0xe8, 0x08, 0x6a, 0xe4, 0x06, 0x87, 0xf3, 0xd0, 0x65, 0x98, 0x2b, 0x6e, 0xc7, 0x5c,
-	0x19, 0x50, 0x1b, 0xea, 0x63, 0x4c, 0x99, 0xeb, 0x5b, 0xcc, 0x25, 0x7e, 0xf3, 0x05, 0x3f, 0x9a,
-	0x35, 0xe9, 0x11, 0xa0, 0x6c, 0xc5, 0xb2, 0x8b, 0xa3, 0x07, 0x5d, 0x7c, 0x99, 0xbd, 0x61, 0x66,
-	0x18, 0x7a, 0x9d, 0x45, 0xac, 0x35, 0x8b, 0xb7, 0xda, 0xd4, 0x31, 0xfd, 0x57, 0x05, 0x0e, 0xfa,
-	0x9e, 0xe5, 0xe0, 0xbe, 0x4f, 0x99, 0x35, 0x9b, 0x25, 0xcc, 0x92, 0x3c, 0xb3, 0x27, 0xd9, 0xbc,
-	0x25, 0xf8, 0xa2, 0xc8, 0xdd, 0x25, 0xc8, 0xf0, 0x2c, 0xdf, 0x72, 0xf0, 0x32, 0xe5, 0x26, 0x82,
-	0x4f, 0x12, 0x82, 0x8f, 0xa0, 0xc6, 0xcf, 0x72, 0xcd, 0xf0, 0xd1, 0x35, 0x57, 0x06, 0xfd, 0x47,
-	0x38, 0xcc, 0xa7, 0x97, 0x44, 0x8d, 0x9f, 0x4a, 0x54, 0x46, 0xdf, 0x85, 0x12, 0x37, 0xb2, 0xf5,
-	0x8b, 0x02, 0x88, 0xa7, 0x37, 0xb1, 0x47, 0x6e, 0xf0, 0x53, 0x1e, 0x84, 0x22, 0xfc, 0xff, 0xe2,
-	0x4a, 0x79, 0xc8, 0xd5, 0x0f, 0xb2, 0xb5, 0x49, 0xf6, 0x67, 0xa5, 0x2a, 0x15, 0xd6, 0x25, 0x9e,
-	0x58, 0xd1, 0x8c, 0x3d, 0x59, 0x58, 0x79, 0xfc, 0xb3, 0x91, 0x95, 0x08, 0x2b, 0x4d, 0xff, 0xac,
-	0x6c, 0x7d, 0x0b, 0x3b, 0x5f, 0xcc, 0xd9, 0x90, 0x7c, 0x87, 0x7d, 0xf4, 0x3e, 0x34, 0x2c, 0xdb,
-	0xc6, 0x94, 0x8e, 0xd8, 0x72, 0x2f, 0x4b, 0xad, 0x0b, 0x9b, 0x80, 0x20, 0xd8, 0x66, 0x77, 0x41,
-	0x32, 0x1e, 0x7c, 0x8d, 0x8e, 0x01, 0xf0, 0x6d, 0xe0, 0x86, 0x98, 0x8e, 0x5c, 0xf1, 0xc2, 0xbc,
-	0x30, 0x6b, 0xd2, 0xd2, 0xf7, 0xf5, 0x2b, 0x38, 0xf8, 0x34, 0x62, 0x53, 0xec, 0x33, 0xd7, 0xb6,
-	0x58, 0x2a, 0x5d, 0x15, 0x76, 0x22, 0x8a, 0xc3, 0x0c, 0x27, 0xe9, 0x7e, 0xe9, 0x0b, 0x2c, 0x4a,
-	0xe7, 0x24, 0x1c, 0xcb, 0x4c, 0xe9, 0x5e, 0xef, 0xc1, 0x61, 0x3e, 0x9c, 0xa4, 0xeb, 0x23, 0xa8,
-	0x0c, 0xd3, 0xaa, 0xeb, 0xdd, 0xc3, 0x2c, 0x5b, 0xc9, 0x0d, 0x4d, 0x01, 0xd1, 0xf7, 0x61, 0xd7,
-	0xc4, 0x93, 0x10, 0xd3, 0xa9, 0xac, 0x46, 0xff, 0x04, 0xf6, 0x52, 0xcb, 0x7f, 0x0f, 0xd8, 0xfd,
-	0x7d, 0x1b, 0x1a, 0xbc, 0x25, 0x03, 0x1c, 0xde, 0xb8, 0x36, 0x46, 0x43, 0xd8, 0x1b, 0x4c, 0xc9,
-	0x3c, 0xf3, 0xb9, 0x43, 0xad, 0xc7, 0xbf, 0xd6, 0xaa, 0xb6, 0xe1, 0x3b, 0xa9, 0x6f, 0xa1, 0x2b,
-	0x80, 0xd5, 0x53, 0x8d, 0x8e, 0x1f, 0xfd, 0xe8, 0xa8, 0xad, 0x75, 0xee, 0x34, 0xdc, 0x00, 0x1a,
-	0xd9, 0x27, 0x0d, 0x69, 0x1b, 0xde, 0x5a, 0xb5, 0xbd, 0x1e, 0x90, 0x06, 0xfd, 0x1a, 0xea, 0x99,
-	0xd9, 0xcf, 0xdf, 0xba, 0xf8, 0x24, 0xa9, 0xda, 0x5a, 0x7f, 0xa1, 0x4c, 0x39, 0x20, 0x25, 0x65,
-	0xe6, 0x27, 0xb7, 0xa4, 0xcc, 0x07, 0xb3, 0x25, 0x82, 0x66, 0x65, 0x94, 0x0f, 0x5a, 0xa2, 0xd7,
-	0x7c, 0xd0, 0x32, 0x05, 0xea, 0x5b, 0xe8, 0x12, 0xde, 0x96, 0x2a, 0x42, 0x6a, 0x16, 0x9e, 0x17,
-	0x9b, 0xfa, 0xaa, 0xd4, 0x97, 0x44, 0xe9, 0xed, 0xff, 0x76, 0xdf, 0x52, 0xfe, 0xb8, 0x6f, 0x29,
-	0x7f, 0xde, 0xb7, 0x94, 0x9f, 0xfe, 0x6a, 0x6d, 0x5d, 0x57, 0xf9, 0x6f, 0xe8, 0xd9, 0xbf, 0x01,
-	0x00, 0x00, 0xff, 0xff, 0xd8, 0xc2, 0x99, 0xa7, 0xd5, 0x0a, 0x00, 0x00,
+	// 1002 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0x4f, 0x73, 0xdb, 0x44,
+	0x14, 0x8f, 0xd2, 0x38, 0xc4, 0xcf, 0x21, 0x09, 0x1b, 0xb7, 0xcd, 0xa8, 0x89, 0x95, 0x6e, 0x1b,
+	0x28, 0x05, 0xbb, 0x33, 0xe9, 0xad, 0x33, 0x1c, 0x70, 0x32, 0x0c, 0x61, 0xa6, 0x85, 0x51, 0x72,
+	0x80, 0x03, 0x63, 0x14, 0x79, 0x6d, 0xef, 0x60, 0x69, 0x85, 0x76, 0x15, 0x37, 0x03, 0x1f, 0x84,
+	0x2b, 0x07, 0x4e, 0x0c, 0x7c, 0x0e, 0x8e, 0x7c, 0x02, 0x0d, 0x04, 0x4e, 0x3e, 0xf2, 0x09, 0x18,
+	0xef, 0xae, 0x64, 0xc9, 0x96, 0xa3, 0x70, 0x68, 0x6e, 0x7a, 0xbb, 0xbf, 0x7d, 0x7f, 0x7e, 0xbf,
+	0xb7, 0xcf, 0x6b, 0xd8, 0xe2, 0xcc, 0xa7, 0x6e, 0xa7, 0xef, 0x33, 0xda, 0x0a, 0x42, 0x26, 0x18,
+	0x02, 0xf9, 0x2d, 0x97, 0xcd, 0x66, 0x9f, 0x8a, 0x41, 0x74, 0xde, 0x72, 0x99, 0xf7, 0xac, 0xcf,
+	0xfa, 0xec, 0x99, 0x84, 0x9c, 0x47, 0x3d, 0x69, 0x49, 0x43, 0x7e, 0xa9, 0xa3, 0x98, 0x41, 0xed,
+	0x74, 0x72, 0xee, 0xf3, 0x48, 0x04, 0x91, 0x40, 0xf7, 0x60, 0x95, 0x0b, 0x47, 0x44, 0x7c, 0xc7,
+	0xd8, 0x37, 0x9e, 0x54, 0x6c, 0x6d, 0xa1, 0x4f, 0xe1, 0x6d, 0xf5, 0xd5, 0xe9, 0x12, 0xe1, 0xd0,
+	0xe1, 0xce, 0xf2, 0xbe, 0xf1, 0xa4, 0xda, 0x7e, 0x34, 0x8e, 0x2d, 0xbd, 0xd1, 0x54, 0x1b, 0xff,
+	0xc6, 0xd6, 0xc6, 0x6b, 0x6f, 0xf8, 0x02, 0x7f, 0xe8, 0x32, 0xcf, 0x23, 0xbe, 0xc0, 0xf6, 0xba,
+	0x02, 0x1c, 0xcb, 0x7d, 0xfc, 0x93, 0x01, 0xe8, 0x8c, 0xb8, 0x03, 0x1e, 0x05, 0x01, 0x0b, 0x85,
+	0x4d, 0xbe, 0x8b, 0x08, 0x17, 0xc8, 0x87, 0x0a, 0xf5, 0x83, 0x48, 0xc8, 0xb8, 0xb5, 0xc3, 0xc7,
+	0xad, 0x69, 0x49, 0xad, 0x79, 0x78, 0xeb, 0x64, 0x82, 0x6d, 0x1f, 0x8e, 0x63, 0x6b, 0x57, 0x62,
+	0x9a, 0x7c, 0xc0, 0x46, 0x4d, 0x31, 0x05, 0xbe, 0x90, 0xde, 0x0a, 0xb2, 0x51, 0x61, 0xcc, 0x07,
+	0x50, 0x91, 0x3e, 0x10, 0x82, 0x95, 0xae, 0x23, 0x88, 0x8c, 0x5b, 0xb5, 0xe5, 0x37, 0xfe, 0xc7,
+	0x80, 0xed, 0x5c, 0x50, 0x1e, 0x30, 0x9f, 0x13, 0xc4, 0x61, 0x95, 0x49, 0x9e, 0x74, 0x96, 0xef,
+	0x2e, 0xcc, 0x52, 0x1d, 0x68, 0x29, 0x56, 0xdb, 0xcf, 0xc7, 0xb1, 0xb5, 0xb7, 0x20, 0x4f, 0xe5,
+	0xb0, 0x20, 0x51, 0x1d, 0xca, 0xfc, 0x12, 0x56, 0xb5, 0x38, 0xaf, 0x60, 0x53, 0xad, 0x75, 0x7a,
+	0x74, 0x48, 0x7c, 0xc7, 0xd3, 0x59, 0xb7, 0x0f, 0xc6, 0xb1, 0xa5, 0xb7, 0x9a, 0xc9, 0x56, 0x81,
+	0xc7, 0x0d, 0x05, 0xf9, 0x44, 0x23, 0xf0, 0x5f, 0x06, 0xdc, 0x3d, 0x1a, 0x12, 0x27, 0x7c, 0x45,
+	0x68, 0x7f, 0x70, 0xce, 0x42, 0x9e, 0xa8, 0x41, 0xf3, 0x6a, 0xbc, 0x97, 0xad, 0xb3, 0xf0, 0x84,
+	0x16, 0xe4, 0xe9, 0x38, 0xb6, 0xea, 0xaa, 0x50, 0x5f, 0x23, 0xca, 0x84, 0xf8, 0x3a, 0x11, 0xa2,
+	0x0e, 0x95, 0x1e, 0x0b, 0x5d, 0x55, 0xd3, 0x9a, 0xad, 0x8c, 0x49, 0x43, 0xf6, 0x1c, 0x8f, 0x0e,
+	0x2f, 0x55, 0xc7, 0xd9, 0xda, 0x42, 0x1b, 0xb0, 0x4c, 0x83, 0x9d, 0x3b, 0x72, 0x6d, 0x99, 0x06,
+	0x13, 0x1c, 0xed, 0x49, 0x4a, 0x56, 0x14, 0x4e, 0x59, 0xf8, 0x37, 0x03, 0xee, 0xcd, 0x66, 0xac,
+	0xd5, 0xf4, 0x67, 0xd4, 0x7c, 0xff, 0xba, 0x2a, 0xf3, 0x82, 0x7e, 0x30, 0x8e, 0xad, 0xbb, 0x33,
+	0x75, 0x96, 0x0a, 0xf9, 0x38, 0x15, 0xd2, 0x84, 0xb5, 0x50, 0x7b, 0xd4, 0x7d, 0x97, 0xda, 0x38,
+	0x36, 0xe0, 0x9d, 0x23, 0x16, 0x5c, 0x1e, 0x31, 0xbf, 0x47, 0xfb, 0x89, 0x20, 0x83, 0xbc, 0x20,
+	0x8f, 0x72, 0xa9, 0xce, 0xa2, 0xb5, 0x18, 0xcd, 0x71, 0x6c, 0xdd, 0x57, 0x49, 0xba, 0x72, 0xbb,
+	0xe9, 0xf5, 0xbd, 0xd2, 0x8b, 0xd1, 0x49, 0xf4, 0x98, 0x8c, 0x02, 0x16, 0x25, 0x82, 0x54, 0x6d,
+	0x6d, 0xa1, 0x5d, 0xa8, 0xb2, 0x0b, 0x12, 0x8e, 0x42, 0x2a, 0x88, 0x14, 0x65, 0xcd, 0x9e, 0x2e,
+	0xa0, 0x7d, 0xa8, 0x75, 0x09, 0x17, 0xd4, 0x77, 0x04, 0x65, 0xbe, 0x16, 0x28, 0xbb, 0x84, 0x23,
+	0x40, 0xd9, 0x8c, 0xb5, 0x18, 0x9d, 0x19, 0x31, 0xee, 0x67, 0x2b, 0xcc, 0x4c, 0xa8, 0x76, 0x6b,
+	0x1c, 0x5b, 0x3b, 0xf3, 0x55, 0x95, 0xb1, 0x8f, 0x7f, 0x35, 0x60, 0xfb, 0xc4, 0x73, 0xfa, 0xe4,
+	0xc4, 0xe7, 0xc2, 0x19, 0x0e, 0x13, 0x66, 0x59, 0x9e, 0xd9, 0x83, 0x6c, 0xdc, 0x02, 0xfc, 0xfc,
+	0xe4, 0xa1, 0x13, 0x50, 0xd3, 0x73, 0x7c, 0xa7, 0x4f, 0x26, 0x21, 0xcb, 0x08, 0x3e, 0x48, 0x08,
+	0xde, 0x85, 0xaa, 0x3c, 0x2b, 0xbb, 0x56, 0x75, 0xf7, 0x74, 0x01, 0xff, 0x00, 0xf5, 0x7c, 0x78,
+	0x4d, 0x54, 0xf7, 0xa6, 0x44, 0x65, 0x86, 0xce, 0x5c, 0x8a, 0xa5, 0x6c, 0xfd, 0x62, 0x00, 0x92,
+	0xe1, 0x6d, 0xe2, 0xb1, 0x0b, 0x72, 0x93, 0x29, 0x3d, 0x0f, 0x7f, 0x53, 0x5c, 0x19, 0xb3, 0x5c,
+	0x7d, 0xaf, 0xa5, 0x4d, 0xa2, 0xdf, 0x2a, 0x55, 0x69, 0x63, 0x1d, 0x93, 0x9e, 0x13, 0x0d, 0xc5,
+	0x8d, 0x1b, 0x2b, 0x8f, 0xbf, 0x35, 0xb2, 0x92, 0xc6, 0x4a, 0xc3, 0xdf, 0x2a, 0x5b, 0xdf, 0xc0,
+	0xda, 0x67, 0x23, 0x71, 0xc6, 0xbe, 0x25, 0x3e, 0x7a, 0x08, 0xeb, 0x8e, 0xeb, 0x12, 0xce, 0x3b,
+	0x62, 0x62, 0xeb, 0x54, 0x6b, 0x6a, 0x4d, 0x41, 0x10, 0xac, 0x88, 0xcb, 0x20, 0xb9, 0x1e, 0xf2,
+	0x1b, 0xed, 0x01, 0x90, 0xd7, 0x01, 0x0d, 0x09, 0xef, 0x50, 0x35, 0x61, 0xee, 0xd8, 0x55, 0xbd,
+	0x72, 0xe2, 0xe3, 0x97, 0xb0, 0xfd, 0x71, 0x24, 0x06, 0xc4, 0x17, 0xd4, 0x75, 0x44, 0xda, 0xba,
+	0x26, 0xac, 0x45, 0x9c, 0x84, 0x19, 0x4e, 0x52, 0x7b, 0xb2, 0x17, 0x38, 0x9c, 0x8f, 0x58, 0xd8,
+	0xd5, 0x91, 0x52, 0x1b, 0xb7, 0xa1, 0x9e, 0x77, 0xa7, 0xe9, 0x7a, 0x0a, 0x95, 0xb3, 0x34, 0xeb,
+	0xda, 0x61, 0x3d, 0xcb, 0x56, 0x52, 0xa1, 0xad, 0x20, 0x78, 0x0b, 0x36, 0x6c, 0xd2, 0x0b, 0x09,
+	0x1f, 0xe8, 0x6c, 0xf0, 0x47, 0xb0, 0x99, 0xae, 0xfc, 0x7f, 0x87, 0x87, 0x3f, 0x57, 0x60, 0x5d,
+	0x4a, 0x72, 0x4a, 0xc2, 0x0b, 0xea, 0x12, 0x74, 0x06, 0x9b, 0xa7, 0x03, 0x36, 0xca, 0xbc, 0x41,
+	0x50, 0xe3, 0xfa, 0x27, 0x94, 0x69, 0x95, 0x3c, 0x5e, 0xf0, 0x12, 0x7a, 0x09, 0x30, 0x1d, 0xd5,
+	0x68, 0xef, 0xda, 0x1f, 0x1d, 0xb3, 0xb1, 0x68, 0x3b, 0x75, 0x77, 0x0a, 0xeb, 0xd9, 0x91, 0x86,
+	0xac, 0x92, 0x59, 0x6b, 0xee, 0x2f, 0x06, 0xa4, 0x4e, 0xbf, 0x80, 0x5a, 0xe6, 0xee, 0xe7, 0xab,
+	0x9e, 0x1f, 0x49, 0xa6, 0xb5, 0x70, 0x7f, 0x2e, 0x4d, 0x7d, 0x41, 0x0a, 0xd2, 0xcc, 0xdf, 0xdc,
+	0x82, 0x34, 0x67, 0xee, 0x96, 0x72, 0x9a, 0x6d, 0xa3, 0xbc, 0xd3, 0x82, 0x7e, 0xcd, 0x3b, 0x2d,
+	0xea, 0x40, 0xbc, 0x84, 0x8e, 0xe1, 0x2d, 0xdd, 0x45, 0xc8, 0xcc, 0xc2, 0xf3, 0xcd, 0x66, 0x3e,
+	0x28, 0xdc, 0x4b, 0xbd, 0x7c, 0x05, 0x1b, 0xf9, 0xd7, 0x0e, 0x7a, 0x58, 0xfa, 0xde, 0x33, 0x71,
+	0xf9, 0x63, 0x09, 0x2f, 0xb5, 0xb7, 0x7e, 0xbf, 0x6a, 0x18, 0x7f, 0x5c, 0x35, 0x8c, 0x3f, 0xaf,
+	0x1a, 0xc6, 0x8f, 0x7f, 0x37, 0x96, 0xce, 0x57, 0xe5, 0xdf, 0x8e, 0xe7, 0xff, 0x05, 0x00, 0x00,
+	0xff, 0xff, 0xb9, 0xe1, 0xd8, 0xfd, 0xc5, 0x0c, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1205,6 +1430,7 @@ type SonicServiceClient interface {
 	ImageDefault(ctx context.Context, in *ImageDefaultRequest, opts ...grpc.CallOption) (*ImageDefaultResponse, error)
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
+	ClearNeighbors(ctx context.Context, in *ClearNeighborsRequest, opts ...grpc.CallOption) (*ClearNeighborsResponse, error)
 }
 
 type sonicServiceClient struct {
@@ -1278,6 +1504,15 @@ func (c *sonicServiceClient) Refresh(ctx context.Context, in *RefreshRequest, op
 	return out, nil
 }
 
+func (c *sonicServiceClient) ClearNeighbors(ctx context.Context, in *ClearNeighborsRequest, opts ...grpc.CallOption) (*ClearNeighborsResponse, error) {
+	out := new(ClearNeighborsResponse)
+	err := c.cc.Invoke(ctx, "/gnoi.sonic.SonicService/ClearNeighbors", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SonicServiceServer is the server API for SonicService service.
 type SonicServiceServer interface {
 	ShowTechsupport(context.Context, *TechsupportRequest) (*TechsupportResponse, error)
@@ -1287,6 +1522,7 @@ type SonicServiceServer interface {
 	ImageDefault(context.Context, *ImageDefaultRequest) (*ImageDefaultResponse, error)
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
+	ClearNeighbors(context.Context, *ClearNeighborsRequest) (*ClearNeighborsResponse, error)
 }
 
 // UnimplementedSonicServiceServer can be embedded to have forward compatible implementations.
@@ -1313,6 +1549,9 @@ func (*UnimplementedSonicServiceServer) Authenticate(ctx context.Context, req *A
 }
 func (*UnimplementedSonicServiceServer) Refresh(ctx context.Context, req *RefreshRequest) (*RefreshResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (*UnimplementedSonicServiceServer) ClearNeighbors(ctx context.Context, req *ClearNeighborsRequest) (*ClearNeighborsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClearNeighbors not implemented")
 }
 
 func RegisterSonicServiceServer(s *grpc.Server, srv SonicServiceServer) {
@@ -1445,6 +1684,24 @@ func _SonicService_Refresh_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SonicService_ClearNeighbors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearNeighborsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SonicServiceServer).ClearNeighbors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gnoi.sonic.SonicService/ClearNeighbors",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SonicServiceServer).ClearNeighbors(ctx, req.(*ClearNeighborsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _SonicService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "gnoi.sonic.SonicService",
 	HandlerType: (*SonicServiceServer)(nil),
@@ -1476,6 +1733,10 @@ var _SonicService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Refresh",
 			Handler:    _SonicService_Refresh_Handler,
+		},
+		{
+			MethodName: "ClearNeighbors",
+			Handler:    _SonicService_ClearNeighbors_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1661,6 +1922,176 @@ func (m *TechsupportResponse_Output) MarshalToSizedBuffer(dAtA []byte) (int, err
 		i -= len(m.OutputFilename)
 		copy(dAtA[i:], m.OutputFilename)
 		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.OutputFilename)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ClearNeighborsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ClearNeighborsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ClearNeighborsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Input != nil {
+		{
+			size, err := m.Input.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSonicGnoi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ClearNeighborsRequest_Input) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ClearNeighborsRequest_Input) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ClearNeighborsRequest_Input) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Ifname) > 0 {
+		i -= len(m.Ifname)
+		copy(dAtA[i:], m.Ifname)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Ifname)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Ip) > 0 {
+		i -= len(m.Ip)
+		copy(dAtA[i:], m.Ip)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Ip)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Family) > 0 {
+		i -= len(m.Family)
+		copy(dAtA[i:], m.Family)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Family)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Force {
+		i--
+		if m.Force {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ClearNeighborsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ClearNeighborsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ClearNeighborsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Output != nil {
+		{
+			size, err := m.Output.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSonicGnoi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ClearNeighborsResponse_Output) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ClearNeighborsResponse_Output) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ClearNeighborsResponse_Output) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Response) > 0 {
+		i -= len(m.Response)
+		copy(dAtA[i:], m.Response)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Response)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -2418,6 +2849,81 @@ func (m *TechsupportResponse_Output) Size() (n int) {
 	return n
 }
 
+func (m *ClearNeighborsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Input != nil {
+		l = m.Input.Size()
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ClearNeighborsRequest_Input) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Force {
+		n += 2
+	}
+	l = len(m.Family)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	l = len(m.Ip)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	l = len(m.Ifname)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ClearNeighborsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Output != nil {
+		l = m.Output.Size()
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ClearNeighborsResponse_Output) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Response)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func (m *CopyConfigRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3141,6 +3647,442 @@ func (m *TechsupportResponse_Output) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.OutputFilename = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ClearNeighborsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ClearNeighborsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ClearNeighborsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Input", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Input == nil {
+				m.Input = &ClearNeighborsRequest_Input{}
+			}
+			if err := m.Input.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ClearNeighborsRequest_Input) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Input: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Input: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Force", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Force = bool(v != 0)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Family", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Family = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ip", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Ip = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ifname", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Ifname = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ClearNeighborsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ClearNeighborsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ClearNeighborsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Output", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Output == nil {
+				m.Output = &ClearNeighborsResponse_Output{}
+			}
+			if err := m.Output.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ClearNeighborsResponse_Output) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Output: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Output: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Response", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Response = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
