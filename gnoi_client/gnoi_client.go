@@ -58,6 +58,8 @@ func main() {
 		switch *rpc {
 		case "showtechsupport":
 			sonicShowTechSupport(sc, ctx)
+		case "copyConfig":
+			copyConfig(sc, ctx)
 		case "authenticate":
 			authenticate(sc, ctx)
 		case "refresh":
@@ -97,6 +99,26 @@ func sonicShowTechSupport(sc spb.SonicServiceClient, ctx context.Context) {
 	json.Unmarshal([]byte(*args), req)
 	
 	resp,err := sc.ShowTechsupport(ctx, req)
+	if err != nil {
+		panic(err.Error())
+	}
+	respstr, err := json.Marshal(resp)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(string(respstr))
+}
+
+func copyConfig(sc spb.SonicServiceClient, ctx context.Context) {
+	fmt.Println("Sonic CopyConfig")
+	ctx = setUserCreds(ctx)
+	req := &spb.CopyConfigRequest{
+		Input: &spb.CopyConfigRequest_Input{},
+	}
+	json.Unmarshal([]byte(*args), req)
+
+	resp,err := sc.CopyConfig(ctx, req)
+
 	if err != nil {
 		panic(err.Error())
 	}

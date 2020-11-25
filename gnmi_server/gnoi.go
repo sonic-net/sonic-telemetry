@@ -138,6 +138,37 @@ func (srv *Server) Refresh(ctx context.Context, req *spb.RefreshRequest) (*spb.R
 
 }
 
+func (srv *Server) CopyConfig(ctx context.Context, req *spb.CopyConfigRequest) (*spb.CopyConfigResponse, error) {
+	ctx,err := authenticate(srv.config.UserAuth, ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.V(1).Info("gNOI: Sonic CopyConfig")
+	
+	resp := &spb.CopyConfigResponse{
+		Output: &spb.SonicOutput {
+
+		},
+	}
+	
+	reqstr, err := json.Marshal(req)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	jsresp, err:= transutil.TranslProcessAction("/sonic-config-mgmt:copy", []byte(reqstr), ctx)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	
+	err = json.Unmarshal(jsresp, resp)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	
+	return resp, nil
+}
+
 func (srv *Server) ShowTechsupport(ctx context.Context, req *spb.TechsupportRequest) (*spb.TechsupportResponse, error) {
 	ctx,err := authenticate(srv.config.UserAuth, ctx)
 	if err != nil {
@@ -169,3 +200,5 @@ func (srv *Server) ShowTechsupport(ctx context.Context, req *spb.TechsupportRequ
 	
 	return resp, nil
 }
+
+

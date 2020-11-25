@@ -27,6 +27,61 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type SonicOutput struct {
+	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	StatusDetail         string   `protobuf:"bytes,2,opt,name=status_detail,json=statusDetail,proto3" json:"status-detail" xml:",comment"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SonicOutput) Reset()         { *m = SonicOutput{} }
+func (m *SonicOutput) String() string { return proto.CompactTextString(m) }
+func (*SonicOutput) ProtoMessage()    {}
+func (*SonicOutput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{0}
+}
+func (m *SonicOutput) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SonicOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SonicOutput.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SonicOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SonicOutput.Merge(m, src)
+}
+func (m *SonicOutput) XXX_Size() int {
+	return m.Size()
+}
+func (m *SonicOutput) XXX_DiscardUnknown() {
+	xxx_messageInfo_SonicOutput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SonicOutput proto.InternalMessageInfo
+
+func (m *SonicOutput) GetStatus() int32 {
+	if m != nil {
+		return m.Status
+	}
+	return 0
+}
+
+func (m *SonicOutput) GetStatusDetail() string {
+	if m != nil {
+		return m.StatusDetail
+	}
+	return ""
+}
+
 type TechsupportRequest struct {
 	Input                *TechsupportRequest_Input `protobuf:"bytes,1,opt,name=input,proto3" json:"sonic-show-techsupport:input" xml:",comment"`
 	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
@@ -38,7 +93,7 @@ func (m *TechsupportRequest) Reset()         { *m = TechsupportRequest{} }
 func (m *TechsupportRequest) String() string { return proto.CompactTextString(m) }
 func (*TechsupportRequest) ProtoMessage()    {}
 func (*TechsupportRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{0}
+	return fileDescriptor_75b35b752d70e98f, []int{1}
 }
 func (m *TechsupportRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -85,7 +140,7 @@ func (m *TechsupportRequest_Input) Reset()         { *m = TechsupportRequest_Inp
 func (m *TechsupportRequest_Input) String() string { return proto.CompactTextString(m) }
 func (*TechsupportRequest_Input) ProtoMessage()    {}
 func (*TechsupportRequest_Input) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{0, 0}
+	return fileDescriptor_75b35b752d70e98f, []int{1, 0}
 }
 func (m *TechsupportRequest_Input) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -132,7 +187,7 @@ func (m *TechsupportResponse) Reset()         { *m = TechsupportResponse{} }
 func (m *TechsupportResponse) String() string { return proto.CompactTextString(m) }
 func (*TechsupportResponse) ProtoMessage()    {}
 func (*TechsupportResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{1}
+	return fileDescriptor_75b35b752d70e98f, []int{2}
 }
 func (m *TechsupportResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -179,7 +234,7 @@ func (m *TechsupportResponse_Output) Reset()         { *m = TechsupportResponse_
 func (m *TechsupportResponse_Output) String() string { return proto.CompactTextString(m) }
 func (*TechsupportResponse_Output) ProtoMessage()    {}
 func (*TechsupportResponse_Output) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{1, 0}
+	return fileDescriptor_75b35b752d70e98f, []int{2, 0}
 }
 func (m *TechsupportResponse_Output) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -215,6 +270,163 @@ func (m *TechsupportResponse_Output) GetOutputFilename() string {
 	return ""
 }
 
+type CopyConfigRequest struct {
+	Input                *CopyConfigRequest_Input `protobuf:"bytes,1,opt,name=input,proto3" json:"sonic-config-mgmt:input" xml:",comment"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
+}
+
+func (m *CopyConfigRequest) Reset()         { *m = CopyConfigRequest{} }
+func (m *CopyConfigRequest) String() string { return proto.CompactTextString(m) }
+func (*CopyConfigRequest) ProtoMessage()    {}
+func (*CopyConfigRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{3}
+}
+func (m *CopyConfigRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CopyConfigRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CopyConfigRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CopyConfigRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CopyConfigRequest.Merge(m, src)
+}
+func (m *CopyConfigRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *CopyConfigRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CopyConfigRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CopyConfigRequest proto.InternalMessageInfo
+
+func (m *CopyConfigRequest) GetInput() *CopyConfigRequest_Input {
+	if m != nil {
+		return m.Input
+	}
+	return nil
+}
+
+type CopyConfigRequest_Input struct {
+	Source               string   `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Overwrite            bool     `protobuf:"varint,2,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
+	Destination          string   `protobuf:"bytes,3,opt,name=destination,proto3" json:"destination,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CopyConfigRequest_Input) Reset()         { *m = CopyConfigRequest_Input{} }
+func (m *CopyConfigRequest_Input) String() string { return proto.CompactTextString(m) }
+func (*CopyConfigRequest_Input) ProtoMessage()    {}
+func (*CopyConfigRequest_Input) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{3, 0}
+}
+func (m *CopyConfigRequest_Input) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CopyConfigRequest_Input) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CopyConfigRequest_Input.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CopyConfigRequest_Input) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CopyConfigRequest_Input.Merge(m, src)
+}
+func (m *CopyConfigRequest_Input) XXX_Size() int {
+	return m.Size()
+}
+func (m *CopyConfigRequest_Input) XXX_DiscardUnknown() {
+	xxx_messageInfo_CopyConfigRequest_Input.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CopyConfigRequest_Input proto.InternalMessageInfo
+
+func (m *CopyConfigRequest_Input) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *CopyConfigRequest_Input) GetOverwrite() bool {
+	if m != nil {
+		return m.Overwrite
+	}
+	return false
+}
+
+func (m *CopyConfigRequest_Input) GetDestination() string {
+	if m != nil {
+		return m.Destination
+	}
+	return ""
+}
+
+type CopyConfigResponse struct {
+	Output               *SonicOutput `protobuf:"bytes,1,opt,name=output,proto3" json:"sonic-config-mgmt:output" xml:",comment"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *CopyConfigResponse) Reset()         { *m = CopyConfigResponse{} }
+func (m *CopyConfigResponse) String() string { return proto.CompactTextString(m) }
+func (*CopyConfigResponse) ProtoMessage()    {}
+func (*CopyConfigResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b35b752d70e98f, []int{4}
+}
+func (m *CopyConfigResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CopyConfigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CopyConfigResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CopyConfigResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CopyConfigResponse.Merge(m, src)
+}
+func (m *CopyConfigResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *CopyConfigResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CopyConfigResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CopyConfigResponse proto.InternalMessageInfo
+
+func (m *CopyConfigResponse) GetOutput() *SonicOutput {
+	if m != nil {
+		return m.Output
+	}
+	return nil
+}
+
 type JwtToken struct {
 	AccessToken          string   `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	Type                 string   `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
@@ -228,7 +440,7 @@ func (m *JwtToken) Reset()         { *m = JwtToken{} }
 func (m *JwtToken) String() string { return proto.CompactTextString(m) }
 func (*JwtToken) ProtoMessage()    {}
 func (*JwtToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{2}
+	return fileDescriptor_75b35b752d70e98f, []int{5}
 }
 func (m *JwtToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -290,7 +502,7 @@ func (m *AuthenticateRequest) Reset()         { *m = AuthenticateRequest{} }
 func (m *AuthenticateRequest) String() string { return proto.CompactTextString(m) }
 func (*AuthenticateRequest) ProtoMessage()    {}
 func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{3}
+	return fileDescriptor_75b35b752d70e98f, []int{6}
 }
 func (m *AuthenticateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -344,7 +556,7 @@ func (m *AuthenticateResponse) Reset()         { *m = AuthenticateResponse{} }
 func (m *AuthenticateResponse) String() string { return proto.CompactTextString(m) }
 func (*AuthenticateResponse) ProtoMessage()    {}
 func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{4}
+	return fileDescriptor_75b35b752d70e98f, []int{7}
 }
 func (m *AuthenticateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -390,7 +602,7 @@ func (m *RefreshRequest) Reset()         { *m = RefreshRequest{} }
 func (m *RefreshRequest) String() string { return proto.CompactTextString(m) }
 func (*RefreshRequest) ProtoMessage()    {}
 func (*RefreshRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{5}
+	return fileDescriptor_75b35b752d70e98f, []int{8}
 }
 func (m *RefreshRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -430,7 +642,7 @@ func (m *RefreshResponse) Reset()         { *m = RefreshResponse{} }
 func (m *RefreshResponse) String() string { return proto.CompactTextString(m) }
 func (*RefreshResponse) ProtoMessage()    {}
 func (*RefreshResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{6}
+	return fileDescriptor_75b35b752d70e98f, []int{9}
 }
 func (m *RefreshResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -467,10 +679,14 @@ func (m *RefreshResponse) GetToken() *JwtToken {
 }
 
 func init() {
+	proto.RegisterType((*SonicOutput)(nil), "gnoi.sonic.SonicOutput")
 	proto.RegisterType((*TechsupportRequest)(nil), "gnoi.sonic.TechsupportRequest")
 	proto.RegisterType((*TechsupportRequest_Input)(nil), "gnoi.sonic.TechsupportRequest.Input")
 	proto.RegisterType((*TechsupportResponse)(nil), "gnoi.sonic.TechsupportResponse")
 	proto.RegisterType((*TechsupportResponse_Output)(nil), "gnoi.sonic.TechsupportResponse.Output")
+	proto.RegisterType((*CopyConfigRequest)(nil), "gnoi.sonic.CopyConfigRequest")
+	proto.RegisterType((*CopyConfigRequest_Input)(nil), "gnoi.sonic.CopyConfigRequest.Input")
+	proto.RegisterType((*CopyConfigResponse)(nil), "gnoi.sonic.CopyConfigResponse")
 	proto.RegisterType((*JwtToken)(nil), "gnoi.sonic.JwtToken")
 	proto.RegisterType((*AuthenticateRequest)(nil), "gnoi.sonic.AuthenticateRequest")
 	proto.RegisterType((*AuthenticateResponse)(nil), "gnoi.sonic.AuthenticateResponse")
@@ -481,40 +697,50 @@ func init() {
 func init() { proto.RegisterFile("sonic_gnoi.proto", fileDescriptor_75b35b752d70e98f) }
 
 var fileDescriptor_75b35b752d70e98f = []byte{
-	// 513 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x53, 0x4f, 0x6f, 0x12, 0x41,
-	0x14, 0xef, 0xda, 0x82, 0xed, 0x83, 0x00, 0x99, 0xf6, 0x40, 0xb6, 0x16, 0x70, 0xa2, 0xa6, 0x31,
-	0xb2, 0x4d, 0xe8, 0xad, 0x89, 0x07, 0x89, 0x31, 0xa9, 0x89, 0x9a, 0x2c, 0x1c, 0xbc, 0xe1, 0xb2,
-	0x7d, 0xb0, 0x1b, 0xbb, 0x33, 0xeb, 0xce, 0xac, 0xd4, 0x6f, 0xe2, 0xd5, 0x6f, 0xe3, 0xd1, 0x4f,
-	0x40, 0x0c, 0x7a, 0xe2, 0xe8, 0x17, 0xd0, 0xec, 0xcc, 0xb0, 0x40, 0x04, 0x4d, 0x6f, 0xef, 0xcf,
-	0x6f, 0x7e, 0xbf, 0xdf, 0x7b, 0x33, 0x03, 0x35, 0xc1, 0x59, 0xe8, 0x0f, 0xc6, 0x8c, 0x87, 0x4e,
-	0x9c, 0x70, 0xc9, 0x09, 0xa8, 0x58, 0x95, 0xed, 0xf6, 0x38, 0x94, 0x41, 0x3a, 0x74, 0x7c, 0x1e,
-	0x9d, 0x8d, 0xf9, 0x98, 0x9f, 0x29, 0xc8, 0x30, 0x1d, 0xa9, 0x4c, 0x25, 0x2a, 0xd2, 0x47, 0xe9,
-	0x17, 0x0b, 0x48, 0x1f, 0xfd, 0x40, 0xa4, 0x71, 0xcc, 0x13, 0xe9, 0xe2, 0x87, 0x14, 0x85, 0x24,
-	0x0c, 0x0a, 0x21, 0x8b, 0x53, 0x59, 0xb7, 0x5a, 0xd6, 0x69, 0xa9, 0xf3, 0xc0, 0x59, 0x2a, 0x38,
-	0x7f, 0xc3, 0x9d, 0xcb, 0x0c, 0xdb, 0xed, 0xcc, 0xa7, 0xcd, 0x7b, 0x0a, 0xd3, 0x16, 0x01, 0x9f,
-	0xb4, 0xe5, 0x12, 0x78, 0xa1, 0xd8, 0x7e, 0x4d, 0x9b, 0x95, 0x9b, 0xe8, 0xfa, 0x82, 0x3e, 0xf1,
-	0x79, 0x14, 0x21, 0x93, 0xd4, 0xd5, 0x32, 0xf6, 0x31, 0x14, 0x14, 0x07, 0x21, 0xb0, 0x77, 0xe5,
-	0x49, 0x54, 0xba, 0x07, 0xae, 0x8a, 0xe9, 0x4f, 0x0b, 0x0e, 0xd7, 0x44, 0x45, 0xcc, 0x99, 0x40,
-	0x22, 0xa0, 0xc8, 0x53, 0xb9, 0x74, 0xf9, 0x68, 0xab, 0x4b, 0x7d, 0xc0, 0x79, 0xa3, 0xd0, 0xdd,
-	0xf3, 0xf9, 0xb4, 0x79, 0xb2, 0xc5, 0xa7, 0x26, 0xdc, 0x60, 0xd4, 0x48, 0xd9, 0x6f, 0xa1, 0xa8,
-	0x69, 0xc8, 0x6b, 0xa8, 0xea, 0xda, 0x60, 0x14, 0x5e, 0x23, 0xf3, 0x22, 0xe3, 0xba, 0xfb, 0x70,
-	0x3e, 0x6d, 0x9a, 0x56, 0x7b, 0xd1, 0xda, 0xc0, 0x58, 0xd1, 0x90, 0x17, 0x06, 0x41, 0xdf, 0xc1,
-	0xfe, 0xcb, 0x89, 0xec, 0xf3, 0xf7, 0xc8, 0xc8, 0x7d, 0x28, 0x7b, 0xbe, 0x8f, 0x42, 0x0c, 0x64,
-	0x96, 0x9b, 0x75, 0x94, 0x74, 0x4d, 0x43, 0x08, 0xec, 0xc9, 0x4f, 0x31, 0xd6, 0xef, 0xe8, 0x4d,
-	0x65, 0x31, 0x39, 0x01, 0xc0, 0x9b, 0x38, 0x4c, 0x50, 0x0c, 0x42, 0x56, 0xdf, 0x6d, 0x59, 0xa7,
-	0xbb, 0xee, 0x81, 0xa9, 0x5c, 0x32, 0xfa, 0x0a, 0x0e, 0x9f, 0xa5, 0x32, 0x40, 0x26, 0x43, 0xdf,
-	0x93, 0xb8, 0xb8, 0x6c, 0x1b, 0xf6, 0x53, 0x81, 0xc9, 0x72, 0x02, 0x37, 0xcf, 0xb3, 0x5e, 0xec,
-	0x09, 0x31, 0xe1, 0xc9, 0x95, 0x51, 0xca, 0x73, 0xda, 0x85, 0xa3, 0x75, 0x3a, 0x73, 0x2f, 0x8f,
-	0xa1, 0xd0, 0xcf, 0x5d, 0x97, 0x3a, 0x47, 0xab, 0xd7, 0xb2, 0x98, 0xd0, 0xd5, 0x10, 0x5a, 0x83,
-	0x8a, 0x8b, 0xa3, 0x04, 0x45, 0x60, 0xdc, 0xd0, 0xa7, 0x50, 0xcd, 0x2b, 0xb7, 0x27, 0xec, 0xfc,
-	0xb6, 0xa0, 0xdc, 0xcb, 0x3a, 0x3d, 0x4c, 0x3e, 0x86, 0x3e, 0x92, 0x3e, 0x54, 0x7b, 0x01, 0x9f,
-	0xac, 0xbc, 0x07, 0xd2, 0xf8, 0xf7, 0x73, 0xb6, 0x9b, 0xff, 0x79, 0x48, 0x74, 0x87, 0xf4, 0xa0,
-	0xbc, 0x3a, 0x3b, 0x59, 0x3b, 0xb2, 0x61, 0xc9, 0x76, 0x6b, 0x3b, 0x20, 0x27, 0x7d, 0x0e, 0x77,
-	0xcd, 0xe8, 0xc4, 0x5e, 0x85, 0xaf, 0x6f, 0xc8, 0x3e, 0xde, 0xd8, 0x5b, 0xb0, 0x74, 0x6b, 0x5f,
-	0x67, 0x0d, 0xeb, 0xdb, 0xac, 0x61, 0x7d, 0x9f, 0x35, 0xac, 0xcf, 0x3f, 0x1a, 0x3b, 0xc3, 0xa2,
-	0xfa, 0xeb, 0xe7, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x46, 0x16, 0xfa, 0x33, 0x3a, 0x04, 0x00,
-	0x00,
+	// 688 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0xcf, 0x4e, 0xdb, 0x4e,
+	0x10, 0xc6, 0x40, 0xf2, 0x23, 0x93, 0xfc, 0x80, 0x2e, 0xa8, 0x44, 0x06, 0xe2, 0xd4, 0xb4, 0x15,
+	0xaa, 0x9a, 0x20, 0x85, 0x1b, 0x52, 0x0f, 0x35, 0xa8, 0x2a, 0x95, 0x68, 0x25, 0x27, 0x87, 0xde,
+	0x5c, 0xe3, 0x6c, 0xe2, 0x55, 0xb1, 0xd7, 0xf5, 0xae, 0x09, 0xbc, 0x49, 0xaf, 0x7d, 0x9b, 0x9e,
+	0xaa, 0x3e, 0x81, 0x55, 0xd1, 0x9e, 0x72, 0xec, 0x13, 0x54, 0xd9, 0x5d, 0x27, 0x4e, 0x49, 0x40,
+	0xbd, 0xcd, 0x9f, 0x6f, 0x67, 0xbe, 0x99, 0x6f, 0x9c, 0xc0, 0x3a, 0xa3, 0x21, 0xf1, 0x9c, 0x7e,
+	0x48, 0x49, 0x33, 0x8a, 0x29, 0xa7, 0x08, 0x84, 0x2d, 0xc2, 0x7a, 0xa3, 0x4f, 0xb8, 0x9f, 0x9c,
+	0x37, 0x3d, 0x1a, 0x1c, 0xf4, 0x69, 0x9f, 0x1e, 0x08, 0xc8, 0x79, 0xd2, 0x13, 0x9e, 0x70, 0x84,
+	0x25, 0x9f, 0x9a, 0x14, 0xca, 0xed, 0xd1, 0xbb, 0x77, 0x09, 0x8f, 0x12, 0x8e, 0x1e, 0x42, 0x91,
+	0x71, 0x97, 0x27, 0xac, 0xaa, 0xd5, 0xb5, 0xfd, 0x82, 0xad, 0x3c, 0xf4, 0x1a, 0xfe, 0x97, 0x96,
+	0xd3, 0xc5, 0xdc, 0x25, 0x17, 0xd5, 0xc5, 0xba, 0xb6, 0x5f, 0xb2, 0xf6, 0x86, 0xa9, 0xa1, 0x12,
+	0x0d, 0x99, 0xf8, 0x9d, 0x1a, 0xab, 0x57, 0xc1, 0xc5, 0x91, 0xf9, 0xdc, 0xa3, 0x41, 0x80, 0x43,
+	0x6e, 0xda, 0x15, 0x09, 0x38, 0x11, 0x79, 0xf3, 0x8b, 0x06, 0xa8, 0x83, 0x3d, 0x9f, 0x25, 0x51,
+	0x44, 0x63, 0x6e, 0xe3, 0x4f, 0x09, 0x66, 0x1c, 0x85, 0x50, 0x20, 0x61, 0x94, 0x70, 0xd1, 0xb7,
+	0xdc, 0x7a, 0xdc, 0x9c, 0x8c, 0xd4, 0xbc, 0x0d, 0x6f, 0x9e, 0x8e, 0xb0, 0x56, 0x6b, 0x98, 0x1a,
+	0x3b, 0x02, 0xd3, 0x60, 0x3e, 0x1d, 0x34, 0xf8, 0x04, 0x78, 0x24, 0xaa, 0xcd, 0x60, 0x23, 0xdb,
+	0xe8, 0xdb, 0x50, 0x10, 0x35, 0x10, 0x82, 0xe5, 0xae, 0xcb, 0xb1, 0xe8, 0x5b, 0xb2, 0x85, 0x6d,
+	0xfe, 0xd2, 0x60, 0x63, 0xaa, 0x29, 0x8b, 0x68, 0xc8, 0x30, 0x62, 0x50, 0xa4, 0x62, 0x4f, 0x8a,
+	0xe5, 0xd3, 0xb9, 0x2c, 0xe5, 0x83, 0xa6, 0xdc, 0xaa, 0x75, 0x38, 0x4c, 0x8d, 0xdd, 0x39, 0x3c,
+	0x65, 0xc1, 0x19, 0x44, 0x55, 0x2b, 0xfd, 0x3d, 0x14, 0x95, 0x38, 0x6f, 0x61, 0x4d, 0xc6, 0x9c,
+	0x1e, 0xb9, 0xc0, 0xa1, 0x1b, 0x28, 0xd6, 0xd6, 0x93, 0x61, 0x6a, 0xa8, 0x54, 0x23, 0x4b, 0xcd,
+	0xa8, 0xb8, 0x2a, 0x21, 0xaf, 0x14, 0xc2, 0x4c, 0x35, 0x78, 0x70, 0x4c, 0xa3, 0xeb, 0x63, 0x1a,
+	0xf6, 0x48, 0x3f, 0x53, 0xc2, 0x9f, 0x56, 0x62, 0x2f, 0x3f, 0xe3, 0x2d, 0xb4, 0x12, 0xa2, 0x31,
+	0x4c, 0x8d, 0x2d, 0x39, 0xa0, 0x27, 0xd2, 0x8d, 0xa0, 0x1f, 0xdc, 0xab, 0x81, 0x93, 0x69, 0x30,
+	0xba, 0x3a, 0x9a, 0xc4, 0x5e, 0xa6, 0x82, 0xf2, 0xd0, 0x0e, 0x94, 0xe8, 0x25, 0x8e, 0x07, 0x31,
+	0xe1, 0x58, 0x5c, 0xdc, 0x8a, 0x3d, 0x09, 0xa0, 0x3a, 0x94, 0xbb, 0x98, 0x71, 0x12, 0xba, 0x9c,
+	0xd0, 0xb0, 0xba, 0x24, 0x9e, 0xe6, 0x43, 0x66, 0x02, 0x28, 0xcf, 0x58, 0xa9, 0xe8, 0xfc, 0xa5,
+	0xe2, 0x56, 0x7e, 0xc2, 0xdc, 0xc7, 0x60, 0x35, 0x87, 0xa9, 0x51, 0xbd, 0x3d, 0xd5, 0x7d, 0x8a,
+	0x99, 0x1f, 0x60, 0xe5, 0xcd, 0x80, 0x77, 0xe8, 0x47, 0x1c, 0xa2, 0x47, 0x50, 0x71, 0x3d, 0x0f,
+	0x33, 0xe6, 0xf0, 0x91, 0xaf, 0x06, 0x2c, 0xcb, 0x98, 0x84, 0x20, 0x58, 0xe6, 0xd7, 0x91, 0x1c,
+	0xb0, 0x64, 0x0b, 0x1b, 0xed, 0x02, 0xe0, 0xab, 0x88, 0xc4, 0x98, 0x39, 0x44, 0x8e, 0xb6, 0x64,
+	0x97, 0x54, 0xe4, 0x34, 0x34, 0xcf, 0x60, 0xe3, 0x65, 0xc2, 0x7d, 0x1c, 0x72, 0xe2, 0xb9, 0x1c,
+	0x67, 0xd2, 0xe9, 0xb0, 0x92, 0x30, 0x1c, 0x4f, 0x2e, 0xc3, 0x1e, 0xfb, 0xa3, 0x5c, 0xe4, 0x32,
+	0x36, 0xa0, 0x71, 0x57, 0x75, 0x1a, 0xfb, 0xa6, 0x05, 0x9b, 0xd3, 0xe5, 0xd4, 0xa6, 0x9e, 0x41,
+	0xa1, 0x33, 0x66, 0x5d, 0x6e, 0x6d, 0xe6, 0x17, 0x95, 0x4d, 0x68, 0x4b, 0x88, 0xb9, 0x0e, 0xab,
+	0x36, 0xee, 0xc5, 0x98, 0xf9, 0x8a, 0x8d, 0xf9, 0x02, 0xd6, 0xc6, 0x91, 0x7f, 0x2f, 0xd8, 0xfa,
+	0xb6, 0x08, 0x15, 0xa1, 0x46, 0x1b, 0xc7, 0x97, 0xc4, 0xc3, 0xa8, 0x03, 0x6b, 0x6d, 0x9f, 0x0e,
+	0x72, 0xdf, 0x19, 0xaa, 0xdd, 0xfd, 0x33, 0xa1, 0x1b, 0xf7, 0x7c, 0xa0, 0xe6, 0x02, 0x3a, 0x03,
+	0x98, 0xdc, 0x08, 0xda, 0xbd, 0xf3, 0xda, 0xf5, 0xda, 0xbc, 0xf4, 0xb8, 0x5c, 0x1b, 0x2a, 0xf9,
+	0x55, 0xa2, 0x29, 0x06, 0x33, 0x34, 0xd3, 0xeb, 0xf3, 0x01, 0xe3, 0xa2, 0x27, 0xf0, 0x9f, 0xda,
+	0x24, 0xd2, 0xf3, 0xf0, 0xe9, 0x85, 0xeb, 0xdb, 0x33, 0x73, 0x59, 0x15, 0x6b, 0xfd, 0xeb, 0x4d,
+	0x4d, 0xfb, 0x7e, 0x53, 0xd3, 0x7e, 0xdc, 0xd4, 0xb4, 0xcf, 0x3f, 0x6b, 0x0b, 0xe7, 0x45, 0xf1,
+	0x1f, 0x70, 0xf8, 0x27, 0x00, 0x00, 0xff, 0xff, 0xd5, 0xb3, 0x84, 0xd9, 0x52, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -530,6 +756,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type SonicServiceClient interface {
 	ShowTechsupport(ctx context.Context, in *TechsupportRequest, opts ...grpc.CallOption) (*TechsupportResponse, error)
+	CopyConfig(ctx context.Context, in *CopyConfigRequest, opts ...grpc.CallOption) (*CopyConfigResponse, error)
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
 }
@@ -545,6 +772,15 @@ func NewSonicServiceClient(cc *grpc.ClientConn) SonicServiceClient {
 func (c *sonicServiceClient) ShowTechsupport(ctx context.Context, in *TechsupportRequest, opts ...grpc.CallOption) (*TechsupportResponse, error) {
 	out := new(TechsupportResponse)
 	err := c.cc.Invoke(ctx, "/gnoi.sonic.SonicService/ShowTechsupport", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sonicServiceClient) CopyConfig(ctx context.Context, in *CopyConfigRequest, opts ...grpc.CallOption) (*CopyConfigResponse, error) {
+	out := new(CopyConfigResponse)
+	err := c.cc.Invoke(ctx, "/gnoi.sonic.SonicService/CopyConfig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -572,6 +808,7 @@ func (c *sonicServiceClient) Refresh(ctx context.Context, in *RefreshRequest, op
 // SonicServiceServer is the server API for SonicService service.
 type SonicServiceServer interface {
 	ShowTechsupport(context.Context, *TechsupportRequest) (*TechsupportResponse, error)
+	CopyConfig(context.Context, *CopyConfigRequest) (*CopyConfigResponse, error)
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
 }
@@ -582,6 +819,9 @@ type UnimplementedSonicServiceServer struct {
 
 func (*UnimplementedSonicServiceServer) ShowTechsupport(ctx context.Context, req *TechsupportRequest) (*TechsupportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShowTechsupport not implemented")
+}
+func (*UnimplementedSonicServiceServer) CopyConfig(ctx context.Context, req *CopyConfigRequest) (*CopyConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CopyConfig not implemented")
 }
 func (*UnimplementedSonicServiceServer) Authenticate(ctx context.Context, req *AuthenticateRequest) (*AuthenticateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
@@ -608,6 +848,24 @@ func _SonicService_ShowTechsupport_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SonicServiceServer).ShowTechsupport(ctx, req.(*TechsupportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SonicService_CopyConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CopyConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SonicServiceServer).CopyConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gnoi.sonic.SonicService/CopyConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SonicServiceServer).CopyConfig(ctx, req.(*CopyConfigRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -657,6 +915,10 @@ var _SonicService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _SonicService_ShowTechsupport_Handler,
 		},
 		{
+			MethodName: "CopyConfig",
+			Handler:    _SonicService_CopyConfig_Handler,
+		},
+		{
 			MethodName: "Authenticate",
 			Handler:    _SonicService_Authenticate_Handler,
 		},
@@ -667,6 +929,45 @@ var _SonicService_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sonic_gnoi.proto",
+}
+
+func (m *SonicOutput) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SonicOutput) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SonicOutput) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.StatusDetail) > 0 {
+		i -= len(m.StatusDetail)
+		copy(dAtA[i:], m.StatusDetail)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.StatusDetail)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Status != 0 {
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TechsupportRequest) Marshal() (dAtA []byte, err error) {
@@ -809,6 +1110,135 @@ func (m *TechsupportResponse_Output) MarshalToSizedBuffer(dAtA []byte) (int, err
 		i -= len(m.OutputFilename)
 		copy(dAtA[i:], m.OutputFilename)
 		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.OutputFilename)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CopyConfigRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CopyConfigRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CopyConfigRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Input != nil {
+		{
+			size, err := m.Input.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSonicGnoi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CopyConfigRequest_Input) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CopyConfigRequest_Input) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CopyConfigRequest_Input) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Destination) > 0 {
+		i -= len(m.Destination)
+		copy(dAtA[i:], m.Destination)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Destination)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Overwrite {
+		i--
+		if m.Overwrite {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Source) > 0 {
+		i -= len(m.Source)
+		copy(dAtA[i:], m.Source)
+		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Source)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CopyConfigResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CopyConfigResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CopyConfigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Output != nil {
+		{
+			size, err := m.Output.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintSonicGnoi(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1018,6 +1448,25 @@ func encodeVarintSonicGnoi(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *SonicOutput) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Status != 0 {
+		n += 1 + sovSonicGnoi(uint64(m.Status))
+	}
+	l = len(m.StatusDetail)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func (m *TechsupportRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1074,6 +1523,61 @@ func (m *TechsupportResponse_Output) Size() (n int) {
 	_ = l
 	l = len(m.OutputFilename)
 	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CopyConfigRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Input != nil {
+		l = m.Input.Size()
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CopyConfigRequest_Input) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Source)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.Overwrite {
+		n += 2
+	}
+	l = len(m.Destination)
+	if l > 0 {
+		n += 1 + l + sovSonicGnoi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CopyConfigResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Output != nil {
+		l = m.Output.Size()
 		n += 1 + l + sovSonicGnoi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -1174,6 +1678,111 @@ func sovSonicGnoi(x uint64) (n int) {
 }
 func sozSonicGnoi(x uint64) (n int) {
 	return sovSonicGnoi(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *SonicOutput) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SonicOutput: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SonicOutput: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StatusDetail", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StatusDetail = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *TechsupportRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -1501,6 +2110,324 @@ func (m *TechsupportResponse_Output) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.OutputFilename = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CopyConfigRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CopyConfigRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CopyConfigRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Input", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Input == nil {
+				m.Input = &CopyConfigRequest_Input{}
+			}
+			if err := m.Input.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CopyConfigRequest_Input) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Input: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Input: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Source = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Overwrite", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Overwrite = bool(v != 0)
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Destination", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Destination = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CopyConfigResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowSonicGnoi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CopyConfigResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CopyConfigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Output", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSonicGnoi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthSonicGnoi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Output == nil {
+				m.Output = &SonicOutput{}
+			}
+			if err := m.Output.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

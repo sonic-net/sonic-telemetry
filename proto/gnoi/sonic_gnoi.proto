@@ -10,8 +10,14 @@ option (gogoproto.unmarshaler_all) = true;
 
 service SonicService {
   rpc ShowTechsupport (TechsupportRequest) returns (TechsupportResponse) {}
+  rpc CopyConfig(CopyConfigRequest) returns (CopyConfigResponse) {}
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
   rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
+}
+
+message SonicOutput {
+    int32 status = 1;
+    string status_detail = 2 [(gogoproto.jsontag) = "status-detail", (gogoproto.moretags) = "xml:\",comment\""];
 }
 
 message TechsupportRequest {
@@ -25,6 +31,18 @@ message TechsupportResponse {
         string output_filename = 1 [(gogoproto.jsontag) = "output-filename", (gogoproto.moretags) = "xml:\",comment\""];
     }
     Output output = 1 [(gogoproto.jsontag) = "sonic-show-techsupport:output", (gogoproto.moretags) = "xml:\",comment\""];
+}
+
+message CopyConfigRequest {
+    message Input {
+        string source = 1;
+        bool overwrite = 2;
+        string destination = 3;
+    }
+    Input input = 1 [(gogoproto.jsontag) = "sonic-config-mgmt:input", (gogoproto.moretags) = "xml:\",comment\""];
+}
+message CopyConfigResponse {
+    SonicOutput output = 1 [(gogoproto.jsontag) = "sonic-config-mgmt:output", (gogoproto.moretags) = "xml:\",comment\""];
 }
 
 message JwtToken {
