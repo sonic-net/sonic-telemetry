@@ -10,6 +10,7 @@ option (gogoproto.unmarshaler_all) = true;
 
 service SonicService {
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
 }
 
 message JwtToken {
