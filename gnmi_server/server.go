@@ -14,10 +14,14 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"github.com/golang/protobuf/proto"
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	gnmi_extpb "github.com/openconfig/gnmi/proto/gnmi_ext"
 	spb_gnoi "github.com/Azure/sonic-telemetry/proto/gnoi"
+	spb "github.com/Azure/sonic-telemetry/proto"
+	"github.com/Azure/sonic-mgmt-common/translib"
 	"bytes"
 )
 
@@ -395,30 +399,42 @@ func (s *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetRes
 
 }
 
-// Capabilities method is not implemented. Refer to gnxi for examples with openconfig integration
 func (s *Server) Capabilities(ctx context.Context, req *gnmipb.CapabilityRequest) (*gnmipb.CapabilityResponse, error) {
 	ctx, err := authenticate(s.config.UserAuth, ctx)
 	if err != nil {
-	        return nil, err
+		return nil, err
 	}
 	extensions := req.GetExtension()
 	dc, _ := sdc.NewTranslClient(nil , nil, ctx, extensions)
 
-		/* Fetch the client capabitlities. */
-		supportedModels := dc.Capabilities()
-		suppModels := make([]*gnmipb.ModelData, len(supportedModels))
+	/* Fetch the client capabitlities. */
+	supportedModels := dc.Capabilities()
+	suppModels := make([]*gnmipb.ModelData, len(supportedModels))
 
-		for index, model := range supportedModels {
-			suppModels[index] = &gnmipb.ModelData{
-						    	     	Name: model.Name, 
-								Organization: model.Organization, 
-								Version: model.Version,
-			}
+	for index, model := range supportedModels {
+		suppModels[index] = &gnmipb.ModelData{
+					    	     	Name: model.Name, 
+							Organization: model.Organization, 
+							Version: model.Version,
 		}
+	}
+
+	sup_bver := spb.SupportedBundleVersions{
+		BundleVersion: translib.GetYangBundleVersion().String(),
+		BaseVersion: translib.GetYangBaseVersion().String(),
+	}
+	sup_msg, _ := proto.Marshal(&sup_bver)
+	ext := gnmi_extpb.Extension{}
+	ext.Ext = &gnmi_extpb.Extension_RegisteredExt {
+		RegisteredExt: &gnmi_extpb.RegisteredExtension {
+			Id: spb.SUPPORTED_VERSIONS_EXT,
+			Msg: sup_msg}}
+	exts := []*gnmi_extpb.Extension{&ext}
 
 	return &gnmipb.CapabilityResponse{SupportedModels: suppModels, 
 				 	  SupportedEncodings: supportedEncodings,
-					  GNMIVersion: "0.7.0"}, nil
+					  GNMIVersion: "0.7.0",
+					  Extension: exts}, nil
 }
 
 func  isTargetDb ( target string) (bool) {
