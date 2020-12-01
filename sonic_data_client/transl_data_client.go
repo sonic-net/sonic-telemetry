@@ -332,9 +332,20 @@ func addTimer(c *TranslClient, ticker_map map[int][]*ticker_info, cases *[]refle
 
 func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient, updates_only bool) {
 	defer c.w.Done()
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
 	q := queue.NewPriorityQueue(1, false)
 	var sync_done bool
 	req := translib.SubscribeRequest{Paths:stringPaths, Q:q, Stop:c.channel}
+	if rc.BundleVersion != nil {
+		nver, err := translib.NewVersion(*rc.BundleVersion)
+		if err != nil {
+			log.V(2).Infof("Subscribe operation failed with error =%v", err.Error())
+			enqueFatalMsgTranslib(c, fmt.Sprintf("Subscribe operation failed with error =%v", err.Error()))
+			return
+		}
+		req.ClientVersion = nver
+	}
 	translib.Subscribe(req)
 	for {
 		items, err := q.Get(1)
