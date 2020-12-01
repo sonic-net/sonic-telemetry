@@ -40,11 +40,12 @@ type TranslClient struct {
 	extensions []*gnmi_extpb.Extension
 }
 
-func NewTranslClient(prefix *gnmipb.Path, getpaths []*gnmipb.Path, ctx context.Context) (Client, error) {
+func NewTranslClient(prefix *gnmipb.Path, getpaths []*gnmipb.Path, ctx context.Context, extensions []*gnmi_extpb.Extension) (Client, error) {
 	var client TranslClient
 	var err error
 	client.ctx = ctx
 	client.prefix = prefix
+	client.extensions = extensions
 	if getpaths != nil {
 		client.path2URI = make(map[*gnmipb.Path]string)
 		/* Populate GNMI path to REST URL map. */

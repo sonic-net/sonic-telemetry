@@ -97,6 +97,8 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	log.V(2).Infof("Client %s recieved initial query %v", c, query)
 
 	c.subscribe = query.GetSubscribe()
+	extensions := query.GetExtension()
+
 	if c.subscribe == nil {
 		return grpc.Errorf(codes.InvalidArgument, "first message must be SubscriptionList: %q", query)
 	}
@@ -125,7 +127,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
             dc, err = sdc.NewDbClient(paths, prefix)
     } else {
             /* For any other target or no target create new Transl Client. */
-            dc, err = sdc.NewTranslClient(prefix, paths, ctx)
+            dc, err = sdc.NewTranslClient(prefix, paths, ctx, extensions)
     }
 
     if err != nil {
