@@ -128,8 +128,8 @@ func TranslProcessGet(uriPath string, op *string, ctx context.Context) (*gnmipb.
 	if isTranslibSuccess(err1) {
 		data = resp.Payload
 	} else {
-		log.V(2).Infof("GET operation failed with error =%v", resp.ErrSrc)
-		return nil, fmt.Errorf("GET failed for this message")
+		log.V(2).Infof("GET operation failed with error =%v, %v", resp.ErrSrc, err1.Error())
+		return nil, err1
 	}
 
 	dst := new(bytes.Buffer)
@@ -164,8 +164,8 @@ func TranslProcessDelete(uri string, ctx context.Context) error {
 	}
 	resp, err := translib.Delete(req)
 	if err != nil{
-		log.V(2).Infof("DELETE operation failed with error =%v", resp.ErrSrc)
-		return fmt.Errorf("DELETE failed for this message")
+		log.V(2).Infof("DELETE operation failed with error =%v, %v", resp.ErrSrc, err.Error())
+		return err
 	}
 
 	return nil
@@ -184,7 +184,7 @@ func TranslProcessReplace(uri string, t *gnmipb.TypedValue, ctx context.Context)
 	if rc.BundleVersion != nil {
 		nver, err := translib.NewVersion(*rc.BundleVersion)
 		if err != nil {
-			log.V(2).Infof("UPDATE operation failed with error =%v", err.Error())
+			log.V(2).Infof("REPLACE operation failed with error =%v", err.Error())
 			return err
 		}
 		req.ClientVersion = nver
@@ -192,15 +192,11 @@ func TranslProcessReplace(uri string, t *gnmipb.TypedValue, ctx context.Context)
 	if rc.Auth.AuthEnabled {
 		req.AuthEnabled = true
 	}
-	resp, err1 := translib.Create(req)
+	resp, err1 := translib.Replace(req)
+
 	if err1 != nil{
-		//If Create fails, it may be due to object already existing/can not be created
-		// such as interface, in this case use Update.
-		resp, err1 = translib.Update(req)
-	}
-	if err1 != nil{
-		log.V(2).Infof("REPLACE operation failed with error =%v", resp.ErrSrc)
-		return fmt.Errorf("REPLACE failed for this message")
+		log.V(2).Infof("REPLACE operation failed with error =%v, %v", resp.ErrSrc, err1.Error())
+		return err1
 	}
 
 
@@ -228,15 +224,20 @@ func TranslProcessUpdate(uri string, t *gnmipb.TypedValue, ctx context.Context) 
 	if rc.Auth.AuthEnabled {
 		req.AuthEnabled = true
 	}
-	resp, err := translib.Create(req)
+	resp, err := translib.Update(req)
 	if err != nil{
-		//If Create fails, it may be due to object already existing/can not be created
-		// such as interface, in this case use Update.
-		resp, err = translib.Update(req)
+		switch err.(type) {
+		case tlerr.NotFoundError:
+			//If Update fails, it may be due to object not existing in this case use Replace to create and update the object.
+			resp, err = translib.Replace(req)
+		default:
+			log.V(2).Infof("UPDATE operation failed with error =%v, %v", resp.ErrSrc, err.Error())
+			return err
+		}
 	}
 	if err != nil{
-		log.V(2).Infof("UPDATE operation failed with error =%v", resp.ErrSrc)
-		return fmt.Errorf("UPDATE failed for this message")
+		log.V(2).Infof("UPDATE operation failed with error =%v, %v", resp.ErrSrc, err.Error())
+		return err
 	}
 	return nil
 }
