@@ -348,65 +348,49 @@ func (s *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetRes
 		/* DELETE */
 		for _, path := range req.GetDelete() {
 			log.V(2).Infof("Delete path: %v", path)
-
-			err := dc.Set(path, nil, sdc.DELETE)
-
-			if err != nil {
-				return nil, err
-			}
-
+	
 			res := gnmipb.UpdateResult{
 							Path: path,
 	      						Op:   gnmipb.UpdateResult_DELETE,
-     			    		          }
-
+	 			    		          }
+	
 			/* Add to Set response results. */
-     			results = append(results, &res)
-
+	 			results = append(results, &res)
+	
 		}
-
+	
 		/* REPLACE */
 		for _, path := range req.GetReplace(){
 			log.V(2).Infof("Replace path: %v ", path)
-
-			err = dc.Set(path.GetPath(), path.GetVal(), sdc.REPLACE)
-
-			if err != nil {
-				return nil, err
-			}
+	
 			res := gnmipb.UpdateResult{
 							Path: path.GetPath(),
 	      						Op:   gnmipb.UpdateResult_REPLACE,
-    				                  }
+					                  }
 			/* Add to Set response results. */
-     			results = append(results, &res)
+	 			results = append(results, &res)
 		}
-
-
+	
+	
 		/* UPDATE */
 		for _, path := range req.GetUpdate(){
 			log.V(2).Infof("Update path: %v ", path)
-
-			err = dc.Set(path.GetPath(), path.GetVal(), sdc.UPDATE)
-
-			if err != nil {
-				return nil, err
-			}
-
+	
 			res := gnmipb.UpdateResult{
 							Path: path.GetPath(),
 	      						Op:   gnmipb.UpdateResult_UPDATE,
-     					          }
+	 					          }
 			/* Add to Set response results. */
-     			results = append(results, &res)
+	 			results = append(results, &res)
 		}
-
-
-
-	return &gnmipb.SetResponse{
- 					Prefix:   req.GetPrefix(),
-		  			Response: results,
-				  }, nil
+		err = dc.Set(req.GetDelete(), req.GetReplace(), req.GetUpdate())
+	
+	
+	
+		return &gnmipb.SetResponse{
+	 					Prefix:   req.GetPrefix(),
+			  			Response: results,
+					  }, err
 
 }
 

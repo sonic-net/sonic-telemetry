@@ -209,6 +209,111 @@ func TranslProcessUpdate(uri string, t *gnmipb.TypedValue, ctx context.Context) 
 	return nil
 }
 
+func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update []*gnmipb.Update, prefix *gnmipb.Path, ctx context.Context) error {
+	var br translib.BulkRequest
+	var uri string
+
+        var deleteUri []string
+        var replaceUri []string
+        var updateUri []string
+
+	rc, ctx := common_utils.GetContext(ctx)
+	log.V(2).Info("TranslProcessBulk Called")
+	for _,d := range delete {
+		ConvertToURI(prefix, d, &uri)
+		var str3 string
+		payload := []byte(str3)
+		req := translib.SetRequest{
+			Path: uri,
+			Payload: payload,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if rc.Auth.AuthEnabled {
+			req.AuthEnabled = true
+		}
+		br.DeleteRequest = append(br.DeleteRequest, req)
+                deleteUri = append(deleteUri, uri)
+	}
+	for _,r := range replace {
+		ConvertToURI(prefix, r.GetPath(), &uri)
+		str := string(r.GetVal().GetJsonIetfVal())
+		str3 := strings.Replace(str, "\n", "", -1)
+		log.V(2).Infof("Incoming JSON body is", str)
+		payload := []byte(str3)
+		req := translib.SetRequest{
+			Path: uri,
+			Payload: payload,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if rc.Auth.AuthEnabled {
+			req.AuthEnabled = true
+		}
+		br.ReplaceRequest = append(br.ReplaceRequest, req)
+                replaceUri = append(replaceUri, uri)
+	}
+	for _,u := range update {
+		ConvertToURI(prefix, u.GetPath(), &uri)
+		str := string(u.GetVal().GetJsonIetfVal())
+		str3 := strings.Replace(str, "\n", "", -1)
+		log.V(2).Infof("Incoming JSON body is", str)
+		payload := []byte(str3)
+		req := translib.SetRequest{
+			Path: uri,
+			Payload: payload,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if rc.Auth.AuthEnabled {
+			req.AuthEnabled = true
+		}
+		br.UpdateRequest = append(br.UpdateRequest, req)
+                updateUri = append(updateUri, uri)
+	}
+
+	resp,err := translib.Bulk(br)
+
+        i := 0
+	for _,d := range resp.DeleteResponse {
+            __log_audit_msg(ctx, "DELETE", deleteUri[i], d.Err)
+            i++
+        }
+        i = 0
+	for _,r := range resp.ReplaceResponse {
+            __log_audit_msg(ctx, "REPLACE", replaceUri[i], r.Err)
+            i++
+        }
+        i = 0
+	for _,u := range resp.UpdateResponse {
+            __log_audit_msg(ctx, "UPDATE", updateUri[i], u.Err)
+            i++
+        }
+
+	var errors []string
+	if err != nil{
+		log.V(2).Infof("BULK SET operation failed with error(s):")
+		for _,d := range resp.DeleteResponse {
+			if d.Err != nil {
+				log.V(2).Infof("%s=%v", d.Err.Error(), d.ErrSrc)
+				errors = append(errors, d.Err.Error())
+			}
+		}
+		for _,r := range resp.ReplaceResponse {
+			if r.Err != nil {
+				log.V(2).Infof("%s=%v", r.Err.Error(), r.ErrSrc)
+				errors = append(errors, r.Err.Error())
+			}
+		}
+		for _,u := range resp.UpdateResponse {
+			if u.Err != nil {
+				log.V(2).Infof("%s=%v", u.Err.Error(), u.ErrSrc)
+				errors = append(errors, u.Err.Error())
+			}
+		}
+		return fmt.Errorf("SET failed: %s", strings.Join(errors, "; "))
+	}
+
+	return nil
+}
+
 /* Action/rpc request handling. */
 func TranslProcessAction(uri string, payload []byte, ctx context.Context) ([]byte, error) {
 	rc, ctx := common_utils.GetContext(ctx)

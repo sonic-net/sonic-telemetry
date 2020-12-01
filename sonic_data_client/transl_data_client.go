@@ -95,27 +95,35 @@ func (c *TranslClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	return values, nil
 }
 
-func (c *TranslClient) Set(path *gnmipb.Path, val *gnmipb.TypedValue, flagop int) error {
+func (c *TranslClient) Set(delete []*gnmipb.Path, replace []*gnmipb.Update, update []*gnmipb.Update) error {
 	rc, ctx := common_utils.GetContext(c.ctx)
 	c.ctx = ctx
 	var uri string
-	var err error
 	version := getBundleVersion(c.extensions)
 	if version != nil {
 		rc.BundleVersion = version
 	}
-	/* Convert the GNMI Path to URI. */
-	transutil.ConvertToURI(c.prefix, path, &uri)
 
-	if flagop == DELETE {
-		err = transutil.TranslProcessDelete(uri, c.ctx)
-	} else if flagop == REPLACE {
-		err = transutil.TranslProcessReplace(uri, val, c.ctx)
-	} else if flagop == UPDATE {
-		err = transutil.TranslProcessUpdate(uri, val, c.ctx)
+	if (len(delete) + len(replace) + len(update)) > 1 {
+		return transutil.TranslProcessBulk(delete, replace, update, c.prefix, c.ctx)
+	} else {
+		if len(delete) == 1 {
+			/* Convert the GNMI Path to URI. */
+			transutil.ConvertToURI(c.prefix, delete[0], &uri)
+			return transutil.TranslProcessDelete(uri, c.ctx)
+		}
+		if len(replace) == 1 {
+			/* Convert the GNMI Path to URI. */
+			transutil.ConvertToURI(c.prefix, replace[0].GetPath(), &uri)
+			return transutil.TranslProcessReplace(uri, replace[0].GetVal(), c.ctx)
+		}
+		if len(update) == 1 {
+			/* Convert the GNMI Path to URI. */
+			transutil.ConvertToURI(c.prefix, update[0].GetPath(), &uri)
+			return transutil.TranslProcessUpdate(uri, update[0].GetVal(), c.ctx)
+		}
 	}
-
-	return err
+	return nil
 }
 func enqueFatalMsgTranslib(c *TranslClient, msg string) {
 	c.q.Put(Value{

@@ -411,7 +411,7 @@ func (c *NonDbClient) Close() error {
 	return nil
 }
 
-func  (c *NonDbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
+func  (c *NonDbClient) Set(delete []*gnmipb.Path, replace []*gnmipb.Update, update []*gnmipb.Update) error {
 	return nil
 }
 func (c *NonDbClient) Capabilities() ([]gnmipb.ModelData) {
