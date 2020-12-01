@@ -5,15 +5,19 @@ import (
 	spb "github.com/Azure/sonic-telemetry/proto"
 	transutil "github.com/Azure/sonic-telemetry/transl_utils"
 	log "github.com/golang/glog"
+	"github.com/golang/protobuf/proto"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	gnmi_extpb "github.com/openconfig/gnmi/proto/gnmi_ext"
 	"github.com/Workiva/go-datastructures/queue"
 	"sync"
 	"time"
 	"fmt"
 	"reflect"
 	"github.com/Azure/sonic-mgmt-common/translib"
+	"github.com/Azure/sonic-telemetry/common_utils"
 	"bytes"
 	"encoding/json"
+	"context"
 )
 
 const (
@@ -32,7 +36,8 @@ type TranslClient struct {
 	synced sync.WaitGroup  // Control when to send gNMI sync_response
 	w      *sync.WaitGroup // wait for all sub go routines to finish
 	mu     sync.RWMutex    // Mutex for data protection among routines for transl_client
-
+	ctx context.Context //Contains Auth info and request info
+	extensions []*gnmi_extpb.Extension
 }
 
 func NewTranslClient(prefix *gnmipb.Path, getpaths []*gnmipb.Path) (Client, error) {
@@ -54,10 +59,15 @@ func NewTranslClient(prefix *gnmipb.Path, getpaths []*gnmipb.Path) (Client, erro
 }
 
 func (c *TranslClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
-
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
 	var values []*spb.Value
 	ts := time.Now()
 
+	version := getBundleVersion(c.extensions)
+	if version != nil {
+		rc.BundleVersion = version
+	}
 	/* Iterate through all GNMI paths. */
 	for gnmiPath, URIPath := range c.path2URI {
 		/* Fill values for each GNMI path. */
@@ -86,9 +96,14 @@ func (c *TranslClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 }
 
 func (c *TranslClient) Set(path *gnmipb.Path, val *gnmipb.TypedValue, flagop int) error {
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
 	var uri string
 	var err error
-
+	version := getBundleVersion(c.extensions)
+	if version != nil {
+		rc.BundleVersion = version
+	}
 	/* Convert the GNMI Path to URI. */
 	transutil.ConvertToURI(c.prefix, path, &uri)
 
@@ -117,11 +132,17 @@ type ticker_info struct{
 }
 
 func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
 	c.w = w
+
 	defer c.w.Done()
 	c.q = q
 	c.channel = stop
-
+	version := getBundleVersion(c.extensions)
+	if version != nil {
+		rc.BundleVersion = version
+	}
 
 	ticker_map := make(map[int][]*ticker_info)
 	var cases []reflect.SelectCase
@@ -364,10 +385,16 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 
 
 func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
 	c.w = w
 	defer c.w.Done()
 	c.q = q
 	c.channel = poll
+	version := getBundleVersion(c.extensions)
+	if version != nil {
+		rc.BundleVersion = version
+	}
 
 	for {
 		_, more := <-c.channel
@@ -404,12 +431,17 @@ func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sy
 	}
 }
 func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup) {
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
 	c.w = w
 	defer c.w.Done()
 	c.q = q
 	c.channel = once
 
-	
+	version := getBundleVersion(c.extensions)
+	if version != nil {
+		rc.BundleVersion = version
+	}
 	_, more := <-c.channel
 	if !more {
 		log.V(1).Infof("%v once channel closed, exiting onceDb routine", c)
@@ -445,12 +477,32 @@ func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sy
 }
 
 func (c *TranslClient) Capabilities() []gnmipb.ModelData {
-
+	rc, ctx := common_utils.GetContext(c.ctx)
+	c.ctx = ctx
+	version := getBundleVersion(c.extensions)
+	if version != nil {
+		rc.BundleVersion = version
+	}
 	/* Fetch the supported models. */
 	supportedModels := transutil.GetModels()
 	return supportedModels
 }
 
 func (c *TranslClient) Close() error {
+	return nil
+}
+
+func getBundleVersion(extensions []*gnmi_extpb.Extension) *string {
+	for _,e := range extensions {
+		switch v := e.Ext.(type) {
+			case *gnmi_extpb.Extension_RegisteredExt:
+				if v.RegisteredExt.Id == spb.BUNDLE_VERSION_EXT {
+					var bv spb.BundleVersion
+					proto.Unmarshal(v.RegisteredExt.Msg, &bv)
+					return &bv.Version
+				}
+			
+		}
+	}
 	return nil
 }
