@@ -290,6 +290,7 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 	}
 
 	paths := req.GetPath()
+	extensions := req.GetExtension()
         target = prefix.GetTarget()
 	log.V(5).Infof("GetRequest paths: %v", paths)
 
@@ -301,7 +302,7 @@ func (s *Server) Get(ctx context.Context, req *gnmipb.GetRequest) (*gnmipb.GetRe
 		dc, err = sdc.NewDbClient(paths, prefix)
 	} else {
 		/* If no prefix target is specified create new Transl Data Client . */
-		dc, err = sdc.NewTranslClient(prefix, paths)
+		dc, err = sdc.NewTranslClient(prefix, paths, ctx, extensions)
 	}
 
 	if err != nil {
@@ -341,9 +342,9 @@ func (s *Server) Set(ctx context.Context,req *gnmipb.SetRequest) (*gnmipb.SetRes
 
 		/* Fetch the prefix. */
 		prefix := req.GetPrefix()
-
+		extensions := req.GetExtension()
                /* Create Transl client. */
-		dc, _ := sdc.NewTranslClient(prefix, nil)
+		dc, _ := sdc.NewTranslClient(prefix, nil, ctx, extensions)
 
 		/* DELETE */
 		for _, path := range req.GetDelete() {
@@ -400,7 +401,8 @@ func (s *Server) Capabilities(ctx context.Context, req *gnmipb.CapabilityRequest
 	if err != nil {
 	        return nil, err
 	}
-	dc, _ := sdc.NewTranslClient(nil , nil)
+	extensions := req.GetExtension()
+	dc, _ := sdc.NewTranslClient(nil , nil, ctx, extensions)
 
 		/* Fetch the client capabitlities. */
 		supportedModels := dc.Capabilities()
