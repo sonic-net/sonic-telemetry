@@ -263,7 +263,7 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 		if rc.BundleVersion != nil {
 			nver, err := translib.NewVersion(*rc.BundleVersion)
 			if err != nil {
-				log.V(2).Infof("Action operation failed with error =%v", err.Error())
+				log.V(2).Infof("Bulk Set operation failed with error =%v", err.Error())
 				return err
 			}
 			req.ClientVersion = nver
@@ -288,7 +288,7 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 		if rc.BundleVersion != nil {
 			nver, err := translib.NewVersion(*rc.BundleVersion)
 			if err != nil {
-				log.V(2).Infof("Action operation failed with error =%v", err.Error())
+				log.V(2).Infof("Bulk Set operation failed with error =%v", err.Error())
 				return err
 			}
 			req.ClientVersion = nver
@@ -313,7 +313,7 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 		if rc.BundleVersion != nil {
 			nver, err := translib.NewVersion(*rc.BundleVersion)
 			if err != nil {
-				log.V(2).Infof("Action operation failed with error =%v", err.Error())
+				log.V(2).Infof("Bulk Set operation failed with error =%v", err.Error())
 				return err
 			}
 			req.ClientVersion = nver
