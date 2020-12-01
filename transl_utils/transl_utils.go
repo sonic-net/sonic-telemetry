@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/sonic-telemetry/common_utils"
 	"context"
 	"log/syslog"
+	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
 
 )
 
