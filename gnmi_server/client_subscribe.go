@@ -73,6 +73,7 @@ func (c *Client) populateDbPathSubscrition(sublist *gnmipb.SubscriptionList) ([]
 // internally after sync until a Poll request is made to the server.
 func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 	defer log.V(1).Infof("Client %s shutdown", c)
+	ctx := stream.Context()
 
 	if stream == nil {
 		return grpc.Errorf(codes.FailedPrecondition, "cannot start client: stream is nil")
@@ -124,7 +125,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
             dc, err = sdc.NewDbClient(paths, prefix)
     } else {
             /* For any other target or no target create new Transl Client. */
-            dc, err = sdc.NewTranslClient(prefix, paths)
+            dc, err = sdc.NewTranslClient(prefix, paths, ctx)
     }
 
     if err != nil {
