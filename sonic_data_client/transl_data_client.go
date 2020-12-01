@@ -71,7 +71,7 @@ func (c *TranslClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
 	/* Iterate through all GNMI paths. */
 	for gnmiPath, URIPath := range c.path2URI {
 		/* Fill values for each GNMI path. */
-		val, err := transutil.TranslProcessGet(URIPath, nil)
+		val, err := transutil.TranslProcessGet(URIPath, nil, c.ctx)
 
 		if err != nil {
 			return nil, err
@@ -108,11 +108,11 @@ func (c *TranslClient) Set(path *gnmipb.Path, val *gnmipb.TypedValue, flagop int
 	transutil.ConvertToURI(c.prefix, path, &uri)
 
 	if flagop == DELETE {
-		err = transutil.TranslProcessDelete(uri)
+		err = transutil.TranslProcessDelete(uri, c.ctx)
 	} else if flagop == REPLACE {
-		err = transutil.TranslProcessReplace(uri, val)
+		err = transutil.TranslProcessReplace(uri, val, c.ctx)
 	} else if flagop == UPDATE {
-		err = transutil.TranslProcessUpdate(uri, val)
+		err = transutil.TranslProcessUpdate(uri, val, c.ctx)
 	}
 
 	return err
@@ -211,7 +211,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 				}
 			}
 			//Send initial data now so we can send sync response.
-			val, err := transutil.TranslProcessGet(c.path2URI[sub.Path], nil)
+			val, err := transutil.TranslProcessGet(c.path2URI[sub.Path], nil, c.ctx)
 			if err != nil {
 				return
 			}
@@ -273,7 +273,7 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 
 		for _,tick := range ticker_map[cases_map[chosen]] {
 			fmt.Printf("tick, heartbeat: %t, path: %s", tick.heartbeat, c.path2URI[tick.sub.Path])
-			val, err := transutil.TranslProcessGet(c.path2URI[tick.sub.Path], nil)
+			val, err := transutil.TranslProcessGet(c.path2URI[tick.sub.Path], nil, c.ctx)
 			if err != nil {
 				return
 			}
@@ -404,7 +404,7 @@ func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sy
 		}
 		t1 := time.Now()
 		for gnmiPath, URIPath := range c.path2URI {
-			val, err := transutil.TranslProcessGet(URIPath, nil)
+			val, err := transutil.TranslProcessGet(URIPath, nil, c.ctx)
 			if err != nil {
 				return
 			}
@@ -449,7 +449,7 @@ func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sy
 	}
 	t1 := time.Now()
 	for gnmiPath, URIPath := range c.path2URI {
-		val, err := transutil.TranslProcessGet(URIPath, nil)
+		val, err := transutil.TranslProcessGet(URIPath, nil, c.ctx)
 		if err != nil {
 			return
 		}
