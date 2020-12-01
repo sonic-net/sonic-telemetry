@@ -36,10 +36,10 @@ type TranslClient struct {
 	ctx context.Context //Contains Auth info and request info
 }
 
-func NewTranslClient(prefix *gnmipb.Path, getpaths []*gnmipb.Path) (Client, error) {
+func NewTranslClient(prefix *gnmipb.Path, getpaths []*gnmipb.Path, ctx context.Context) (Client, error) {
 	var client TranslClient
 	var err error
-
+	client.ctx = ctx
 	client.prefix = prefix
 	if getpaths != nil {
 		client.path2URI = make(map[*gnmipb.Path]string)
