@@ -44,7 +44,7 @@ var (
 			getFunc: dataGetFunc(getCpuUtil),
 		},
 		{ // Get host uptime
-			path:    []string{"OTHERS", "platform", "sysuptime"},
+			path:    []string{"OTHERS", "proc", "sysuptime"},
 			getFunc: dataGetFunc(getSysUptime),
 		},
 		{ // Get proc meminfo
@@ -95,11 +95,6 @@ type cpuUtil struct {
 	CpuUtil_5s    uint64 `json:"5s"`
 	CpuUtil_1min  uint64 `json:"1min"`
 	CpuUtil_5min  uint64 `json:"5min"`
-}
-
-// SONiC Host system uptime
-type sysUptime struct {
-    Total   uint64 `json:"total"`
 }
 
 func getCpuUtilPercents(cur, last *linuxproc.CPUStat) uint64 {
@@ -257,9 +252,7 @@ func getProcStat() ([]byte, error) {
 
 func getSysUptime() ([]byte, error) {
     timeInfo, _ := linuxproc.ReadUptime("/proc/uptime")
-    uptime := sysUptime{}
-    uptime.Total = uint64(timeInfo.Total)
-    b, err := json.Marshal(uptime)
+    b, err := json.Marshal(timeInfo)
     if err != nil {
         log.V(2).Infof("%v", err)
         return b, err
