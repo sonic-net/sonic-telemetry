@@ -2,8 +2,9 @@ package client
 
 import (
 	"fmt"
-	log "github.com/golang/glog"
 	"strings"
+
+	log "github.com/golang/glog"
 )
 
 // virtual db is to Handle
@@ -130,8 +131,9 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		return nil, err
 	}
 
-	keyName := fmt.Sprintf("PFC_WD_TABLE%v*", separator)
+	keyName := fmt.Sprintf("PFC_WD%v*", separator)
 	resp, err := redisDb.Keys(keyName).Result()
+	log.V(10).Infof("Database response %v", resp)
 	if err != nil {
 		log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
 		return nil, err
@@ -144,10 +146,12 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 	}
 
 	for _, key := range resp {
-		name := key[13:]
-		pfcwdName_map[name] = make(map[string]string)
+		if len(key) > 15 && strings.EqualFold(key[:15], "PFC_WD|Ethernet") { //Need to be long enough so that we know it is a port not PFC_WD|Global and so we don't go beyond the end of the string.
+			name := key[7:] //Should be 7, but is there a more resilient way to do this?
+			pfcwdName_map[name] = make(map[string]string)
+			log.V(10).Infof("key 8: %v ,key: %v name: %v , pfcwdName_map: %v", key[8:8], key, name, pfcwdName_map[name])
+		}
 	}
-
 	// Get Queue indexes that are enabled with PFC-WD
 	keyName = "PORT_QOS_MAP*"
 	resp, err = redisDb.Keys(keyName).Result()

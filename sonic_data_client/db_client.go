@@ -16,15 +16,15 @@ import (
 
 	spb "github.com/Azure/sonic-telemetry/proto"
 	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
+	"github.com/Workiva/go-datastructures/queue"
 	"github.com/go-redis/redis"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/Workiva/go-datastructures/queue"
 )
 
 const (
 	// indentString represents the default indentation string used for
 	// JSON. Two spaces are used here.
-	indentString                 string = "  "
+	indentString string = "  "
 )
 
 // Client defines a set of methods which every client must implement.
@@ -45,9 +45,9 @@ type Client interface {
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
 	// Set data based on path and value
-	Set(path *gnmipb.Path,  t *gnmipb.TypedValue, op int) error
+	Set(path *gnmipb.Path, t *gnmipb.TypedValue, op int) error
 	// Capabilities of the switch
-	Capabilities() ([]gnmipb.ModelData)
+	Capabilities() []gnmipb.ModelData
 
 	// Close provides implemenation for explicit cleanup of Client
 	Close() error
@@ -1012,10 +1012,9 @@ func dbTableKeySubscribe(gnmiPath *gnmipb.Path, c *DbClient) {
 	}
 }
 
-func  (c *DbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
+func (c *DbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
 	return nil
 }
-func (c *DbClient) Capabilities() ([]gnmipb.ModelData) {
+func (c *DbClient) Capabilities() []gnmipb.ModelData {
 	return nil
 }
-
