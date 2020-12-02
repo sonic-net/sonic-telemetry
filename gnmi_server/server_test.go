@@ -736,10 +736,33 @@ func TestGnmiGet(t *testing.T) {
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcwdByte,
 	},
-		createBuildVersionTestCase("get osversion/build", `{"build_version": "sonic.12345678.90"}`, "build_version: '12345678.90'\ndebian_version: '9.13'", nil),
-		createBuildVersionTestCase("get osversion/build file load error", `{"build_version": "sonic.NA"}`, "", fmt.Errorf("Cannot access '%v' ", sdc.SonicVersionFilePath)),
-		createBuildVersionTestCase("get osversion/build file parse error", `{"build_version": "sonic.NA"}`, "no a valid YAML content", nil),
-		createBuildVersionTestCase("get osversion/build different value", `{"build_version": "sonic.23456789.01"}`, "build_version: '23456789.01'\ndebian_version: '9.15'", nil),
+		// Happy path
+		createBuildVersionTestCase(
+			"get osversion/build",                                  // query path
+			`{"build_version": "sonic.12345678.90", "error":""}`,   // expected response
+			"build_version: '12345678.90'\ndebian_version: '9.13'", // YAML file content
+			nil), // mock file reading error
+
+		// File reading error
+		createBuildVersionTestCase(
+			"get osversion/build file load error",
+			`{"build_version": "sonic.NA", "error":"Cannot access '/etc/sonic/sonic_version.yml'"}`,
+			"",
+			fmt.Errorf("Cannot access '%v'", sdc.SonicVersionFilePath)),
+
+		// File content is not valid YAML
+		createBuildVersionTestCase(
+			"get osversion/build file parse error",
+			`{"build_version": "sonic.NA", "error":"yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `+"`not a v...`"+` into client.SonicVersionInfo"}`,
+			"not a valid YAML content",
+			nil),
+
+		// Happy path with different value
+		createBuildVersionTestCase(
+			"get osversion/build different value",
+			`{"build_version": "sonic.23456789.01", "error":""}`,
+			"build_version: '23456789.01'\ndebian_version: '9.15'",
+			nil),
 	}
 
 	for _, td := range tds {

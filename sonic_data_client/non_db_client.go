@@ -42,6 +42,7 @@ type statsRing struct {
 // SonicVersionInfo is a data model to serialize '/etc/sonic/sonic_version.yml'
 type SonicVersionInfo struct {
 	BuildVersion string `yaml:"build_version" json:"build_version"`
+	Error        string `json:"error"` // Applicable only when there is a failure while reading the file.
 }
 
 // sonicVersionYmlStash caches the content of '/etc/sonic/sonic_version.yml'
@@ -284,16 +285,19 @@ func getBuildVersion() ([]byte, error) {
 	// Load and parse the content of version file
 	versionFileStash.once.Do(func() {
 		versionFileStash.versionInfo.BuildVersion = "sonic.NA"
+		versionFileStash.versionInfo.Error = "" // empty string means no error.
 
 		fileContent, err := ImplIoutilReadFile(SonicVersionFilePath)
 		if err != nil {
 			log.Errorf("Failed to read '%v', %v", SonicVersionFilePath, err)
+			versionFileStash.versionInfo.Error = err.Error()
 			return
 		}
 
 		err = yaml.Unmarshal(fileContent, &versionFileStash.versionInfo)
 		if err != nil {
 			log.Errorf("Failed to parse '%v', %v", SonicVersionFilePath, err)
+			versionFileStash.versionInfo.Error = err.Error()
 			return
 		}
 
