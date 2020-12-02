@@ -219,21 +219,25 @@ func (c *TranslClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *
 					return
 				}
 			}
-			//Send initial data now so we can send sync response.
-			val, err := transutil.TranslProcessGet(c.path2URI[sub.Path], nil, c.ctx)
-			if err != nil {
-				return
+			if !subscribe.UpdatesOnly {
+				//Send initial data now so we can send sync response.
+				val, err := transutil.TranslProcessGet(c.path2URI[sub.Path], nil, c.ctx)
+				if err != nil {
+					return
+				}
+				spbv := &spb.Value{
+					Prefix:       c.prefix,
+					Path:         sub.Path,
+					Timestamp:    time.Now().UnixNano(),
+					SyncResponse: false,
+					Val:          val,
+				}
+				c.q.Put(Value{spbv})
+				valueCache[c.path2URI[sub.Path]] = string(val.GetJsonIetfVal())
 			}
-			spbv := &spb.Value{
-				Prefix:       c.prefix,
-				Path:         sub.Path,
-				Timestamp:    time.Now().UnixNano(),
-				SyncResponse: false,
-				Val:          val,
-			}
-			c.q.Put(Value{spbv})
-			valueCache[c.path2URI[sub.Path]] = string(val.GetJsonIetfVal())
+
 			addTimer(c, ticker_map, &cases, cases_map, interval, sub, false)
+
 			//Heartbeat intervals are valid for SAMPLE in the case suppress_redundant is specified
 			if sub.SuppressRedundant && sub.HeartbeatInterval > 0 {
 				if int(sub.HeartbeatInterval) < subSupport[i].MinInterval * int(time.Second) {
@@ -404,7 +408,7 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 
 
 
-func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
+func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	rc, ctx := common_utils.GetContext(c.ctx)
 	c.ctx = ctx
 	c.w = w
@@ -415,7 +419,7 @@ func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sy
 	if version != nil {
 		rc.BundleVersion = version
 	}
-
+	synced := false
 	for {
 		_, more := <-c.channel
 		if !more {
@@ -424,21 +428,23 @@ func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sy
 		}
 		t1 := time.Now()
 		for gnmiPath, URIPath := range c.path2URI {
-			val, err := transutil.TranslProcessGet(URIPath, nil, c.ctx)
-			if err != nil {
-				return
-			}
+			if synced || !subscribe.UpdatesOnly {
+				val, err := transutil.TranslProcessGet(URIPath, nil, c.ctx)
+				if err != nil {
+					return
+				}
 
-			spbv := &spb.Value{
-				Prefix:       c.prefix,
-				Path:         gnmiPath,
-				Timestamp:    time.Now().UnixNano(),
-				SyncResponse: false,
-				Val:          val,
-			}
+				spbv := &spb.Value{
+					Prefix:       c.prefix,
+					Path:         gnmiPath,
+					Timestamp:    time.Now().UnixNano(),
+					SyncResponse: false,
+					Val:          val,
+				}
 
-			c.q.Put(Value{spbv})
-			log.V(6).Infof("Added spbv #%v", spbv)
+				c.q.Put(Value{spbv})
+				log.V(6).Infof("Added spbv #%v", spbv)
+			}
 		}
 
 		c.q.Put(Value{
@@ -447,10 +453,11 @@ func (c *TranslClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sy
 				SyncResponse: true,
 			},
 		})
+		synced = true
 		log.V(4).Infof("Sync done, poll time taken: %v ms", int64(time.Since(t1)/time.Millisecond))
 	}
 }
-func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup) {
+func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	rc, ctx := common_utils.GetContext(c.ctx)
 	c.ctx = ctx
 	c.w = w
@@ -474,16 +481,18 @@ func (c *TranslClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sy
 			return
 		}
 
-		spbv := &spb.Value{
-			Prefix:       c.prefix,
-			Path:         gnmiPath,
-			Timestamp:    time.Now().UnixNano(),
-			SyncResponse: false,
-			Val:          val,
-		}
+		if !subscribe.UpdatesOnly && val != nil {
+			spbv := &spb.Value{
+				Prefix:       c.prefix,
+				Path:         gnmiPath,
+				Timestamp:    time.Now().UnixNano(),
+				SyncResponse: false,
+				Val:          val,
+			}
 
-		c.q.Put(Value{spbv})
-		log.V(6).Infof("Added spbv #%v", spbv)
+			c.q.Put(Value{spbv})
+			log.V(6).Infof("Added spbv #%v", spbv)
+		}
 	}
 
 	c.q.Put(Value{

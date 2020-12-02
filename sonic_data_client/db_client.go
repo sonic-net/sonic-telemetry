@@ -40,8 +40,8 @@ type Client interface {
 	// data read from data source will be enqueued on to the priority queue
 	// The service will stop upon detection of poll channel closing.
 	// It should run as a go routine
-	PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup)
-	OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup)
+	PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList)
+	OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList)
 	// Get return data from the data source in format of *spb.Value
 	Get(w *sync.WaitGroup) ([]*spb.Value, error)
 	// Set data based on path and value
@@ -200,7 +200,7 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 	}
 }
 
-func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
+func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	c.w = w
 	defer c.w.Done()
 	c.q = q
@@ -240,7 +240,7 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 		log.V(4).Infof("Sync done, poll time taken: %v ms", int64(time.Since(t1)/time.Millisecond))
 	}
 }
-func (c *DbClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup) {
+func (c *DbClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	return
 }
 func (c *DbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {

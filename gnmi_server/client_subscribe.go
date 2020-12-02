@@ -144,12 +144,12 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 		c.polled = make(chan struct{}, 1)
 		c.polled <- struct{}{}
 		c.w.Add(1)
-		go dc.PollRun(c.q, c.polled, &c.w)
+		go dc.PollRun(c.q, c.polled, &c.w, c.subscribe)
 	case gnmipb.SubscriptionList_ONCE:
 		c.once = make(chan struct{}, 1)
 		c.once <- struct{}{}
 		c.w.Add(1)
-		go dc.OnceRun(c.q, c.once, &c.w)
+		go dc.OnceRun(c.q, c.once, &c.w, c.subscribe)
 	default:
 		return grpc.Errorf(codes.InvalidArgument, "Unkown subscription mode: %q", query)
 	}

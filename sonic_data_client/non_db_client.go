@@ -335,7 +335,7 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 	return
 }
 
-func (c *NonDbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup) {
+func (c *NonDbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	c.w = w
 	defer c.w.Done()
 	c.q = q
@@ -377,7 +377,7 @@ func (c *NonDbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *syn
 		log.V(4).Infof("Sync done, poll time taken: %v ms", int64(time.Since(t1)/time.Millisecond))
 	}
 }
-func (c *NonDbClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup) {
+func (c *NonDbClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
 	return
 }
 func (c *NonDbClient) Get(w *sync.WaitGroup) ([]*spb.Value, error) {
