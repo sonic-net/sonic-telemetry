@@ -251,8 +251,8 @@ func getProcStat() ([]byte, error) {
 }
 
 func getSysUptime() ([]byte, error) {
-    timeInfo, _ := linuxproc.ReadUptime("/proc/uptime")
-    b, err := json.Marshal(timeInfo)
+    sysUptime, _ := linuxproc.ReadUptime("/proc/uptime")
+    b, err := json.Marshal(sysUptime)
     if err != nil {
         log.V(2).Infof("%v", err)
         return b, err
