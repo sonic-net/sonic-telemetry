@@ -44,7 +44,7 @@ var (
 			getFunc: dataGetFunc(getCpuUtil),
 		},
 		{ // Get host uptime
-			path:    []string{"OTHERS", "proc", "sysuptime"},
+			path:    []string{"OTHERS", "proc", "uptime"},
 			getFunc: dataGetFunc(getSysUptime),
 		},
 		{ // Get proc meminfo
