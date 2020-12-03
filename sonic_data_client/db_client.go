@@ -929,7 +929,12 @@ func dbSingleTableKeySubscribe(c *DbClient, rsd redisSubData, updateChannel chan
 						continue
 					}
 				}
-				log.V(2).Infof("pubsub.ReceiveTimeout err %v", err)
+
+				// Do not log errors if stop is signaled
+				if _, activeCh := <-c.channel; activeCh {
+					log.V(2).Infof("pubsub.ReceiveTimeout err %v", err)
+				}
+
 				continue
 			}
 			newMsi := make(map[string]interface{})
@@ -1035,7 +1040,7 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 		return nil
 	}
 
-	// Go through the paths and idetify the tables to register.
+	// Go through the paths and identify the tables to register.
 	for _, tblPath := range tblPaths {
 		// Subscribe to keyspace notification
 		pattern := "__keyspace@" + strconv.Itoa(int(spb.Target_value[tblPath.dbName])) + "__:"
