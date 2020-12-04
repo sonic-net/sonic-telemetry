@@ -5,15 +5,17 @@ These examples show various use case examples using the gnmi_get, gnmi_set and g
 
 ## Openconfig Models:
 
-These examples show get/set/subscribe with the supported openconfig models
+These examples show get/set/subscribe/capabilities with the supported openconfig models
 
 
 ### Get:
 
 Gets JSON_IETF values from specified openconfig path.
 
+#### Input:
     gnmi_get -insecure -username admin -password sonicadmin -xpath /openconfig-interfaces:interfaces/interface[name=Ethernet0]/config -target_addr 127.0.0.1:8080 -xpath_target OC-YANG
 
+#### Output:
     == getRequest:
     prefix: <
       target: "OC-YANG"
@@ -67,12 +69,13 @@ Gets JSON_IETF values from specified openconfig path.
 
 Sets values using JSON_IETF payload.
 
+####Input:
     gnmi_set -insecure -username admin -password sonicadmin -update /openconfig-interfaces:interfaces/interface[name=Ethernet0]/config/mtu:@./mtu.json -target_addr localhost:8080 -xpath_target OC-YANG
 
-mtu.json:
-
+####mtu.json:
     {"mtu": 9108}
 
+####Output:
     == setRequest:
     prefix: <
       target: "OC-YANG"
@@ -132,8 +135,10 @@ mtu.json:
 
 Returns list of supported openconfig models and versions as well as supporrted encodings.
 
+####Input:
     gnmi_cli -insecure -with_user_pass -capabilities -address 127.0.0.1:8080
 
+####Output:
     supported_models: <
       name: "openconfig-acl"
       organization: "OpenConfig working group"
@@ -161,8 +166,10 @@ Returns list of supported openconfig models and versions as well as supporrted e
 
 Subscribe to openconfig paths with either streaming, polling or once type subscription.
 
+####Input:
     gnmi_cli -insecure -logtostderr -address 127.0.0.1:8080 -query_type s -streaming_type TARGET_DEFINED -q /openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/oper-status -target OC-YANG -with_user_pass
 
+####Output:
     password: {
       "OC-YANG": {
         "openconfig-interfaces:interfaces": {
