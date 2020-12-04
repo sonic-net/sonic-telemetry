@@ -65,17 +65,17 @@ Gets JSON_IETF values from specified openconfig path.
       >
     >
 
-###Set:
+### Set:
 
 Sets values using JSON_IETF payload.
 
-####Input:
+#### Input:
     gnmi_set -insecure -username admin -password sonicadmin -update /openconfig-interfaces:interfaces/interface[name=Ethernet0]/config/mtu:@./mtu.json -target_addr localhost:8080 -xpath_target OC-YANG
 
-####mtu.json:
+#### mtu.json:
     {"mtu": 9108}
 
-####Output:
+#### Output:
     == setRequest:
     prefix: <
       target: "OC-YANG"
@@ -131,14 +131,14 @@ Sets values using JSON_IETF payload.
     >
 
 
-###Capabilities:
+### Capabilities:
 
 Returns list of supported openconfig models and versions as well as supporrted encodings.
 
-####Input:
+#### Input:
     gnmi_cli -insecure -with_user_pass -capabilities -address 127.0.0.1:8080
 
-####Output:
+#### Output:
     supported_models: <
       name: "openconfig-acl"
       organization: "OpenConfig working group"
@@ -162,14 +162,14 @@ Returns list of supported openconfig models and versions as well as supporrted e
     ...
 
 
-###Subscribe:
+### Subscribe:
 
 Subscribe to openconfig paths with either streaming, polling or once type subscription.
 
-####Input:
+#### Input:
     gnmi_cli -insecure -logtostderr -address 127.0.0.1:8080 -query_type s -streaming_type TARGET_DEFINED -q /openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/oper-status -target OC-YANG -with_user_pass
 
-####Output:
+#### Output:
     password: {
       "OC-YANG": {
         "openconfig-interfaces:interfaces": {
