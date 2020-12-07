@@ -4,12 +4,9 @@ These examples show various use case examples using the gnmi_get, gnmi_set and g
 
 The examples use the following open source gNMI CLI tools:
 
-  - [gnmi_get](https://github.com/google/gnxi/tree/master/gnmi_get)
-    + This tools allows for retrieval of one or more paths 
-  - [gnmi_set](https://github.com/google/gnxi/tree/master/gnmi_get)
-    + This tools allows for update, replace and delete operations.
-  - [gnmi_cli](https://github.com/openconfig/gnmi/tree/master/cmd/gnmi_cli)
-    + This tool allows for dial-in Subscription operations as well as Capabilities request to list available models.
+  - [gnmi_get](https://github.com/google/gnxi/tree/master/gnmi_get): This tools allows for retrieval of one or more paths 
+  - [gnmi_set](https://github.com/google/gnxi/tree/master/gnmi_get): This tools allows for update, replace and delete operations.
+  - [gnmi_cli](https://github.com/openconfig/gnmi/tree/master/cmd/gnmi_cli): This tool allows for dial-in Subscription operations as well as Capabilities request to list available models.
 
 The above tools also have custom patches applied for additional features [here](https://github.com/Azure/sonic-telemetry/tree/master/patches). The patched versions of these tools are built with the sonic-telemetry repo and are installed in /usr/bin in the telemetry container.
 
