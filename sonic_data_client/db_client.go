@@ -200,7 +200,7 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 				c.synced.Add(1)
 				go streamOnChangeSubscription(c, sub.GetPath())
 			} else {
-				enqueFatalMsg(c, fmt.Sprintf("unsupported subscription mode, %v", subMode))
+				enqueueFatalMsg(c, fmt.Sprintf("unsupported subscription mode, %v", subMode))
 				return
 			}
 		}
@@ -229,7 +229,7 @@ func streamOnChangeSubscription(c *DbClient, gnmiPath *gnmipb.Path) {
 
 	if tblPaths[0].field != "" {
 		if len(tblPaths) > 1 {
-			go dbFieldMultiSubscribe(c, gnmiPath, true, time.Millisecond*200)
+			go dbFieldMultiSubscribe(c, gnmiPath, true, time.Millisecond*200, false)
 		} else {
 			go dbFieldSubscribe(c, gnmiPath, true, time.Millisecond*200)
 		}
@@ -243,7 +243,7 @@ func streamOnChangeSubscription(c *DbClient, gnmiPath *gnmipb.Path) {
 func streamSampleSubscription(c *DbClient, sub *gnmipb.Subscription, updateOnly bool) {
 	samplingInterval, err := validateSampleInterval(sub)
 	if err != nil {
-		enqueFatalMsg(c, err.Error())
+		enqueueFatalMsg(c, err.Error())
 		c.synced.Done()
 		c.w.Done()
 		return
@@ -254,7 +254,7 @@ func streamSampleSubscription(c *DbClient, sub *gnmipb.Subscription, updateOnly 
 	log.V(2).Infof("streamSampleSubscription gnmiPath: %v", gnmiPath)
 	if tblPaths[0].field != "" {
 		if len(tblPaths) > 1 {
-			dbFieldMultiSubscribe(c, gnmiPath, false, samplingInterval)
+			dbFieldMultiSubscribe(c, gnmiPath, false, samplingInterval, updateOnly)
 		} else {
 			dbFieldSubscribe(c, gnmiPath, false, samplingInterval)
 		}
@@ -715,7 +715,7 @@ func tableData2TypedValue(tblPaths []tablePath, op *string) (*gnmipb.TypedValue,
 	return msi2TypedValue(msi)
 }
 
-func enqueFatalMsg(c *DbClient, msg string) {
+func enqueueFatalMsg(c *DbClient, msg string) {
 	putFatalMsg(c.q, msg)
 }
 
@@ -729,8 +729,8 @@ func putFatalMsg(q *queue.PriorityQueue, msg string) {
 }
 
 // for subscribe request with granularity of table field, the value is fetched periodically.
-// Upon value change, it will be put to queue for furhter notification
-func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, interval time.Duration) {
+// Upon value change, it will be put to queue for further notification
+func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, interval time.Duration, updateOnly bool) {
 	defer c.w.Done()
 
 	tblPaths := c.pathG2S[gnmiPath]
@@ -764,7 +764,7 @@ func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, in
 
 			// This value was saved before and it hasn't changed since then
 			_, valueMapped := path2ValueMap[tblPath]
-			if onChange && valueMapped && val == path2ValueMap[tblPath] {
+			if (onChange || updateOnly) && valueMapped && val == path2ValueMap[tblPath] {
 				continue
 			}
 
@@ -780,7 +780,7 @@ func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, in
 	sendVal := func(msi map[string]interface{}) error {
 		val, err := msi2TypedValue(msi)
 		if err != nil {
-			enqueFatalMsg(c, err.Error())
+			enqueueFatalMsg(c, err.Error())
 			return err
 		}
 
@@ -814,9 +814,9 @@ func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, in
 		case <-IntervalTicker(interval):
 			msi := readVal()
 
-			if len(msi) != 0 {
+			if onChange == false || len(msi) != 0 {
 				if err := sendVal(msi); err != nil {
-					log.V(1).Infof("Queue error:  %v", err)
+					log.Errorf("Queue error:  %v", err)
 					return
 				}
 			}
@@ -959,7 +959,7 @@ func dbSingleTableKeySubscribe(c *DbClient, rsd redisSubData, updateChannel chan
 				if tblPath.tableKey != "" {
 					err = tableData2Msi(&tblPath, false, nil, &newMsi)
 					if err != nil {
-						enqueFatalMsg(c, err.Error())
+						enqueueFatalMsg(c, err.Error())
 						return
 					}
 				} else {
@@ -971,7 +971,7 @@ func dbSingleTableKeySubscribe(c *DbClient, rsd redisSubData, updateChannel chan
 					tblPath.tableKey = subscr.Channel[prefixLen:]
 					err = tableData2Msi(&tblPath, false, nil, &newMsi)
 					if err != nil {
-						enqueFatalMsg(c, err.Error())
+						enqueueFatalMsg(c, err.Error())
 						return
 					}
 				}
@@ -1015,7 +1015,7 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 	// Helper to handle fatal case.
 	handleFatalMsg := func(msg string) {
 		log.V(1).Infof(msg)
-		enqueFatalMsg(c, msg)
+		enqueueFatalMsg(c, msg)
 		signalSync()
 	}
 
@@ -1151,7 +1151,6 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 			return
 		}
 	}
-
 }
 
 func (c *DbClient) Set(path *gnmipb.Path, t *gnmipb.TypedValue, flagop int) error {
