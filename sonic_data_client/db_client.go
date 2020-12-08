@@ -728,8 +728,10 @@ func putFatalMsg(q *queue.PriorityQueue, msg string) {
 	})
 }
 
-// for subscribe request with granularity of table field, the value is fetched periodically.
-// Upon value change, it will be put to queue for further notification
+// dbFieldMultiSubscribe would read a field from multiple tables and put to output queue.
+// For SAMPLE mode, it would send periodically regardless of change.
+// However, if `updateOnly` is true, the payload would include only the changed fields.
+// For ON_CHANGE mode, it would send only if the value has changed since the last update.
 func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, interval time.Duration, updateOnly bool) {
 	defer c.w.Done()
 
@@ -824,8 +826,9 @@ func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, in
 	}
 }
 
-// for subscribe request with granularity of table field, the value is fetched periodically.
-// Upon value change, it will be put to queue for furhter notification
+// dbFieldSubscribe would read a field from a single table and put to output queue.
+// For SAMPLE mode, it would send periodically regardless of change.
+// For ON_CHANGE mode, it would send only if the value has changed since the last update.
 func dbFieldSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, interval time.Duration) {
 	defer c.w.Done()
 
