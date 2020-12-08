@@ -14,8 +14,6 @@ service SonicService {
   rpc ImageInstall(ImageInstallRequest) returns (ImageInstallResponse) {}
   rpc ImageRemove(ImageRemoveRequest) returns (ImageRemoveResponse) {}
   rpc ImageDefault(ImageDefaultRequest) returns (ImageDefaultResponse) {}
-  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
-  rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
 }
 
 message SonicOutput {
@@ -76,23 +74,3 @@ message ImageDefaultResponse {
     SonicOutput output = 1 [(gogoproto.jsontag) = "sonic-image-management:output", (gogoproto.moretags) = "xml:\",comment\""];
 }
 
-message JwtToken {
-    string access_token = 1;
-    string type = 2;
-    int64 expires_in = 3; 
-}
-message AuthenticateRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message AuthenticateResponse {
-    JwtToken Token = 1;
-}
-
-message RefreshRequest {
-}
-
-message RefreshResponse {
-    JwtToken Token = 1;
-}
