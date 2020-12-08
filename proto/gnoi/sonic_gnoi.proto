@@ -11,8 +11,6 @@ option (gogoproto.unmarshaler_all) = true;
 service SonicService {
   rpc ShowTechsupport (TechsupportRequest) returns (TechsupportResponse) {}
   rpc CopyConfig(CopyConfigRequest) returns (CopyConfigResponse) {}
-  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
-  rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
 }
 
 message SonicOutput {
@@ -45,23 +43,3 @@ message CopyConfigResponse {
     SonicOutput output = 1 [(gogoproto.jsontag) = "sonic-config-mgmt:output", (gogoproto.moretags) = "xml:\",comment\""];
 }
 
-message JwtToken {
-    string access_token = 1;
-    string type = 2;
-    int64 expires_in = 3; 
-}
-message AuthenticateRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message AuthenticateResponse {
-    JwtToken Token = 1;
-}
-
-message RefreshRequest {
-}
-
-message RefreshResponse {
-    JwtToken Token = 1;
-}

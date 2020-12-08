@@ -18,6 +18,7 @@ import (
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	spb_gnoi "github.com/Azure/sonic-telemetry/proto/gnoi"
+	spb_jwt_gnoi "github.com/Azure/sonic-telemetry/proto/gnoi/jwt"
 	"bytes"
 )
 
@@ -134,6 +135,7 @@ func NewServer(config *Config, opts []grpc.ServerOption) (*Server, error) {
 		return nil, fmt.Errorf("failed to open listener port %d: %v", srv.config.Port, err)
 	}
 	gnmipb.RegisterGNMIServer(srv.s, srv)
+	spb_jwt_gnoi.RegisterSonicJwtServiceServer(srv.s, srv)
 	if READ_WRITE_MODE {
 		gnoi_system_pb.RegisterSystemServer(srv.s, srv)
 		spb_gnoi.RegisterSonicServiceServer(srv.s, srv)
