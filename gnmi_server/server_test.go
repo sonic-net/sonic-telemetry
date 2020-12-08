@@ -744,14 +744,47 @@ func TestGnmiGet(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 
-	tds := []struct {
+	type testCase struct {
 		desc        string
 		pathTarget  string
 		textPbPath  string
 		wantRetCode codes.Code
 		wantRespVal interface{}
 		valTest     bool
-	}{{
+		testInit    func()
+	}
+
+	// A helper function create test cases for 'osversion/build' queries.
+	createBuildVersionTestCase := func(desc string, wantedVersion string, versionFileContent string, fileReadErr error) testCase {
+		return testCase{
+			desc:       desc,
+			pathTarget: "OTHERS",
+			textPbPath: `
+						elem: <name: "osversion" >
+						elem: <name: "build" >
+					`,
+			wantRetCode: codes.OK,
+			valTest:     true,
+			wantRespVal: []byte(wantedVersion),
+			testInit: func() {
+				// Override file read function to mock file content.
+				sdc.ImplIoutilReadFile = func(filePath string) ([]byte, error) {
+					if filePath == sdc.SonicVersionFilePath {
+						if fileReadErr != nil {
+							return nil, fileReadErr
+						}
+						return []byte(versionFileContent), nil
+					}
+					return ioutil.ReadFile(filePath)
+				}
+
+				// Reset the cache so that the content gets loaded again.
+				sdc.InvalidateVersionFileStash()
+			},
+		}
+	}
+
+	tds := []testCase{{
 		desc:       "Test non-existing path Target",
 		pathTarget: "MY_DB",
 		textPbPath: `
@@ -868,9 +901,40 @@ func TestGnmiGet(t *testing.T) {
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcwdByte,
 	},
+		// Happy path
+		createBuildVersionTestCase(
+			"get osversion/build",                                  // query path
+			`{"build_version": "sonic.12345678.90", "error":""}`,   // expected response
+			"build_version: '12345678.90'\ndebian_version: '9.13'", // YAML file content
+			nil), // mock file reading error
+
+		// File reading error
+		createBuildVersionTestCase(
+			"get osversion/build file load error",
+			`{"build_version": "sonic.NA", "error":"Cannot access '/etc/sonic/sonic_version.yml'"}`,
+			"",
+			fmt.Errorf("Cannot access '%v'", sdc.SonicVersionFilePath)),
+
+		// File content is not valid YAML
+		createBuildVersionTestCase(
+			"get osversion/build file parse error",
+			`{"build_version": "sonic.NA", "error":"yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `+"`not a v...`"+` into client.SonicVersionInfo"}`,
+			"not a valid YAML content",
+			nil),
+
+		// Happy path with different value
+		createBuildVersionTestCase(
+			"get osversion/build different value",
+			`{"build_version": "sonic.23456789.01", "error":""}`,
+			"build_version: '23456789.01'\ndebian_version: '9.15'",
+			nil),
 	}
 
 	for _, td := range tds {
+		if td.testInit != nil {
+			td.testInit()
+		}
+
 		t.Run(td.desc, func(t *testing.T) {
 			runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
 		})

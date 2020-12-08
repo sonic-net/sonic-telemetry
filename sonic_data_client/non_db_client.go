@@ -3,8 +3,11 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	spb "github.com/Azure/sonic-telemetry/proto"
 	"github.com/Workiva/go-datastructures/queue"
@@ -18,6 +21,9 @@ import (
 
 const (
 	statsRingCap uint64 = 3000 // capacity of statsRing.
+
+	// SonicVersionFilePath is the path of build version YML file.
+	SonicVersionFilePath = "/etc/sonic/sonic_version.yml"
 )
 
 type dataGetFunc func() ([]byte, error)
@@ -33,16 +39,43 @@ type statsRing struct {
 	mu       sync.RWMutex // Mutex for data protection
 }
 
+// SonicVersionInfo is a data model to serialize '/etc/sonic/sonic_version.yml'
+type SonicVersionInfo struct {
+	BuildVersion string `yaml:"build_version" json:"build_version"`
+	Error        string `json:"error"` // Applicable only when there is a failure while reading the file.
+}
+
+// sonicVersionYmlStash caches the content of '/etc/sonic/sonic_version.yml'
+// Assumed that the content of the file doesn't change during the lifetime of telemetry service.
+type sonicVersionYmlStash struct {
+	once        sync.Once // sync object to make sure file is loaded only once.
+	versionInfo SonicVersionInfo
+}
+
+// InvalidateVersionFileStash invalidates the cache that keeps version file content.
+func InvalidateVersionFileStash() {
+	versionFileStash = sonicVersionYmlStash{}
+}
+
 var (
 	clientTrie *Trie
 	statsR     statsRing
 
-	// path2DataFuncTbl is used to populate trie tree which is reponsible
+	versionFileStash sonicVersionYmlStash
+
+	// ImplIoutilReadFile points to the implementation of ioutil.ReadFile. Should be overridden by UTs only.
+	ImplIoutilReadFile func(string) ([]byte, error) = ioutil.ReadFile
+
+	// path2DataFuncTbl is used to populate trie tree which is responsible
 	// for getting data at the path specified
 	path2DataFuncTbl = []path2DataFunc{
-		{ // Get cpu utilizaation
+		{ // Get cpu utilization
 			path:    []string{"OTHERS", "platform", "cpu"},
 			getFunc: dataGetFunc(getCpuUtil),
+		},
+		{ // Get host uptime
+			path:    []string{"OTHERS", "proc", "uptime"},
+			getFunc: dataGetFunc(getSysUptime),
 		},
 		{ // Get proc meminfo
 			path:    []string{"OTHERS", "proc", "meminfo"},
@@ -63,6 +96,10 @@ var (
 		{ // Get proc stat
 			path:    []string{"OTHERS", "proc", "stat"},
 			getFunc: dataGetFunc(getProcStat),
+		},
+		{ // OS build version
+			path:    []string{"OTHERS", "osversion", "build"},
+			getFunc: dataGetFunc(getBuildVersion),
 		},
 	}
 )
@@ -244,6 +281,54 @@ func getProcStat() ([]byte, error) {
 		return b, err
 	}
 	log.V(4).Infof("getProcStat, output %v", string(b))
+	return b, nil
+}
+
+func getSysUptime() ([]byte, error) {
+	uptime, _ := linuxproc.ReadUptime("/proc/uptime")
+	b, err := json.Marshal(uptime)
+	if err != nil {
+		log.V(2).Infof("%v", err)
+		return b, err
+	}
+
+	log.V(4).Infof("getSysUptime, output %v", string(b))
+	return b, nil
+}
+
+func getBuildVersion() ([]byte, error) {
+
+	// Load and parse the content of version file
+	versionFileStash.once.Do(func() {
+		versionFileStash.versionInfo.BuildVersion = "sonic.NA"
+		versionFileStash.versionInfo.Error = "" // empty string means no error.
+
+		fileContent, err := ImplIoutilReadFile(SonicVersionFilePath)
+		if err != nil {
+			log.Errorf("Failed to read '%v', %v", SonicVersionFilePath, err)
+			versionFileStash.versionInfo.Error = err.Error()
+			return
+		}
+
+		err = yaml.Unmarshal(fileContent, &versionFileStash.versionInfo)
+		if err != nil {
+			log.Errorf("Failed to parse '%v', %v", SonicVersionFilePath, err)
+			versionFileStash.versionInfo.Error = err.Error()
+			return
+		}
+
+		// Prepend 'sonic.' to the build version string.
+		if versionFileStash.versionInfo.BuildVersion != "sonic.NA" {
+			versionFileStash.versionInfo.BuildVersion = "sonic." + versionFileStash.versionInfo.BuildVersion
+		}
+	})
+
+	b, err := json.Marshal(versionFileStash.versionInfo)
+	if err != nil {
+		log.V(2).Infof("%v", err)
+		return b, err
+	}
+	log.V(4).Infof("getBuildVersion, output %v", string(b))
 	return b, nil
 }
 
