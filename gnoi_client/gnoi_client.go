@@ -4,6 +4,7 @@ import (
 	"google.golang.org/grpc"
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
 	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
+	spb_jwt "github.com/Azure/sonic-telemetry/proto/gnoi/jwt"
 	"context"
 	"os"
 	"os/signal"
@@ -54,23 +55,30 @@ func main() {
 			panic("Invalid RPC Name")
 		}
 	case "Sonic":
-		sc := spb.NewSonicServiceClient(conn)
 		switch *rpc {
 		case "showtechsupport":
+			sc := spb.NewSonicServiceClient(conn)
 			sonicShowTechSupport(sc, ctx)
 		case "copyConfig":
+			sc := spb.NewSonicServiceClient(conn)
 			copyConfig(sc, ctx)
 		case "authenticate":
+			sc := spb_jwt.NewSonicJwtServiceClient(conn)
 			authenticate(sc, ctx)
 		case "imageInstall":
+			sc := spb.NewSonicServiceClient(conn)
 			imageInstall(sc, ctx)
 		case "imageDefault":
+			sc := spb.NewSonicServiceClient(conn)
 			imageDefault(sc, ctx)
 		case "imageRemove":
+			sc := spb.NewSonicServiceClient(conn)
 			imageRemove(sc, ctx)
 		case "refresh":
+			sc := spb_jwt.NewSonicJwtServiceClient(conn)
 			refresh(sc, ctx)
 		case "clearNeighbors":
+			sc := spb.NewSonicServiceClient(conn)
 			clearNeighbors(sc, ctx)
 		default:
 			panic("Invalid RPC Name")
@@ -195,10 +203,10 @@ func imageDefault(sc spb.SonicServiceClient, ctx context.Context) {
 	fmt.Println(string(respstr))
 }
 
-func authenticate(sc spb.SonicServiceClient, ctx context.Context) {
+func authenticate(sc spb_jwt.SonicJwtServiceClient, ctx context.Context) {
 	fmt.Println("Sonic Authenticate")
 	ctx = setUserCreds(ctx)
-	req := &spb.AuthenticateRequest {}
+	req := &spb_jwt.AuthenticateRequest {}
 	
 	json.Unmarshal([]byte(*args), req)
 	
@@ -213,10 +221,10 @@ func authenticate(sc spb.SonicServiceClient, ctx context.Context) {
 	fmt.Println(string(respstr))
 }
 
-func refresh(sc spb.SonicServiceClient, ctx context.Context) {
+func refresh(sc spb_jwt.SonicJwtServiceClient, ctx context.Context) {
 	fmt.Println("Sonic Refresh")
 	ctx = setUserCreds(ctx)
-	req := &spb.RefreshRequest {}
+	req := &spb_jwt.RefreshRequest {}
 	
 	json.Unmarshal([]byte(*args), req)
 

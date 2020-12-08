@@ -1062,257 +1062,6 @@ func (m *ImageDefaultResponse) GetOutput() *SonicOutput {
 	return nil
 }
 
-type JwtToken struct {
-	AccessToken          string   `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	Type                 string   `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	ExpiresIn            int64    `protobuf:"varint,3,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *JwtToken) Reset()         { *m = JwtToken{} }
-func (m *JwtToken) String() string { return proto.CompactTextString(m) }
-func (*JwtToken) ProtoMessage()    {}
-func (*JwtToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{13}
-}
-func (m *JwtToken) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *JwtToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_JwtToken.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *JwtToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JwtToken.Merge(m, src)
-}
-func (m *JwtToken) XXX_Size() int {
-	return m.Size()
-}
-func (m *JwtToken) XXX_DiscardUnknown() {
-	xxx_messageInfo_JwtToken.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_JwtToken proto.InternalMessageInfo
-
-func (m *JwtToken) GetAccessToken() string {
-	if m != nil {
-		return m.AccessToken
-	}
-	return ""
-}
-
-func (m *JwtToken) GetType() string {
-	if m != nil {
-		return m.Type
-	}
-	return ""
-}
-
-func (m *JwtToken) GetExpiresIn() int64 {
-	if m != nil {
-		return m.ExpiresIn
-	}
-	return 0
-}
-
-type AuthenticateRequest struct {
-	Username             string   `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Password             string   `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *AuthenticateRequest) Reset()         { *m = AuthenticateRequest{} }
-func (m *AuthenticateRequest) String() string { return proto.CompactTextString(m) }
-func (*AuthenticateRequest) ProtoMessage()    {}
-func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{14}
-}
-func (m *AuthenticateRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *AuthenticateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_AuthenticateRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *AuthenticateRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AuthenticateRequest.Merge(m, src)
-}
-func (m *AuthenticateRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *AuthenticateRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_AuthenticateRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AuthenticateRequest proto.InternalMessageInfo
-
-func (m *AuthenticateRequest) GetUsername() string {
-	if m != nil {
-		return m.Username
-	}
-	return ""
-}
-
-func (m *AuthenticateRequest) GetPassword() string {
-	if m != nil {
-		return m.Password
-	}
-	return ""
-}
-
-type AuthenticateResponse struct {
-	Token                *JwtToken `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
-}
-
-func (m *AuthenticateResponse) Reset()         { *m = AuthenticateResponse{} }
-func (m *AuthenticateResponse) String() string { return proto.CompactTextString(m) }
-func (*AuthenticateResponse) ProtoMessage()    {}
-func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{15}
-}
-func (m *AuthenticateResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *AuthenticateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_AuthenticateResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *AuthenticateResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AuthenticateResponse.Merge(m, src)
-}
-func (m *AuthenticateResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *AuthenticateResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_AuthenticateResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AuthenticateResponse proto.InternalMessageInfo
-
-func (m *AuthenticateResponse) GetToken() *JwtToken {
-	if m != nil {
-		return m.Token
-	}
-	return nil
-}
-
-type RefreshRequest struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RefreshRequest) Reset()         { *m = RefreshRequest{} }
-func (m *RefreshRequest) String() string { return proto.CompactTextString(m) }
-func (*RefreshRequest) ProtoMessage()    {}
-func (*RefreshRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{16}
-}
-func (m *RefreshRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RefreshRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RefreshRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RefreshRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RefreshRequest.Merge(m, src)
-}
-func (m *RefreshRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *RefreshRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RefreshRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RefreshRequest proto.InternalMessageInfo
-
-type RefreshResponse struct {
-	Token                *JwtToken `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
-}
-
-func (m *RefreshResponse) Reset()         { *m = RefreshResponse{} }
-func (m *RefreshResponse) String() string { return proto.CompactTextString(m) }
-func (*RefreshResponse) ProtoMessage()    {}
-func (*RefreshResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b35b752d70e98f, []int{17}
-}
-func (m *RefreshResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RefreshResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RefreshResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RefreshResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RefreshResponse.Merge(m, src)
-}
-func (m *RefreshResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *RefreshResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RefreshResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RefreshResponse proto.InternalMessageInfo
-
-func (m *RefreshResponse) GetToken() *JwtToken {
-	if m != nil {
-		return m.Token
-	}
-	return nil
-}
-
 func init() {
 	proto.RegisterType((*SonicOutput)(nil), "gnoi.sonic.SonicOutput")
 	proto.RegisterType((*TechsupportRequest)(nil), "gnoi.sonic.TechsupportRequest")
@@ -1335,80 +1084,65 @@ func init() {
 	proto.RegisterType((*ImageDefaultRequest)(nil), "gnoi.sonic.ImageDefaultRequest")
 	proto.RegisterType((*ImageDefaultRequest_Input)(nil), "gnoi.sonic.ImageDefaultRequest.Input")
 	proto.RegisterType((*ImageDefaultResponse)(nil), "gnoi.sonic.ImageDefaultResponse")
-	proto.RegisterType((*JwtToken)(nil), "gnoi.sonic.JwtToken")
-	proto.RegisterType((*AuthenticateRequest)(nil), "gnoi.sonic.AuthenticateRequest")
-	proto.RegisterType((*AuthenticateResponse)(nil), "gnoi.sonic.AuthenticateResponse")
-	proto.RegisterType((*RefreshRequest)(nil), "gnoi.sonic.RefreshRequest")
-	proto.RegisterType((*RefreshResponse)(nil), "gnoi.sonic.RefreshResponse")
 }
 
 func init() { proto.RegisterFile("sonic_gnoi.proto", fileDescriptor_75b35b752d70e98f) }
 
 var fileDescriptor_75b35b752d70e98f = []byte{
-	// 1002 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0x4f, 0x73, 0xdb, 0x44,
-	0x14, 0x8f, 0xd2, 0x38, 0xc4, 0xcf, 0x21, 0x09, 0x1b, 0xb7, 0xcd, 0xa8, 0x89, 0x95, 0x6e, 0x1b,
-	0x28, 0x05, 0xbb, 0x33, 0xe9, 0xad, 0x33, 0x1c, 0x70, 0x32, 0x0c, 0x61, 0xa6, 0x85, 0x51, 0x72,
-	0x80, 0x03, 0x63, 0x14, 0x79, 0x6d, 0xef, 0x60, 0x69, 0x85, 0x76, 0x15, 0x37, 0x03, 0x1f, 0x84,
-	0x2b, 0x07, 0x4e, 0x0c, 0x7c, 0x0e, 0x8e, 0x7c, 0x02, 0x0d, 0x04, 0x4e, 0x3e, 0xf2, 0x09, 0x18,
-	0xef, 0xae, 0x64, 0xc9, 0x96, 0xa3, 0x70, 0x68, 0x6e, 0x7a, 0xbb, 0xbf, 0x7d, 0x7f, 0x7e, 0xbf,
-	0xb7, 0xcf, 0x6b, 0xd8, 0xe2, 0xcc, 0xa7, 0x6e, 0xa7, 0xef, 0x33, 0xda, 0x0a, 0x42, 0x26, 0x18,
-	0x02, 0xf9, 0x2d, 0x97, 0xcd, 0x66, 0x9f, 0x8a, 0x41, 0x74, 0xde, 0x72, 0x99, 0xf7, 0xac, 0xcf,
-	0xfa, 0xec, 0x99, 0x84, 0x9c, 0x47, 0x3d, 0x69, 0x49, 0x43, 0x7e, 0xa9, 0xa3, 0x98, 0x41, 0xed,
-	0x74, 0x72, 0xee, 0xf3, 0x48, 0x04, 0x91, 0x40, 0xf7, 0x60, 0x95, 0x0b, 0x47, 0x44, 0x7c, 0xc7,
-	0xd8, 0x37, 0x9e, 0x54, 0x6c, 0x6d, 0xa1, 0x4f, 0xe1, 0x6d, 0xf5, 0xd5, 0xe9, 0x12, 0xe1, 0xd0,
-	0xe1, 0xce, 0xf2, 0xbe, 0xf1, 0xa4, 0xda, 0x7e, 0x34, 0x8e, 0x2d, 0xbd, 0xd1, 0x54, 0x1b, 0xff,
-	0xc6, 0xd6, 0xc6, 0x6b, 0x6f, 0xf8, 0x02, 0x7f, 0xe8, 0x32, 0xcf, 0x23, 0xbe, 0xc0, 0xf6, 0xba,
-	0x02, 0x1c, 0xcb, 0x7d, 0xfc, 0x93, 0x01, 0xe8, 0x8c, 0xb8, 0x03, 0x1e, 0x05, 0x01, 0x0b, 0x85,
-	0x4d, 0xbe, 0x8b, 0x08, 0x17, 0xc8, 0x87, 0x0a, 0xf5, 0x83, 0x48, 0xc8, 0xb8, 0xb5, 0xc3, 0xc7,
-	0xad, 0x69, 0x49, 0xad, 0x79, 0x78, 0xeb, 0x64, 0x82, 0x6d, 0x1f, 0x8e, 0x63, 0x6b, 0x57, 0x62,
-	0x9a, 0x7c, 0xc0, 0x46, 0x4d, 0x31, 0x05, 0xbe, 0x90, 0xde, 0x0a, 0xb2, 0x51, 0x61, 0xcc, 0x07,
-	0x50, 0x91, 0x3e, 0x10, 0x82, 0x95, 0xae, 0x23, 0x88, 0x8c, 0x5b, 0xb5, 0xe5, 0x37, 0xfe, 0xc7,
-	0x80, 0xed, 0x5c, 0x50, 0x1e, 0x30, 0x9f, 0x13, 0xc4, 0x61, 0x95, 0x49, 0x9e, 0x74, 0x96, 0xef,
-	0x2e, 0xcc, 0x52, 0x1d, 0x68, 0x29, 0x56, 0xdb, 0xcf, 0xc7, 0xb1, 0xb5, 0xb7, 0x20, 0x4f, 0xe5,
-	0xb0, 0x20, 0x51, 0x1d, 0xca, 0xfc, 0x12, 0x56, 0xb5, 0x38, 0xaf, 0x60, 0x53, 0xad, 0x75, 0x7a,
-	0x74, 0x48, 0x7c, 0xc7, 0xd3, 0x59, 0xb7, 0x0f, 0xc6, 0xb1, 0xa5, 0xb7, 0x9a, 0xc9, 0x56, 0x81,
-	0xc7, 0x0d, 0x05, 0xf9, 0x44, 0x23, 0xf0, 0x5f, 0x06, 0xdc, 0x3d, 0x1a, 0x12, 0x27, 0x7c, 0x45,
-	0x68, 0x7f, 0x70, 0xce, 0x42, 0x9e, 0xa8, 0x41, 0xf3, 0x6a, 0xbc, 0x97, 0xad, 0xb3, 0xf0, 0x84,
-	0x16, 0xe4, 0xe9, 0x38, 0xb6, 0xea, 0xaa, 0x50, 0x5f, 0x23, 0xca, 0x84, 0xf8, 0x3a, 0x11, 0xa2,
-	0x0e, 0x95, 0x1e, 0x0b, 0x5d, 0x55, 0xd3, 0x9a, 0xad, 0x8c, 0x49, 0x43, 0xf6, 0x1c, 0x8f, 0x0e,
-	0x2f, 0x55, 0xc7, 0xd9, 0xda, 0x42, 0x1b, 0xb0, 0x4c, 0x83, 0x9d, 0x3b, 0x72, 0x6d, 0x99, 0x06,
-	0x13, 0x1c, 0xed, 0x49, 0x4a, 0x56, 0x14, 0x4e, 0x59, 0xf8, 0x37, 0x03, 0xee, 0xcd, 0x66, 0xac,
-	0xd5, 0xf4, 0x67, 0xd4, 0x7c, 0xff, 0xba, 0x2a, 0xf3, 0x82, 0x7e, 0x30, 0x8e, 0xad, 0xbb, 0x33,
-	0x75, 0x96, 0x0a, 0xf9, 0x38, 0x15, 0xd2, 0x84, 0xb5, 0x50, 0x7b, 0xd4, 0x7d, 0x97, 0xda, 0x38,
-	0x36, 0xe0, 0x9d, 0x23, 0x16, 0x5c, 0x1e, 0x31, 0xbf, 0x47, 0xfb, 0x89, 0x20, 0x83, 0xbc, 0x20,
-	0x8f, 0x72, 0xa9, 0xce, 0xa2, 0xb5, 0x18, 0xcd, 0x71, 0x6c, 0xdd, 0x57, 0x49, 0xba, 0x72, 0xbb,
-	0xe9, 0xf5, 0xbd, 0xd2, 0x8b, 0xd1, 0x49, 0xf4, 0x98, 0x8c, 0x02, 0x16, 0x25, 0x82, 0x54, 0x6d,
-	0x6d, 0xa1, 0x5d, 0xa8, 0xb2, 0x0b, 0x12, 0x8e, 0x42, 0x2a, 0x88, 0x14, 0x65, 0xcd, 0x9e, 0x2e,
-	0xa0, 0x7d, 0xa8, 0x75, 0x09, 0x17, 0xd4, 0x77, 0x04, 0x65, 0xbe, 0x16, 0x28, 0xbb, 0x84, 0x23,
-	0x40, 0xd9, 0x8c, 0xb5, 0x18, 0x9d, 0x19, 0x31, 0xee, 0x67, 0x2b, 0xcc, 0x4c, 0xa8, 0x76, 0x6b,
-	0x1c, 0x5b, 0x3b, 0xf3, 0x55, 0x95, 0xb1, 0x8f, 0x7f, 0x35, 0x60, 0xfb, 0xc4, 0x73, 0xfa, 0xe4,
-	0xc4, 0xe7, 0xc2, 0x19, 0x0e, 0x13, 0x66, 0x59, 0x9e, 0xd9, 0x83, 0x6c, 0xdc, 0x02, 0xfc, 0xfc,
-	0xe4, 0xa1, 0x13, 0x50, 0xd3, 0x73, 0x7c, 0xa7, 0x4f, 0x26, 0x21, 0xcb, 0x08, 0x3e, 0x48, 0x08,
-	0xde, 0x85, 0xaa, 0x3c, 0x2b, 0xbb, 0x56, 0x75, 0xf7, 0x74, 0x01, 0xff, 0x00, 0xf5, 0x7c, 0x78,
-	0x4d, 0x54, 0xf7, 0xa6, 0x44, 0x65, 0x86, 0xce, 0x5c, 0x8a, 0xa5, 0x6c, 0xfd, 0x62, 0x00, 0x92,
-	0xe1, 0x6d, 0xe2, 0xb1, 0x0b, 0x72, 0x93, 0x29, 0x3d, 0x0f, 0x7f, 0x53, 0x5c, 0x19, 0xb3, 0x5c,
-	0x7d, 0xaf, 0xa5, 0x4d, 0xa2, 0xdf, 0x2a, 0x55, 0x69, 0x63, 0x1d, 0x93, 0x9e, 0x13, 0x0d, 0xc5,
-	0x8d, 0x1b, 0x2b, 0x8f, 0xbf, 0x35, 0xb2, 0x92, 0xc6, 0x4a, 0xc3, 0xdf, 0x2a, 0x5b, 0xdf, 0xc0,
-	0xda, 0x67, 0x23, 0x71, 0xc6, 0xbe, 0x25, 0x3e, 0x7a, 0x08, 0xeb, 0x8e, 0xeb, 0x12, 0xce, 0x3b,
-	0x62, 0x62, 0xeb, 0x54, 0x6b, 0x6a, 0x4d, 0x41, 0x10, 0xac, 0x88, 0xcb, 0x20, 0xb9, 0x1e, 0xf2,
-	0x1b, 0xed, 0x01, 0x90, 0xd7, 0x01, 0x0d, 0x09, 0xef, 0x50, 0x35, 0x61, 0xee, 0xd8, 0x55, 0xbd,
-	0x72, 0xe2, 0xe3, 0x97, 0xb0, 0xfd, 0x71, 0x24, 0x06, 0xc4, 0x17, 0xd4, 0x75, 0x44, 0xda, 0xba,
-	0x26, 0xac, 0x45, 0x9c, 0x84, 0x19, 0x4e, 0x52, 0x7b, 0xb2, 0x17, 0x38, 0x9c, 0x8f, 0x58, 0xd8,
-	0xd5, 0x91, 0x52, 0x1b, 0xb7, 0xa1, 0x9e, 0x77, 0xa7, 0xe9, 0x7a, 0x0a, 0x95, 0xb3, 0x34, 0xeb,
-	0xda, 0x61, 0x3d, 0xcb, 0x56, 0x52, 0xa1, 0xad, 0x20, 0x78, 0x0b, 0x36, 0x6c, 0xd2, 0x0b, 0x09,
-	0x1f, 0xe8, 0x6c, 0xf0, 0x47, 0xb0, 0x99, 0xae, 0xfc, 0x7f, 0x87, 0x87, 0x3f, 0x57, 0x60, 0x5d,
-	0x4a, 0x72, 0x4a, 0xc2, 0x0b, 0xea, 0x12, 0x74, 0x06, 0x9b, 0xa7, 0x03, 0x36, 0xca, 0xbc, 0x41,
-	0x50, 0xe3, 0xfa, 0x27, 0x94, 0x69, 0x95, 0x3c, 0x5e, 0xf0, 0x12, 0x7a, 0x09, 0x30, 0x1d, 0xd5,
-	0x68, 0xef, 0xda, 0x1f, 0x1d, 0xb3, 0xb1, 0x68, 0x3b, 0x75, 0x77, 0x0a, 0xeb, 0xd9, 0x91, 0x86,
-	0xac, 0x92, 0x59, 0x6b, 0xee, 0x2f, 0x06, 0xa4, 0x4e, 0xbf, 0x80, 0x5a, 0xe6, 0xee, 0xe7, 0xab,
-	0x9e, 0x1f, 0x49, 0xa6, 0xb5, 0x70, 0x7f, 0x2e, 0x4d, 0x7d, 0x41, 0x0a, 0xd2, 0xcc, 0xdf, 0xdc,
-	0x82, 0x34, 0x67, 0xee, 0x96, 0x72, 0x9a, 0x6d, 0xa3, 0xbc, 0xd3, 0x82, 0x7e, 0xcd, 0x3b, 0x2d,
-	0xea, 0x40, 0xbc, 0x84, 0x8e, 0xe1, 0x2d, 0xdd, 0x45, 0xc8, 0xcc, 0xc2, 0xf3, 0xcd, 0x66, 0x3e,
-	0x28, 0xdc, 0x4b, 0xbd, 0x7c, 0x05, 0x1b, 0xf9, 0xd7, 0x0e, 0x7a, 0x58, 0xfa, 0xde, 0x33, 0x71,
-	0xf9, 0x63, 0x09, 0x2f, 0xb5, 0xb7, 0x7e, 0xbf, 0x6a, 0x18, 0x7f, 0x5c, 0x35, 0x8c, 0x3f, 0xaf,
-	0x1a, 0xc6, 0x8f, 0x7f, 0x37, 0x96, 0xce, 0x57, 0xe5, 0xdf, 0x8e, 0xe7, 0xff, 0x05, 0x00, 0x00,
-	0xff, 0xff, 0xb9, 0xe1, 0xd8, 0xfd, 0xc5, 0x0c, 0x00, 0x00,
+	// 838 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0xcb, 0x6e, 0xf3, 0x44,
+	0x14, 0x8e, 0x4b, 0x13, 0x35, 0x27, 0x25, 0x7f, 0x99, 0xde, 0x22, 0xd3, 0xc6, 0xc1, 0x6d, 0xa1,
+	0x5c, 0x9c, 0x4a, 0xed, 0xae, 0xcb, 0xb4, 0x42, 0x74, 0x41, 0x41, 0x4e, 0x17, 0xb0, 0x40, 0x91,
+	0x93, 0x4c, 0x9c, 0x91, 0x6c, 0x8f, 0xb1, 0xc7, 0x2d, 0x15, 0x3c, 0x01, 0x4f, 0xc0, 0x96, 0x35,
+	0x82, 0xe7, 0x60, 0xc9, 0x13, 0x58, 0x50, 0x58, 0x79, 0xc9, 0x13, 0xa0, 0xcc, 0x8c, 0x13, 0x3b,
+	0x97, 0xba, 0x1b, 0xba, 0x9b, 0x99, 0xf3, 0xcd, 0xb9, 0x7c, 0xdf, 0xf1, 0x19, 0xc3, 0x56, 0x48,
+	0x3d, 0x32, 0xe8, 0xd9, 0x1e, 0x25, 0x6d, 0x3f, 0xa0, 0x8c, 0x22, 0xe0, 0x6b, 0x7e, 0xac, 0x1a,
+	0x36, 0x61, 0xe3, 0xa8, 0xdf, 0x1e, 0x50, 0xf7, 0xcc, 0xa6, 0x36, 0x3d, 0xe3, 0x90, 0x7e, 0x34,
+	0xe2, 0x3b, 0xbe, 0xe1, 0x2b, 0x71, 0x55, 0xa7, 0x50, 0xeb, 0x4e, 0xee, 0x7d, 0x11, 0x31, 0x3f,
+	0x62, 0x68, 0x0f, 0x2a, 0x21, 0xb3, 0x58, 0x14, 0x36, 0x94, 0x96, 0x72, 0x5a, 0x36, 0xe5, 0x0e,
+	0x7d, 0x06, 0x6f, 0x8b, 0x55, 0x6f, 0x88, 0x99, 0x45, 0x9c, 0xc6, 0x5a, 0x4b, 0x39, 0xad, 0x76,
+	0x8e, 0x92, 0x58, 0x93, 0x06, 0x43, 0x18, 0xfe, 0x8d, 0xb5, 0xfa, 0x77, 0xae, 0x73, 0xa9, 0x7f,
+	0x32, 0xa0, 0xae, 0x8b, 0x3d, 0xa6, 0x9b, 0x9b, 0x02, 0x70, 0xcd, 0xed, 0xfa, 0xcf, 0x0a, 0xa0,
+	0x3b, 0x3c, 0x18, 0x87, 0x91, 0xef, 0xd3, 0x80, 0x99, 0xf8, 0xdb, 0x08, 0x87, 0x0c, 0x79, 0x50,
+	0x26, 0x9e, 0x1f, 0x31, 0x1e, 0xb7, 0x76, 0x7e, 0xdc, 0x9e, 0x95, 0xd4, 0x5e, 0x84, 0xb7, 0x6f,
+	0x26, 0xd8, 0xce, 0x79, 0x12, 0x6b, 0x07, 0x1c, 0x63, 0x84, 0x63, 0xfa, 0x60, 0xb0, 0x19, 0xf0,
+	0x92, 0x7b, 0x5b, 0x92, 0x8d, 0x08, 0xa3, 0xbe, 0x0b, 0x65, 0xee, 0x03, 0x21, 0x58, 0x1f, 0x5a,
+	0x0c, 0xf3, 0xb8, 0x55, 0x93, 0xaf, 0xf5, 0x7f, 0x14, 0xd8, 0xce, 0x05, 0x0d, 0x7d, 0xea, 0x85,
+	0x18, 0x85, 0x50, 0xa1, 0x9c, 0x27, 0x99, 0xe5, 0xfb, 0x2b, 0xb3, 0x14, 0x17, 0xda, 0x82, 0xd5,
+	0xce, 0x45, 0x12, 0x6b, 0x87, 0x2b, 0xf2, 0x14, 0x0e, 0x97, 0x24, 0x2a, 0x43, 0xa9, 0x5f, 0x41,
+	0x45, 0x8a, 0x73, 0x0b, 0x6f, 0xc4, 0x59, 0x6f, 0x44, 0x1c, 0xec, 0x59, 0xae, 0xcc, 0xba, 0x73,
+	0x92, 0xc4, 0x9a, 0x34, 0x19, 0xa9, 0x69, 0x89, 0xc7, 0xba, 0x80, 0x7c, 0x2a, 0x11, 0xfa, 0x5f,
+	0x0a, 0xec, 0x5e, 0x39, 0xd8, 0x0a, 0x6e, 0x31, 0xb1, 0xc7, 0x7d, 0x1a, 0x84, 0xa9, 0x1a, 0x24,
+	0xaf, 0xc6, 0x07, 0xd9, 0x3a, 0x97, 0xde, 0x90, 0x82, 0x7c, 0x94, 0xc4, 0xda, 0x8e, 0x28, 0xd4,
+	0x93, 0x88, 0x22, 0x21, 0xbe, 0x49, 0x85, 0xd8, 0x81, 0xf2, 0x88, 0x06, 0x03, 0x51, 0xd3, 0x86,
+	0x29, 0x36, 0x93, 0x86, 0x1c, 0x59, 0x2e, 0x71, 0x1e, 0x45, 0xc7, 0x99, 0x72, 0x87, 0xea, 0xb0,
+	0x46, 0xfc, 0xc6, 0x5b, 0xfc, 0x6c, 0x8d, 0xf8, 0x13, 0x1c, 0x19, 0x71, 0x4a, 0xd6, 0x05, 0x4e,
+	0xec, 0xf4, 0xdf, 0x14, 0xd8, 0x9b, 0xcf, 0x58, 0xaa, 0xe9, 0xcd, 0xa9, 0xf9, 0xe1, 0x73, 0x55,
+	0xe6, 0x05, 0xfd, 0x38, 0x89, 0xb5, 0xdd, 0xb9, 0x3a, 0x0b, 0x85, 0x3c, 0x9e, 0x0a, 0xa9, 0xc2,
+	0x46, 0x20, 0x3d, 0xca, 0xbe, 0x9b, 0xee, 0xf5, 0x58, 0x81, 0x77, 0xae, 0xa8, 0xff, 0x78, 0x45,
+	0xbd, 0x11, 0xb1, 0x53, 0x41, 0xc6, 0x79, 0x41, 0x8e, 0x72, 0xa9, 0xce, 0xa3, 0xa5, 0x18, 0x46,
+	0x12, 0x6b, 0xfb, 0x22, 0xc9, 0x01, 0x37, 0x1b, 0xae, 0xed, 0x16, 0x7e, 0x18, 0xbd, 0x54, 0x8f,
+	0xc9, 0x28, 0xa0, 0x51, 0x2a, 0x48, 0xd5, 0x94, 0x3b, 0x74, 0x00, 0x55, 0x7a, 0x8f, 0x83, 0x87,
+	0x80, 0x30, 0xcc, 0x45, 0xd9, 0x30, 0x67, 0x07, 0xa8, 0x05, 0xb5, 0x21, 0x0e, 0x19, 0xf1, 0x2c,
+	0x46, 0xa8, 0x27, 0x05, 0xca, 0x1e, 0xe9, 0x11, 0xa0, 0x6c, 0xc6, 0x52, 0x8c, 0xde, 0x9c, 0x18,
+	0xfb, 0xd9, 0x0a, 0x33, 0x13, 0xaa, 0xd3, 0x4e, 0x62, 0xad, 0xb1, 0x58, 0x55, 0x11, 0xfb, 0xfa,
+	0xaf, 0x0a, 0x6c, 0xdf, 0xb8, 0x96, 0x8d, 0x6f, 0xbc, 0x90, 0x59, 0x8e, 0x93, 0x32, 0x4b, 0xf3,
+	0xcc, 0x9e, 0x64, 0xe3, 0x2e, 0xc1, 0x2f, 0x4e, 0x1e, 0x32, 0x01, 0x19, 0xae, 0xe5, 0x59, 0x36,
+	0x9e, 0x84, 0x2c, 0x22, 0xf8, 0x24, 0x25, 0xf8, 0x00, 0xaa, 0xfc, 0x2e, 0xef, 0x5a, 0xd1, 0xdd,
+	0xb3, 0x03, 0xfd, 0x07, 0xd8, 0xc9, 0x87, 0x97, 0x44, 0x0d, 0x5f, 0x4a, 0x54, 0x66, 0xe8, 0x2c,
+	0xa4, 0x58, 0xc8, 0xd6, 0x2f, 0x0a, 0x20, 0x1e, 0xde, 0xc4, 0x2e, 0xbd, 0xc7, 0x2f, 0x99, 0xd2,
+	0x8b, 0xf0, 0xff, 0x8b, 0x2b, 0x65, 0x9e, 0xab, 0xef, 0xa5, 0xb4, 0x69, 0xf4, 0x57, 0xa5, 0x6a,
+	0xda, 0x58, 0xd7, 0x78, 0x64, 0x45, 0x0e, 0x7b, 0x71, 0x63, 0xe5, 0xf1, 0xaf, 0x46, 0x56, 0xda,
+	0x58, 0xd3, 0xf0, 0xaf, 0xc9, 0xd6, 0xf9, 0x8f, 0xeb, 0xb0, 0xc9, 0x9d, 0x75, 0x71, 0x70, 0x4f,
+	0x06, 0x18, 0xdd, 0xc1, 0x9b, 0xee, 0x98, 0x3e, 0x64, 0x5e, 0x4f, 0xd4, 0x7c, 0xfe, 0xf1, 0x57,
+	0xb5, 0x82, 0x67, 0x57, 0x2f, 0xa1, 0xcf, 0x01, 0x66, 0x43, 0x06, 0x1d, 0x3e, 0x3b, 0x2e, 0xd5,
+	0xe6, 0x2a, 0xf3, 0xd4, 0x5d, 0x17, 0x36, 0xb3, 0x1f, 0x23, 0xd2, 0x0a, 0xa6, 0x84, 0xda, 0x5a,
+	0x0d, 0x98, 0x3a, 0xfd, 0x12, 0x6a, 0x99, 0xae, 0xcd, 0x57, 0xbd, 0xf8, 0x31, 0xa9, 0xda, 0x4a,
+	0xfb, 0x42, 0x9a, 0x52, 0xda, 0x25, 0x69, 0xe6, 0x7b, 0x6e, 0x49, 0x9a, 0x73, 0x5d, 0xa1, 0x97,
+	0xd0, 0xd7, 0x50, 0xcf, 0x3f, 0x86, 0xe8, 0xbd, 0xc2, 0xdf, 0x01, 0x55, 0x2f, 0x7e, 0x4b, 0xf5,
+	0x52, 0x67, 0xeb, 0xf7, 0xa7, 0xa6, 0xf2, 0xc7, 0x53, 0x53, 0xf9, 0xf3, 0xa9, 0xa9, 0xfc, 0xf4,
+	0x77, 0xb3, 0xd4, 0xaf, 0xf0, 0xbf, 0xd2, 0x8b, 0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0x4d, 0x5c,
+	0x3f, 0x62, 0xe4, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1428,8 +1162,6 @@ type SonicServiceClient interface {
 	ImageInstall(ctx context.Context, in *ImageInstallRequest, opts ...grpc.CallOption) (*ImageInstallResponse, error)
 	ImageRemove(ctx context.Context, in *ImageRemoveRequest, opts ...grpc.CallOption) (*ImageRemoveResponse, error)
 	ImageDefault(ctx context.Context, in *ImageDefaultRequest, opts ...grpc.CallOption) (*ImageDefaultResponse, error)
-	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
-	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
 	ClearNeighbors(ctx context.Context, in *ClearNeighborsRequest, opts ...grpc.CallOption) (*ClearNeighborsResponse, error)
 }
 
@@ -1486,24 +1218,6 @@ func (c *sonicServiceClient) ImageDefault(ctx context.Context, in *ImageDefaultR
 	return out, nil
 }
 
-func (c *sonicServiceClient) Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
-	out := new(AuthenticateResponse)
-	err := c.cc.Invoke(ctx, "/gnoi.sonic.SonicService/Authenticate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sonicServiceClient) Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error) {
-	out := new(RefreshResponse)
-	err := c.cc.Invoke(ctx, "/gnoi.sonic.SonicService/Refresh", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *sonicServiceClient) ClearNeighbors(ctx context.Context, in *ClearNeighborsRequest, opts ...grpc.CallOption) (*ClearNeighborsResponse, error) {
 	out := new(ClearNeighborsResponse)
 	err := c.cc.Invoke(ctx, "/gnoi.sonic.SonicService/ClearNeighbors", in, out, opts...)
@@ -1520,8 +1234,6 @@ type SonicServiceServer interface {
 	ImageInstall(context.Context, *ImageInstallRequest) (*ImageInstallResponse, error)
 	ImageRemove(context.Context, *ImageRemoveRequest) (*ImageRemoveResponse, error)
 	ImageDefault(context.Context, *ImageDefaultRequest) (*ImageDefaultResponse, error)
-	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
-	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
 	ClearNeighbors(context.Context, *ClearNeighborsRequest) (*ClearNeighborsResponse, error)
 }
 
@@ -1543,12 +1255,6 @@ func (*UnimplementedSonicServiceServer) ImageRemove(ctx context.Context, req *Im
 }
 func (*UnimplementedSonicServiceServer) ImageDefault(ctx context.Context, req *ImageDefaultRequest) (*ImageDefaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ImageDefault not implemented")
-}
-func (*UnimplementedSonicServiceServer) Authenticate(ctx context.Context, req *AuthenticateRequest) (*AuthenticateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
-}
-func (*UnimplementedSonicServiceServer) Refresh(ctx context.Context, req *RefreshRequest) (*RefreshResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
 }
 func (*UnimplementedSonicServiceServer) ClearNeighbors(ctx context.Context, req *ClearNeighborsRequest) (*ClearNeighborsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClearNeighbors not implemented")
@@ -1648,42 +1354,6 @@ func _SonicService_ImageDefault_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SonicService_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthenticateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SonicServiceServer).Authenticate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gnoi.sonic.SonicService/Authenticate",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SonicServiceServer).Authenticate(ctx, req.(*AuthenticateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SonicService_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefreshRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SonicServiceServer).Refresh(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gnoi.sonic.SonicService/Refresh",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SonicServiceServer).Refresh(ctx, req.(*RefreshRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SonicService_ClearNeighbors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClearNeighborsRequest)
 	if err := dec(in); err != nil {
@@ -1725,14 +1395,6 @@ var _SonicService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ImageDefault",
 			Handler:    _SonicService_ImageDefault_Handler,
-		},
-		{
-			MethodName: "Authenticate",
-			Handler:    _SonicService_Authenticate_Handler,
-		},
-		{
-			MethodName: "Refresh",
-			Handler:    _SonicService_Refresh_Handler,
 		},
 		{
 			MethodName: "ClearNeighbors",
@@ -2563,198 +2225,6 @@ func (m *ImageDefaultResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *JwtToken) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *JwtToken) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *JwtToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.ExpiresIn != 0 {
-		i = encodeVarintSonicGnoi(dAtA, i, uint64(m.ExpiresIn))
-		i--
-		dAtA[i] = 0x18
-	}
-	if len(m.Type) > 0 {
-		i -= len(m.Type)
-		copy(dAtA[i:], m.Type)
-		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Type)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.AccessToken) > 0 {
-		i -= len(m.AccessToken)
-		copy(dAtA[i:], m.AccessToken)
-		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.AccessToken)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *AuthenticateRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AuthenticateRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AuthenticateRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Password) > 0 {
-		i -= len(m.Password)
-		copy(dAtA[i:], m.Password)
-		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Password)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Username) > 0 {
-		i -= len(m.Username)
-		copy(dAtA[i:], m.Username)
-		i = encodeVarintSonicGnoi(dAtA, i, uint64(len(m.Username)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *AuthenticateResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AuthenticateResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AuthenticateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.Token != nil {
-		{
-			size, err := m.Token.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintSonicGnoi(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RefreshRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RefreshRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RefreshRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RefreshResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RefreshResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RefreshResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.Token != nil {
-		{
-			size, err := m.Token.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintSonicGnoi(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintSonicGnoi(dAtA []byte, offset int, v uint64) int {
 	offset -= sovSonicGnoi(v)
 	base := offset
@@ -3115,93 +2585,6 @@ func (m *ImageDefaultResponse) Size() (n int) {
 	_ = l
 	if m.Output != nil {
 		l = m.Output.Size()
-		n += 1 + l + sovSonicGnoi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *JwtToken) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.AccessToken)
-	if l > 0 {
-		n += 1 + l + sovSonicGnoi(uint64(l))
-	}
-	l = len(m.Type)
-	if l > 0 {
-		n += 1 + l + sovSonicGnoi(uint64(l))
-	}
-	if m.ExpiresIn != 0 {
-		n += 1 + sovSonicGnoi(uint64(m.ExpiresIn))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *AuthenticateRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Username)
-	if l > 0 {
-		n += 1 + l + sovSonicGnoi(uint64(l))
-	}
-	l = len(m.Password)
-	if l > 0 {
-		n += 1 + l + sovSonicGnoi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *AuthenticateResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Token != nil {
-		l = m.Token.Size()
-		n += 1 + l + sovSonicGnoi(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *RefreshRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *RefreshResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Token != nil {
-		l = m.Token.Size()
 		n += 1 + l + sovSonicGnoi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -5197,495 +4580,6 @@ func (m *ImageDefaultResponse) Unmarshal(dAtA []byte) error {
 				m.Output = &SonicOutput{}
 			}
 			if err := m.Output.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *JwtToken) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSonicGnoi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: JwtToken: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: JwtToken: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AccessToken", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.AccessToken = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Type = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExpiresIn", wireType)
-			}
-			m.ExpiresIn = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.ExpiresIn |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AuthenticateRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSonicGnoi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AuthenticateRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AuthenticateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Username", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Username = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Password", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Password = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AuthenticateResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSonicGnoi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AuthenticateResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AuthenticateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Token == nil {
-				m.Token = &JwtToken{}
-			}
-			if err := m.Token.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RefreshRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSonicGnoi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RefreshRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RefreshRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSonicGnoi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RefreshResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSonicGnoi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RefreshResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RefreshResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Token", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSonicGnoi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSonicGnoi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Token == nil {
-				m.Token = &JwtToken{}
-			}
-			if err := m.Token.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
