@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
+	spb "github.com/Azure/sonic-telemetry/proto/gnoi/jwt"
 	"time"
 )
 
