@@ -5,7 +5,7 @@ import (
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
 	log "github.com/golang/glog"
 	"time"
-	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
+	spb_jwt "github.com/Azure/sonic-telemetry/proto/gnoi/jwt"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"os/user"
@@ -82,7 +82,7 @@ func (srv *Server) Time(ctx context.Context, req *gnoi_system_pb.TimeRequest) (*
 	return &tm, nil
 }
 
-func (srv *Server) Authenticate(ctx context.Context, req *spb.AuthenticateRequest) (*spb.AuthenticateResponse, error) {
+func (srv *Server) Authenticate(ctx context.Context, req *spb_jwt.AuthenticateRequest) (*spb_jwt.AuthenticateResponse, error) {
 	// Can't enforce normal authentication here.. maybe only enforce client cert auth if enabled?
 	// ctx,err := authenticate(srv.config.UserAuth, ctx)
 	// if err != nil {
@@ -100,7 +100,7 @@ func (srv *Server) Authenticate(ctx context.Context, req *spb.AuthenticateReques
 		if err == nil {
 			roles, err := GetUserRoles(usr)
 			if err == nil {
-				return &spb.AuthenticateResponse{Token: tokenResp(req.Username, roles)}, nil
+				return &spb_jwt.AuthenticateResponse{Token: tokenResp(req.Username, roles)}, nil
 			}
 		}
 		
@@ -108,7 +108,7 @@ func (srv *Server) Authenticate(ctx context.Context, req *spb.AuthenticateReques
 	return nil, status.Errorf(codes.PermissionDenied, "Invalid Username or Password")
 
 }
-func (srv *Server) Refresh(ctx context.Context, req *spb.RefreshRequest) (*spb.RefreshResponse, error) {
+func (srv *Server) Refresh(ctx context.Context, req *spb_jwt.RefreshRequest) (*spb_jwt.RefreshResponse, error) {
 	ctx,err := authenticate(srv.config.UserAuth, ctx)
 	if err != nil {
 		return nil, err
@@ -132,6 +132,6 @@ func (srv *Server) Refresh(ctx context.Context, req *spb.RefreshRequest) (*spb.R
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid JWT Token")
 	}
 	
-	return &spb.RefreshResponse{Token: tokenResp(claims.Username, claims.Roles)}, nil
+	return &spb_jwt.RefreshResponse{Token: tokenResp(claims.Username, claims.Roles)}, nil
 
 }

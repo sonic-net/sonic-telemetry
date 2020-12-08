@@ -9,27 +9,5 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 
 service SonicService {
-  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
-  rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
 }
 
-message JwtToken {
-    string access_token = 1;
-    string type = 2;
-    int64 expires_in = 3; 
-}
-message AuthenticateRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message AuthenticateResponse {
-    JwtToken Token = 1;
-}
-
-message RefreshRequest {
-}
-
-message RefreshResponse {
-    JwtToken Token = 1;
-}

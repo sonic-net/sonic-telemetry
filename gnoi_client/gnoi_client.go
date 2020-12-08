@@ -3,7 +3,7 @@ package main
 import (
 	"google.golang.org/grpc"
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
-	spb "github.com/Azure/sonic-telemetry/proto/gnoi"
+	spb "github.com/Azure/sonic-telemetry/proto/gnoi/jwt"
 	"context"
 	"os"
 	"os/signal"
@@ -54,7 +54,7 @@ func main() {
 			panic("Invalid RPC Name")
 		}
 	case "Sonic":
-		sc := spb.NewSonicServiceClient(conn)
+		sc := spb.NewSonicJwtServiceClient(conn)
 		switch *rpc {
 		case "authenticate":
 			authenticate(sc, ctx)
@@ -83,7 +83,7 @@ func systemTime(sc gnoi_system_pb.SystemClient, ctx context.Context) {
 	fmt.Println(string(respstr))
 }
 
-func authenticate(sc spb.SonicServiceClient, ctx context.Context) {
+func authenticate(sc spb.SonicJwtServiceClient, ctx context.Context) {
 	fmt.Println("Sonic Authenticate")
 	ctx = setUserCreds(ctx)
 	req := &spb.AuthenticateRequest {}
@@ -101,7 +101,7 @@ func authenticate(sc spb.SonicServiceClient, ctx context.Context) {
 	fmt.Println(string(respstr))
 }
 
-func refresh(sc spb.SonicServiceClient, ctx context.Context) {
+func refresh(sc spb.SonicJwtServiceClient, ctx context.Context) {
 	fmt.Println("Sonic Refresh")
 	ctx = setUserCreds(ctx)
 	req := &spb.RefreshRequest {}
