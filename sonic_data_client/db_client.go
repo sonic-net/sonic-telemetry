@@ -176,7 +176,6 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 		// NOTE: per https://github.com/Azure/sonic-telemetry/blob/master/doc/dialout.md#dialout_client_cli-and-dialout_server_cli
 		// TELEMETRY_CLIENT subscription doesn't specificy type of the stream.
 		// Handling it as a ON_CHANGE stream for backward compatibility.
-		// TODO: We need to decide wheter this should be ON_CHANGE or SAMPLE
 		for gnmiPath := range c.pathG2S {
 			c.w.Add(1)
 			c.synced.Add(1)
@@ -192,8 +191,8 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 			subMode := sub.GetMode()
 
 			if subMode == gnmipb.SubscriptionMode_SAMPLE {
-				c.w.Add(1)
-				c.synced.Add(1)
+				c.w.Add(1)      // wait group to indicate the streaming session is complete.
+				c.synced.Add(1) // wait group to indicate whether sync_response is sent.
 				go streamSampleSubscription(c, sub, subscribe.GetUpdatesOnly())
 			} else if subMode == gnmipb.SubscriptionMode_ON_CHANGE {
 				c.w.Add(1)
@@ -729,6 +728,7 @@ func putFatalMsg(q *queue.PriorityQueue, msg string) {
 }
 
 // dbFieldMultiSubscribe would read a field from multiple tables and put to output queue.
+// It handles queries like "COUNTERS/Ethernet*/xyz" where the path translates to a field  in multiple tables.
 // For SAMPLE mode, it would send periodically regardless of change.
 // However, if `updateOnly` is true, the payload would include only the changed fields.
 // For ON_CHANGE mode, it would send only if the value has changed since the last update.
@@ -827,6 +827,7 @@ func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, in
 }
 
 // dbFieldSubscribe would read a field from a single table and put to output queue.
+// Handles queries like "COUNTERS/Ethernet0/xyz" where the path translates to a field in a table.
 // For SAMPLE mode, it would send periodically regardless of change.
 // For ON_CHANGE mode, it would send only if the value has changed since the last update.
 func dbFieldSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, interval time.Duration) {
@@ -999,6 +1000,9 @@ func dbSingleTableKeySubscribe(c *DbClient, rsd redisSubData, updateChannel chan
 	}
 }
 
+// dbTableKeySubscribe subscribes to tables using a table keys.
+// Handles queries like "COUNTERS/Ethernet0" or "COUNTERS/Ethernet*"
+// This function handles both ON_CHANGE and SAMPLE modes. "interval" being 0 is interpreted as ON_CHANGE mode.
 func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Duration, updateOnly bool) {
 	defer c.w.Done()
 

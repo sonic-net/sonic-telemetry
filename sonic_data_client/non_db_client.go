@@ -426,13 +426,6 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 
 	// Validate all subs
 	for _, sub := range subscribe.GetSubscription() {
-		gnmiPath := sub.GetPath()
-		_, ok := c.path2Getter[gnmiPath]
-		if !ok {
-			log.V(3).Infof("Cannot find getter for the path: %v", gnmiPath)
-			continue
-		}
-
 		subMode := sub.GetMode()
 		if subMode != gnmipb.SubscriptionMode_SAMPLE {
 			putFatalMsg(c.q, fmt.Sprintf("Unsupported subscription mode: %v.", subMode))
@@ -443,6 +436,13 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 		if err != nil {
 			putFatalMsg(c.q, err.Error())
 			return
+		}
+
+		gnmiPath := sub.GetPath()
+		_, ok := c.path2Getter[gnmiPath]
+		if !ok {
+			log.V(3).Infof("Cannot find getter for the path: %v", gnmiPath)
+			continue
 		}
 
 		validatedSubs[sub] = interval
