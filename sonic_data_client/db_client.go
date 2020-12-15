@@ -500,6 +500,25 @@ func makeJSON_redis(msi *map[string]interface{}, key *string, op *string, mfv ma
 	}
 
 	fp := map[string]interface{}{}
+
+	if key == nil {
+		if (*msi)[*op] != nil {
+			fp = (*msi)[*op].(map[string]interface{})
+		}
+	} else if op == nil {
+		if (*msi)[*key] != nil {
+			fp = (*msi)[*key].(map[string]interface{})
+		}
+	} else {
+		of_old := map[string]interface{}{}
+		if (*msi)[*key] != nil {
+			of_old = (*msi)[*key].(map[string]interface{})
+			if of_old[*op] != nil {
+				fp = of_old[*op].(map[string]interface{})
+			}
+		}
+	}
+
 	for f, v := range mfv {
 		fp[f] = v
 	}
