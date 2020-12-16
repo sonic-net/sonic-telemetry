@@ -1,5 +1,5 @@
---- ./github.com/openconfig/gnmi/client/gnmi/client.go	2019-11-22 14:03:29.839103602 -0800
-+++ ./github.com/openconfig/gnmi/client/gnmi/client.go	2019-10-11 13:48:49.226145599 -0700
+--- ./client/gnmi/client.go	2019-11-22 14:03:29.839103602 -0800
++++ ./client/gnmi/client.go	2019-10-11 13:48:49.226145599 -0700
 @@ -257,7 +257,7 @@
  		if err != nil {
  			return nil, fmt.Errorf("invalid query path %q: %v", qq, err)
@@ -9,8 +9,8 @@
  	}
  	return &gpb.SubscribeRequest{Request: s}, nil
  }
---- ./github.com/openconfig/gnmi/cmd/gnmi_cli/gnmi_cli.go	2019-11-22 14:03:29.839103602 -0800
-+++ ./github.com/openconfig/gnmi/cmd/gnmi_cli/gnmi_cli.go	2019-11-21 09:30:52.453893674 -0800
+--- ./cmd/gnmi_cli/gnmi_cli.go	2019-11-22 14:03:29.839103602 -0800
++++ ./cmd/gnmi_cli/gnmi_cli.go	2019-11-21 09:30:52.453893674 -0800
 @@ -76,6 +76,11 @@
  	caCert     = flag.String("ca_crt", "", "CA certificate file. Used to verify server TLS certificate.")
  	clientCert = flag.String("client_crt", "", "Client certificate file. Used for client certificate-based authentication.")
@@ -46,8 +46,8 @@
  	for _, path := range *queryFlag {
  		query, err := parseQuery(path, cfg.Delimiter)
  		if err != nil {
---- ./github.com/openconfig/gnmi/client/query.go	2019-11-22 14:03:29.839103602 -0800
-+++ ./github.com/openconfig/gnmi/client/query.go	2019-10-11 13:48:49.226145599 -0700
+--- ./client/query.go	2019-11-22 14:03:29.839103602 -0800
++++ ./client/query.go	2019-10-11 13:48:49.226145599 -0700
 @@ -172,6 +172,10 @@
  	// SubReq is an optional field. If not nil, gnmi client implementation uses
  	// it rather than generating from client.Query while sending gnmi Subscribe RPC.
@@ -59,8 +59,8 @@
  }
  
  // Destination extracts a Destination instance out of Query fields.
---- ./github.com/openconfig/gnmi/value/value.go	2019-11-22 14:03:29.847103498 -0800
-+++ ./github.com/openconfig/gnmi/value/value.go	2019-10-11 13:48:49.234145530 -0700
+--- ./value/value.go	2019-11-22 14:03:29.847103498 -0800
++++ ./value/value.go	2019-10-11 13:48:49.234145530 -0700
 @@ -117,6 +117,8 @@
  		i = ss
  	case *pb.TypedValue_BytesVal:
