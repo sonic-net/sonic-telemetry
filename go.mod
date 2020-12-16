@@ -26,12 +26,14 @@ require (
 	github.com/openconfig/goyang v0.0.0-20200309174518-a00bece872fc // indirect
 	github.com/openconfig/ygot v0.7.1
 	github.com/pborman/getopt v0.0.0-20190409184431-ee0cd42419d3 // indirect
+	github.com/philopon/go-toposort v0.0.0-20170620085441-9be86dbd762f // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/sys v0.0.0-20190412213103-97732733099d // indirect
 	google.golang.org/genproto v0.0.0-20200319113533-08878b785e9c // indirect
 	google.golang.org/grpc v1.28.0
 	google.golang.org/protobuf v1.21.0 // indirect
+	gopkg.in/yaml.v2 v2.2.4
 )
 
 replace github.com/Azure/sonic-mgmt-common => ../sonic-mgmt-common

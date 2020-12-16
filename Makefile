@@ -32,6 +32,7 @@ go.mod:
 $(GO_DEPS): go.mod $(PATCHES)
 	# FIXME temporary workaround for crypto not downloading..
 	$(GO) get golang.org/x/crypto/ssh/terminal@e9b2fee46413
+	$(GO) get github.com/openconfig/gnmi@v0.0.0-20200617225440-d2b4e6a45802
 	$(GO) mod vendor
 	$(MGMT_COMMON_DIR)/patches/apply.sh vendor
 	cp -r $(GOPATH)/pkg/mod/golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413 vendor/golang.org/x/crypto
