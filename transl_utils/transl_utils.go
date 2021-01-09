@@ -253,13 +253,14 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 
 	rc, ctx := common_utils.GetContext(ctx)
 	log.V(2).Info("TranslProcessBulk Called")
+	var nver translib.Version
+	var err error
 	if rc.BundleVersion != nil {
-		nver, err := translib.NewVersion(*rc.BundleVersion)
+		nver, err = translib.NewVersion(*rc.BundleVersion)
 		if err != nil {
 			log.V(2).Infof("Bundle Version Check failed with error =%v", err.Error())
 			return err
 		}
-		req.ClientVersion = nver
 	}
 	for _,d := range delete {
 		ConvertToURI(prefix, d, &uri)
@@ -269,6 +270,9 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 			Path: uri,
 			Payload: payload,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if rc.BundleVersion != nil {
+			req.ClientVersion = nver
 		}
 		if rc.Auth.AuthEnabled {
 			req.AuthEnabled = true
@@ -287,6 +291,9 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 			Payload: payload,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
+		if rc.BundleVersion != nil {
+			req.ClientVersion = nver
+		}
 		if rc.Auth.AuthEnabled {
 			req.AuthEnabled = true
 		}
@@ -303,6 +310,9 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 			Path: uri,
 			Payload: payload,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if rc.BundleVersion != nil {
+			req.ClientVersion = nver
 		}
 		if rc.Auth.AuthEnabled {
 			req.AuthEnabled = true
