@@ -37,10 +37,9 @@ const requestContextKey contextkey = 0
 var requestCounter uint64
 
 // GetContext function returns the RequestContext object for a
-// HTTP request. RequestContext is maintained as a context value of
+// gRPC request. RequestContext is maintained as a context value of
 // the request. Creates a new RequestContext object is not already
-// available; in which case this function also creates a copy of
-// the HTTP request object with new context.
+// available.
 func GetContext(ctx context.Context) (*RequestContext, context.Context) {
 	cv := ctx.Value(requestContextKey)
 	if cv != nil {

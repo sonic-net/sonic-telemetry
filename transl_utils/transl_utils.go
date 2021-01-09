@@ -177,7 +177,7 @@ func TranslProcessReplace(uri string, t *gnmipb.TypedValue, ctx context.Context)
 	/* Form the CURL request and send to client . */
 	str := string(t.GetJsonIetfVal())
 	str3 := strings.Replace(str, "\n", "", -1)
-	log.V(2).Infof("Incoming JSON body is", str)
+	log.V(2).Info("Incoming JSON body is", str)
 
 	payload := []byte(str3)
 	rc, ctx := common_utils.GetContext(ctx)
@@ -209,7 +209,7 @@ func TranslProcessUpdate(uri string, t *gnmipb.TypedValue, ctx context.Context) 
 	/* Form the CURL request and send to client . */
 	str := string(t.GetJsonIetfVal())
 	str3 := strings.Replace(str, "\n", "", -1)
-	log.V(2).Infof("Incoming JSON body is", str)
+	log.V(2).Info("Incoming JSON body is", str)
 
 	payload := []byte(str3)
 	rc, ctx := common_utils.GetContext(ctx)
@@ -253,6 +253,14 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 
 	rc, ctx := common_utils.GetContext(ctx)
 	log.V(2).Info("TranslProcessBulk Called")
+	if rc.BundleVersion != nil {
+		nver, err := translib.NewVersion(*rc.BundleVersion)
+		if err != nil {
+			log.V(2).Infof("Bundle Version Check failed with error =%v", err.Error())
+			return err
+		}
+		req.ClientVersion = nver
+	}
 	for _,d := range delete {
 		ConvertToURI(prefix, d, &uri)
 		var str3 string
@@ -261,14 +269,6 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 			Path: uri,
 			Payload: payload,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if rc.BundleVersion != nil {
-			nver, err := translib.NewVersion(*rc.BundleVersion)
-			if err != nil {
-				log.V(2).Infof("Bulk Set operation failed with error =%v", err.Error())
-				return err
-			}
-			req.ClientVersion = nver
 		}
 		if rc.Auth.AuthEnabled {
 			req.AuthEnabled = true
@@ -280,20 +280,12 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 		ConvertToURI(prefix, r.GetPath(), &uri)
 		str := string(r.GetVal().GetJsonIetfVal())
 		str3 := strings.Replace(str, "\n", "", -1)
-		log.V(2).Infof("Incoming JSON body is", str)
+		log.V(2).Info("Incoming JSON body is", str)
 		payload := []byte(str3)
 		req := translib.SetRequest{
 			Path: uri,
 			Payload: payload,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if rc.BundleVersion != nil {
-			nver, err := translib.NewVersion(*rc.BundleVersion)
-			if err != nil {
-				log.V(2).Infof("Bulk Set operation failed with error =%v", err.Error())
-				return err
-			}
-			req.ClientVersion = nver
 		}
 		if rc.Auth.AuthEnabled {
 			req.AuthEnabled = true
@@ -305,20 +297,12 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 		ConvertToURI(prefix, u.GetPath(), &uri)
 		str := string(u.GetVal().GetJsonIetfVal())
 		str3 := strings.Replace(str, "\n", "", -1)
-		log.V(2).Infof("Incoming JSON body is", str)
+		log.V(2).Info("Incoming JSON body is", str)
 		payload := []byte(str3)
 		req := translib.SetRequest{
 			Path: uri,
 			Payload: payload,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if rc.BundleVersion != nil {
-			nver, err := translib.NewVersion(*rc.BundleVersion)
-			if err != nil {
-				log.V(2).Infof("Bulk Set operation failed with error =%v", err.Error())
-				return err
-			}
-			req.ClientVersion = nver
 		}
 		if rc.Auth.AuthEnabled {
 			req.AuthEnabled = true
@@ -347,7 +331,7 @@ func TranslProcessBulk(delete []*gnmipb.Path, replace []*gnmipb.Update, update [
 
 	var errors []string
 	if err != nil{
-		log.V(2).Infof("BULK SET operation failed with error(s):")
+		log.V(2).Info("BULK SET operation failed with error(s):")
 		for _,d := range resp.DeleteResponse {
 			if d.Err != nil {
 				log.V(2).Infof("%s=%v", d.Err.Error(), d.ErrSrc)
