@@ -37,8 +37,8 @@ func __log_audit_msg(ctx context.Context, reqType string, uriPath string, err er
 
     common_utils.GetUsername(ctx, &username)
 
-    auditMsg := fmt.Sprintf("User \"%s\" request \"%s %s\" status - %s",
-                            username, reqType, uriPath, statusMsg)
+    auditMsg := fmt.Sprintf("User \"%s\" request \"%s %s\" status - %s error - %s",
+                            username, reqType, uriPath, statusMsg, err.Error())
     Writer.Info(auditMsg)
 }
 
