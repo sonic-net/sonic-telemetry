@@ -16,7 +16,7 @@ import (
 )
 
 var (
-        defUserAuth = gnmi.AuthTypes{"password": true, "cert": false}
+        defUserAuth = gnmi.AuthTypes{"password": false, "cert": false, "none": true}
         userAuth = gnmi.AuthTypes{"password": false, "cert": false}
 	port = flag.Int("port", -1, "port to listen on")
 	// Certificate files.
@@ -24,6 +24,7 @@ var (
 	serverCert        = flag.String("server_crt", "", "TLS server certificate")
 	serverKey         = flag.String("server_key", "", "TLS server private key")
 	insecure          = flag.Bool("insecure", false, "Skip providing TLS cert and key, for testing only!")
+	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, telemetry server will request but not require a client certificate.")
 	jwtRefInt         = flag.Uint64("jwt_refresh_int", 900, "Seconds before JWT expiry the token can be refreshed.")
 	jwtValInt         = flag.Uint64("jwt_valid_int", 3600, "Seconds that JWT token is valid for.")
 )
@@ -69,7 +70,7 @@ func main() {
 	}
 
 	tlsCfg := &tls.Config{
-		ClientAuth:   tls.RequestClientCert,
+		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
@@ -86,8 +87,14 @@ func main() {
 
 	}
 
+	if *allowNoClientCert {
+		// RequestClientCert will ask client for a certificate but won't
+		// require it to proceed. If certificate is provided, it will be
+		// verified.
+		tlsCfg.ClientAuth = tls.RequestClientCert
+	}
+
 	if *caCert != "" {
-		tlsCfg.ClientAuth = tls.RequireAndVerifyClientCert
 		ca, err := ioutil.ReadFile(*caCert)
 		if err != nil {
 			log.Exitf("could not read CA certificate: %s", err)
