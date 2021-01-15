@@ -16,7 +16,6 @@ import (
 )
 
 var (
-        defUserAuth = gnmi.AuthTypes{"jwt": false, "password": false, "cert": false, "none": true}
         userAuth = gnmi.AuthTypes{"password": false, "cert": false, "jwt": false}
 	port = flag.Int("port", -1, "port to listen on")
 	// Certificate files.
@@ -32,6 +31,15 @@ var (
 func main() {
 	flag.Var(userAuth, "client_auth", "Client auth mode(s) - none,cert,password")
 	flag.Parse()
+
+	var defUserAuth gnmi.AuthTypes
+	if gnmi.READ_WRITE_MODE {
+		//In read/write mode we want to enable auth by default.
+		defUserAuth = gnmi.AuthTypes{"password": true, "cert": false, "jwt": true}
+	}else {
+		defUserAuth = gnmi.AuthTypes{"jwt": false, "password": false, "cert": false}
+	}
+
         if isFlagPassed("client_auth") {
                 log.V(1).Infof("client_auth provided")
         }else {
