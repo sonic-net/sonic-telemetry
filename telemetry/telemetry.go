@@ -34,9 +34,9 @@ func main() {
 		return
 	}
 
-	// var opts []grpc.ServerOption
 	cfg := &gnmi.Config{}
 	cfg.Port = int64(*port)
+	var opts []grpc.ServerOption
 
 	if !*noTLS {
 		var certificate tls.Certificate
@@ -99,7 +99,7 @@ func main() {
 		tlsCfg.ClientCAs = certPool
 	}
 
-	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
+	opts = []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
 }
 
 	s, err := gnmi.NewServer(cfg, opts)
