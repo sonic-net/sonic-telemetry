@@ -21,6 +21,7 @@ var (
 	serverCert        = flag.String("server_crt", "", "TLS server certificate")
 	serverKey         = flag.String("server_key", "", "TLS server private key")
 	insecure          = flag.Bool("insecure", false, "Skip providing TLS cert and key, for testing only!")
+	noTLS            = flag.Bool("noTLS", false, "disable TLS, for testing only!")
 	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, telemetry server will request but not require a client certificate.")
 )
 
@@ -32,10 +33,17 @@ func main() {
 		log.Errorf("port must be > 0.")
 		return
 	}
-	var certificate tls.Certificate
-	var err error
+
+	var opts []grpc.ServerOption
+	cfg := &gnmi.Config{}
+	cfg.Port = int64(*port)
+
+	if !*noTLS {
+		var certificate tls.Certificate
+		var err error
 
 	if *insecure {
+
 		certificate, err = testcert.NewCert()
 		if err != nil {
 			log.Exitf("could not load server key pair: %s", err)
@@ -92,8 +100,8 @@ func main() {
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(credentials.NewTLS(tlsCfg))}
-	cfg := &gnmi.Config{}
-	cfg.Port = int64(*port)
+}
+
 	s, err := gnmi.NewServer(cfg, opts)
 	if err != nil {
 		log.Errorf("Failed to create gNMI server: %v", err)
