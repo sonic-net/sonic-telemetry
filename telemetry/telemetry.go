@@ -21,7 +21,7 @@ var (
 	serverCert        = flag.String("server_crt", "", "TLS server certificate")
 	serverKey         = flag.String("server_key", "", "TLS server private key")
 	insecure          = flag.Bool("insecure", false, "Skip providing TLS cert and key, for testing only!")
-	noTLS            = flag.Bool("noTLS", false, "disable TLS, for testing only!")
+	noTLS             = flag.Bool("noTLS", false, "disable TLS, for testing only!")
 	allowNoClientCert = flag.Bool("allow_no_client_auth", false, "When set, telemetry server will request but not require a client certificate.")
 )
 
@@ -34,7 +34,7 @@ func main() {
 		return
 	}
 
-	var opts []grpc.ServerOption
+	// var opts []grpc.ServerOption
 	cfg := &gnmi.Config{}
 	cfg.Port = int64(*port)
 
