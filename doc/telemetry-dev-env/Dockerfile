@@ -15,7 +15,6 @@ RUN apt-get install -y tmux
 # install go and configure
 RUN wget https://golang.org/dl/go1.14.14.linux-amd64.tar.gz -O /tmp/go1.14.14.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf /tmp/go1.14.14.linux-amd64.tar.gz
-RUN ip -c a
 RUN mkdir /usr/gopath
 ENV GOPATH="/usr/gopath"
 ENV GOROOT="/usr/local/go"
@@ -40,6 +39,7 @@ COPY files/* /tmp
 
 # SSH settings
 EXPOSE 22/tcp
+# Following will expose 6379 port. Not needed except dugging.
 EXPOSE 6379/tcp
 
 ENTRYPOINT service ssh restart && bash

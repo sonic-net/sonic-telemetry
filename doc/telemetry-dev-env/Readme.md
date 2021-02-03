@@ -1,3 +1,4 @@
+Goto doc/telemetry-dev-env
 Build the image:
 ```
 docker build -t telemetry-dev .
@@ -9,7 +10,7 @@ docker rm telemetry-dev-env
 ```
 Create personal fork repo from sonic-telemetry from git
 
-Creatd directory 'src' and Clone git repos in it:
+Create directory '~/src' and Clone git repos in it:
 ```
 git clone https://<your_github_username>@github.com/<your_github_username>/sonic-telemetry.git 
 git clone https://<your_github_username>@github.com/<your_github_username>/sonic-mgmt-common.git
@@ -27,9 +28,9 @@ Build and start service (Inside container):
 cd /src/sonic-mgmt-common && make
 cd /src/sonic-telemetry && make all
 
-# Bootstrap DB
+# Bootstrap DB.
 mkdir -p /var/run/redis/sonic-db && chown redis  /var/run/redis/sonic-db && install testdata/database_config.json -t /var/run/redis/sonic-db
-service redis-server stop && cp /tmp/dump.rdb /var/lib/redis/dump.rdb && service redis-server start
+service redis-server stop && cp /files/dump.rdb /var/lib/redis/dump.rdb && service redis-server start
 
 # Start the service
 ./build/bin/telemetry --port 8080 -insecure --allow_no_client_auth --logtostderr  -v 10
