@@ -41,36 +41,35 @@ func main() {
 	if !*noTLS {
 		var certificate tls.Certificate
 		var err error
-
-	if *insecure {
-
-		certificate, err = testcert.NewCert()
-		if err != nil {
-			log.Exitf("could not load server key pair: %s", err)
+		if *insecure {
+			certificate, err = testcert.NewCert()
+			if err != nil {
+				log.Exitf("could not load server key pair: %s", err)
+			}
 		}
-	} else {
-		switch {
-		case *serverCert == "":
-			log.Errorf("serverCert must be set.")
-			return
-		case *serverKey == "":
-			log.Errorf("serverKey must be set.")
-			return
+		else {
+			switch {
+			case *serverCert == "":
+				log.Errorf("serverCert must be set.")
+				return
+			case *serverKey == "":
+				log.Errorf("serverKey must be set.")
+				return
+			}
+			certificate, err = tls.LoadX509KeyPair(*serverCert, *serverKey)
+			if err != nil {
+				log.Exitf("could not load server key pair: %s", err)
+			}
 		}
-		certificate, err = tls.LoadX509KeyPair(*serverCert, *serverKey)
-		if err != nil {
-			log.Exitf("could not load server key pair: %s", err)
-		}
-	}
 
-	tlsCfg := &tls.Config{
+		tlsCfg := &tls.Config{
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
 		PreferServerCipherSuites: true,
-		CipherSuites: []uint16{
-
+		CipherSuites: []uint16
+		{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
@@ -78,8 +77,8 @@ func main() {
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		},
-
 	}
+
 	if *allowNoClientCert {
 		// RequestClientCert will ask client for a certificate but won't
 		// require it to proceed. If certificate is provided, it will be
