@@ -18,7 +18,7 @@ git clone https://<your_github_username>@github.com/<your_github_username>/sonic
 
 Create a new container using the image:
 ```
-docker run -it -v ~/src:/src --name telemetry-dev-env telemetry-dev
+docker run -it -v ~/src:/src --net=host --name telemetry-dev-env telemetry-dev
 ```
 
 Build and start service (Inside container):
