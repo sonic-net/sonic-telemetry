@@ -53,8 +53,6 @@ func main() {
 		log.Errorf("port must be > 0.")
 		return
 	}
-	var certificate tls.Certificate
-	var err error
 	gnmi.JwtRefreshInt = time.Duration(*jwtRefInt*uint64(time.Second))
 	gnmi.JwtValidInt = time.Duration(*jwtValInt*uint64(time.Second))
 
