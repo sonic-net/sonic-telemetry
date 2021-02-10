@@ -28,7 +28,7 @@ Build and start service (Inside container):
 cd /src/sonic-mgmt-common && make
 cd /src/sonic-telemetry && make all
 
-# Bootstrap DB.
+# Bootstrap DB. dump.rdb provided under files/ is empty. Please replace empty rdb file and then restart redis.
 mkdir -p /var/run/redis/sonic-db && chown redis  /var/run/redis/sonic-db && install testdata/database_config.json -t /var/run/redis/sonic-db
 service redis-server stop && cp /files/dump.rdb /var/lib/redis/dump.rdb && service redis-server start
 
