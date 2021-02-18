@@ -32,10 +32,14 @@ go.mod:
 $(GO_DEPS): go.mod $(PATCHES)
 	$(GO) mod vendor
 	$(GO) mod download golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413
-	cp -r $(GOPATH)/pkg/mod/golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413 vendor/golang.org/x/crypto
+	$(GO) mod download github.com/jipanyang/gnxi@v0.0.0-20181221084354-f0a90cca6fd0
+	cp -r $(GOPATH)/pkg/mod/golang.org/x/crypto@v0.0.0-20191206172530-e9b2fee46413/* vendor/golang.org/x/crypto/
+	cp -r $(GOPATH)/pkg/mod/github.com/jipanyang/gnxi@v0.0.0-20181221084354-f0a90cca6fd0/* vendor/github.com/jipanyang/gnxi/
 	$(MGMT_COMMON_DIR)/patches/apply.sh vendor
 	chmod -R u+w vendor
-	patch -d vendor -p0 <patches/gnmi_cli.all.patch
+	patch -d vendor -p0 < patches/gnmi_cli.all.patch
+	patch -d vendor -p0 < patches/gnmi_set.patch
+	patch -d vendor -p0 < patches/gnmi_get.patch
 	touch $@
 
 go-deps: $(GO_DEPS)
@@ -46,9 +50,10 @@ go-deps-clean:
 sonic-telemetry: $(GO_DEPS)
 	$(GO) install -mod=vendor $(BLD_FLAGS) github.com/Azure/sonic-telemetry/telemetry
 	$(GO) install -mod=vendor $(BLD_FLAGS) github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
-	$(GO) install github.com/jipanyang/gnxi/gnmi_get
-	$(GO) install github.com/jipanyang/gnxi/gnmi_set
+	$(GO) install -mod=vendor github.com/jipanyang/gnxi/gnmi_get
+	$(GO) install -mod=vendor github.com/jipanyang/gnxi/gnmi_set
 	$(GO) install -mod=vendor github.com/openconfig/gnmi/cmd/gnmi_cli
+	$(GO) install -mod=vendor github.com/Azure/sonic-telemetry/gnoi_client
 
 check:
 	sudo mkdir -p ${DBDIR}
@@ -73,6 +78,7 @@ install:
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_get $(DESTDIR)/usr/sbin/gnmi_get
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_set $(DESTDIR)/usr/sbin/gnmi_set
 	$(INSTALL) -D $(BUILD_DIR)/gnmi_cli $(DESTDIR)/usr/sbin/gnmi_cli
+	$(INSTALL) -D $(BUILD_DIR)/gnoi_client $(DESTDIR)/usr/sbin/gnoi_client
 
 
 deinstall:
@@ -80,5 +86,6 @@ deinstall:
 	rm $(DESTDIR)/usr/sbin/dialout_client_cli
 	rm $(DESTDIR)/usr/sbin/gnmi_get
 	rm $(DESTDIR)/usr/sbin/gnmi_set
+	rm $(DESTDIR)/usr/sbin/gnoi_client
 
 
