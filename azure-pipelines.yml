@@ -32,5 +32,6 @@ stages:
         # set -ex
         # ./scripts/common/sonic-telemetry-build/build.sh
     - publish: $(System.DefaultWorkingDirectory)/target/python-wheels/
-      artifact: sonic-py-swsssdk
-      displayName: "Archive sonic image"
+      artifact: sonic-telemetry
+      displayName: "Archive artifacts"
+
