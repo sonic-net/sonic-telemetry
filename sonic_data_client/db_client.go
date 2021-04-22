@@ -385,7 +385,6 @@ func GetRedisClientsForDb(target string) (map[string]*redis.Client) {
 		for _, ns := range ns_list {
 			redis_client_map[ns]  = Target2RedisDb[ns][target]
 		}
-
 	} else {
 		ns := sdcfg.GetDbDefaultNamespace()
 		redis_client_map[ns] = Target2RedisDb[ns][target]
@@ -412,45 +411,46 @@ func IsTargetDb ( target string) (string, bool, string, bool) {
 }
 // For testing only
 func useRedisTcpClient() {
-	for dbName, dbn := range spb.Target_value {
-		if dbName != "OTHERS" {
-			// DB connector for direct redis operation
-			if UseRedisLocalTcpPort {
-				for _, dbNamespace := range(sdcfg.GetDbAllNamespaces()) {
-					var redisDb *redis.Client
-					redisDb = redis.NewClient(&redis.Options{
-						Network:     "tcp",
-						Addr:        sdcfg.GetDbTcpAddr(dbName, dbNamespace),
-						Password:    "", // no password set
-						DB:          int(dbn),
-						DialTimeout: 0,
-					})
-					Target2RedisDb[dbNamespace][dbName] = redisDb
-				}
-			}
-		}
-	}
+    if UseRedisLocalTcpPort {
+        for _, dbNamespace := range(sdcfg.GetDbAllNamespaces()) {
+            Target2RedisDb[dbNamespace] = make(map[string]*redis.Client)
+            for dbName, dbn := range spb.Target_value {
+                if dbName != "OTHERS" {
+                    // DB connector for direct redis operation
+                    var redisDb *redis.Client
+                    redisDb = redis.NewClient(&redis.Options{
+                        Network:     "tcp",
+                        Addr:        sdcfg.GetDbTcpAddr(dbName, dbNamespace),
+                        Password:    "", // no password set
+                        DB:          int(dbn),
+                        DialTimeout: 0,
+                    })
+                    Target2RedisDb[dbNamespace][dbName] = redisDb
+                }
+            }
+        }
+    }
 }
 
 // Client package prepare redis clients to all DBs automatically
 func init() {
-	for dbName, dbn := range spb.Target_value {
-		if dbName != "OTHERS" {
-			// DB connector for direct redis operation
-
-			for _, dbNamespace := range(sdcfg.GetDbAllNamespaces()) {
-				var redisDb *redis.Client
-				redisDb = redis.NewClient(&redis.Options{
-					Network:     "unix",
-					Addr:        sdcfg.GetDbSock(dbName, dbNamespace),
-					Password:    "", // no password set
-					DB:          int(dbn),
-					DialTimeout: 0,
-				})
-				Target2RedisDb[dbNamespace][dbName] = redisDb
-			}
-		}
-	}
+    for _, dbNamespace := range(sdcfg.GetDbAllNamespaces()) {
+        Target2RedisDb[dbNamespace] = make(map[string]*redis.Client)
+        for dbName, dbn := range spb.Target_value {
+            if dbName != "OTHERS" {
+                // DB connector for direct redis operation
+                var redisDb *redis.Client
+                redisDb = redis.NewClient(&redis.Options{
+                    Network:     "unix",
+                    Addr:        sdcfg.GetDbSock(dbName, dbNamespace),
+                    Password:    "", // no password set
+                    DB:          int(dbn),
+                    DialTimeout: 0,
+                })
+                Target2RedisDb[dbNamespace][dbName] = redisDb
+            }
+        }
+    }
 }
 
 // gnmiFullPath builds the full path from the prefix and path.
