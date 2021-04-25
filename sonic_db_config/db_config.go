@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	SONIC_DB_GLOBAL_CONFIG_FILE string = "/var/run/redis/sonic-db/database_globale.json"
+	SONIC_DB_GLOBAL_CONFIG_FILE string = "/var/run/redis/sonic-db/database_global.json"
 	SONIC_DB_CONFIG_FILE        string = "/var/run/redis/sonic-db/database_config.json"
 	SONIC_DEFAULT_NAMESPACE     string = ""
 )
@@ -29,7 +29,7 @@ func CheckDbMultiNamespace() bool {
 	if !sonic_db_init {
 		DbInit()
 	}
-	return  sonic_db_multi_namespace
+	return sonic_db_multi_namespace
 }
 func GetDbNonDefaultNamespaces() ([]string, int) {
 	if !sonic_db_init {
@@ -40,11 +40,11 @@ func GetDbNonDefaultNamespaces() ([]string, int) {
 		if ns == SONIC_DEFAULT_NAMESPACE {
 			continue
 		}
-                ns_list = append(ns_list, ns)
+		ns_list = append(ns_list, ns)
 	}
 	return ns_list, len(ns_list)
 }
-func GetDbAllNamespaces() ([]string) {
+func GetDbAllNamespaces() []string {
 	if !sonic_db_init {
 		DbInit()
 	}
@@ -61,8 +61,8 @@ func GetDbNamespaceFromTarget(target string) (string, bool) {
 	if target == GetDbDefaultNamespace() {
 		return target, true
 	}
-	ns_list,_ := GetDbNonDefaultNamespaces()
-	for _,ns := range(ns_list) {
+	ns_list, _ := GetDbNonDefaultNamespaces()
+	for _, ns := range ns_list {
 		if target == ns {
 			return target, true
 		}
@@ -75,7 +75,7 @@ func GetDbList(ns string) map[string]interface{} {
 	}
 	db_list, ok := sonic_db_config[ns]["DATABASES"].(map[string]interface{})
 	if !ok {
-		panic(fmt.Errorf("DATABASES' is not valid key in database_config.json file!"))
+		panic(fmt.Errorf("DATABASES' is not valid key in database_config.json file for namespace %q!", ns))
 	}
 	return db_list
 }
@@ -254,16 +254,6 @@ func DbInit() {
 	sonic_db_init = true
 }
 
-func init() {
+func Init() {
 	sonic_db_init = false
 }
-
-/*
-func main() {
-	  DbInit();
-	  fmt.Println(GetDbSock("CONFIG_DB", "asic0"))
-	  fmt.Println(GetDbSock("CONFIG_DB", ""))
-	  fmt.Println(GetDbSeparator("CONFIG_DB", "asic0"))
-	  //GetDbList("asic0");
-  }
-*/
