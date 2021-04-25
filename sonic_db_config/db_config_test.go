@@ -1,56 +1,11 @@
 package dbconfig
 
 import (
-	"io"
-	"os"
+	"github.com/Azure/sonic-telemetry/test_utils"
 	"testing"
+
 )
 
-func setupMultiNamespace(t *testing.T) func() {
-	err := os.MkdirAll("/var/run/redis0/sonic-db/", 0755)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-	srcFileName := [2]string{"../testdata/database_global.json", "../testdata/database_config_asic0.json"}
-	dstFileName := [2]string{SONIC_DB_GLOBAL_CONFIG_FILE, "/var/run/redis0/sonic-db/database_config_asic0.json"}
-	for i := 0; i < len(srcFileName); i++ {
-		sourceFileStat, err := os.Stat(srcFileName[i])
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-
-		if !sourceFileStat.Mode().IsRegular() {
-			t.Fatalf("err: %s", err)
-		}
-
-		source, err := os.Open(srcFileName[i])
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-		defer source.Close()
-
-		destination, err := os.Create(dstFileName[i])
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-		defer destination.Close()
-		_, err = io.Copy(destination, source)
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-	}
-	/* https://github.com/golang/go/issues/32111 */
-	return func() {
-		err := os.Remove(SONIC_DB_GLOBAL_CONFIG_FILE)
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-		err = os.RemoveAll("/var/run/redis0")
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-	}
-}
 func TestGetDb(t *testing.T) {
 	t.Run("Id", func(t *testing.T) {
 		db_id := GetDbId("CONFIG_DB", GetDbDefaultNamespace())
@@ -82,9 +37,18 @@ func TestGetDb(t *testing.T) {
 }
 func TestGetDbMultiNs(t *testing.T) {
 	Init()
-	cleanupMultiNamespace := setupMultiNamespace(t)
+	err := test_utils.SetupMultiNamespace()
+	if err != nil {
+		t.Fatalf("error Setting up MultiNamespace files with err %T", err)
+	}
+
 	/* https://www.gopherguides.com/articles/test-cleanup-in-go-1-14*/
-	t.Cleanup(cleanupMultiNamespace)
+	t.Cleanup(func() {
+		if err:= test_utils.CleanUpMultiNamespace(); err != nil {
+			t.Fatalf("error Cleaning up MultiNamespace files with err %T", err)
+
+		}
+	})
 	t.Run("Id", func(t *testing.T) {
 		db_id := GetDbId("CONFIG_DB", "asic0")
 		if db_id != 4 {
