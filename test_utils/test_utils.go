@@ -1,11 +1,11 @@
 package test_utils
+
 import (
 	"io"
 	"os"
 )
 
-
-func SetupMultiNamespace() (error) {
+func SetupMultiNamespace() error {
 	err := os.MkdirAll("/var/run/redis0/sonic-db/", 0755)
 	if err != nil {
 		return err
@@ -53,5 +53,5 @@ func CleanUpMultiNamespace() error {
 	return nil
 }
 func GetMultiNsNamespace() string {
-    return "asic0"
+	return "asic0"
 }

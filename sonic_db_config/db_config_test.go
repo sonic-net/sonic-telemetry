@@ -3,7 +3,6 @@ package dbconfig
 import (
 	"github.com/Azure/sonic-telemetry/test_utils"
 	"testing"
-
 )
 
 func TestGetDb(t *testing.T) {
@@ -44,7 +43,7 @@ func TestGetDbMultiNs(t *testing.T) {
 
 	/* https://www.gopherguides.com/articles/test-cleanup-in-go-1-14*/
 	t.Cleanup(func() {
-		if err:= test_utils.CleanUpMultiNamespace(); err != nil {
+		if err := test_utils.CleanUpMultiNamespace(); err != nil {
 			t.Fatalf("error Cleaning up MultiNamespace files with err %T", err)
 
 		}
