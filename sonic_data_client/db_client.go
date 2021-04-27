@@ -397,6 +397,10 @@ func IsTargetDb ( target string) (string, bool, string, bool) {
 	dbNameSpaceExist := false
 	dbNamespace := sdcfg.GetDbDefaultNamespace()
 
+	if len(targetname) > 2 {
+	    return dbName, false, dbNamespace, dbNameSpaceExist
+	}
+
 	if len(targetname) > 1 {
 		dbNamespace = targetname[1]
 		dbNameSpaceExist = true

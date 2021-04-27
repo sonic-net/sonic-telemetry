@@ -312,6 +312,12 @@ func prepareConfigDb(t *testing.T, namespace string) {
 	mpi_pfcwd_map := loadConfig(t, "", configPfcwdByte)
 	loadConfigDB(t, rclient, mpi_pfcwd_map)
 }
+func prepareStateDb(t *testing.T, namespace string) {
+	rclient := getRedisClientN(t, 6, namespace)
+	defer rclient.Close()
+	rclient.FlushDB()
+    rclient.HSet("SWITCH_CAPABILITY|switch", "test_field", "test_value")
+}
 
 func prepareDb(t *testing.T, namespace string) {
 	rclient := getRedisClient(t, namespace)
@@ -397,6 +403,9 @@ func prepareDb(t *testing.T, namespace string) {
 
 	// Load CONFIG_DB for alias translation
 	prepareConfigDb(t, namespace)
+
+    //Load STATE_DB to test non V2R dataset
+    prepareStateDb(t, namespace)
 }
 
 func prepareDbTranslib(t *testing.T) {
@@ -687,7 +696,7 @@ func TestGnmiSet(t *testing.T) {
 	s.s.Stop()
 }
 
-func runGnmiTestGet(t *testing.T) {
+func runGnmiTestGet(t *testing.T, namespace string) {
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
@@ -744,6 +753,12 @@ func runGnmiTestGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
+
+    stateDBPath := "STATE_DB"
+
+    if namespace != sdcfg.GetDbDefaultNamespace() {
+        stateDBPath = "STATE_DB" + "/" + namespace
+    }
 
 	type testCase struct {
 		desc        string
@@ -814,6 +829,7 @@ func runGnmiTestGet(t *testing.T) {
 		`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersPortNameMapByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet68",
 		pathTarget: "COUNTERS_DB",
@@ -823,6 +839,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68Byte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
@@ -833,6 +850,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: "2",
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet68 Pfcwd",
 		pathTarget: "COUNTERS_DB",
@@ -843,6 +861,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68PfcwdByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
 		pathTarget: "COUNTERS_DB",
@@ -852,6 +871,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68Byte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
@@ -862,6 +882,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: "2",
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
 		pathTarget: "COUNTERS_DB",
@@ -872,6 +893,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernet68PfcwdAliasByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet*",
 		pathTarget: "COUNTERS_DB",
@@ -881,6 +903,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
 		pathTarget: "COUNTERS_DB",
@@ -891,6 +914,7 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcByte,
+		valTest:     true,
 	}, {
 		desc:       "get COUNTERS:Ethernet* Pfcwd",
 		pathTarget: "COUNTERS_DB",
@@ -901,7 +925,19 @@ func runGnmiTestGet(t *testing.T) {
 				`,
 		wantRetCode: codes.OK,
 		wantRespVal: countersEthernetWildcardPfcwdByte,
+		valTest:     true,
+	}, {
+		desc:       "get State DB Data for SWITCH_CAPABILITY switch",
+		pathTarget: stateDBPath,
+		textPbPath: `
+					elem: <name: "SWITCH_CAPABILITY" >
+					elem: <name: "switch" >
+				`,
+		valTest:     true,
+		wantRetCode: codes.OK,
+        wantRespVal: []byte(`{"test_field": "test_value"}`),
 	},
+
 		// Happy path
 		createBuildVersionTestCase(
 			"get osversion/build",                                  // query path
@@ -951,7 +987,7 @@ func TestGnmiGet(t *testing.T) {
 
 	prepareDb(t, sdcfg.GetDbDefaultNamespace())
 
-	runGnmiTestGet(t)
+	runGnmiTestGet(t, sdcfg.GetDbDefaultNamespace())
 
 	s.s.Stop()
 }
@@ -976,7 +1012,7 @@ func TestGnmiGetMultiNs(t *testing.T) {
 
 	prepareDb(t, test_utils.GetMultiNsNamespace())
 
-	runGnmiTestGet(t)
+	runGnmiTestGet(t, test_utils.GetMultiNsNamespace())
 
 	s.s.Stop()
 }
