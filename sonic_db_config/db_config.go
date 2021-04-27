@@ -168,28 +168,6 @@ func GetDbTcpAddr(db_name string, ns string) string {
 	return hostname + ":" + strconv.Itoa(port)
 }
 
-func fetchValue(value interface{}) { // pass the interface value from the struct in this function as it will run recursively to get the value.
-	switch value.(type) {
-	case string:
-		fmt.Printf("%v is an string \n ", value.(string))
-	case bool:
-		fmt.Printf("%v is bool \n ", value.(bool))
-	case float64:
-		fmt.Printf("%v is float64 \n ", value.(float64))
-	case []interface{}:
-		fmt.Printf("%v is a slice of interface \n ", value)
-		for _, v := range value.([]interface{}) {
-			fetchValue(v)
-		}
-	case map[string]interface{}:
-		fmt.Printf("%v is a map \n ", value)
-		for _, v := range value.(map[string]interface{}) {
-			fetchValue(v)
-		}
-	default:
-		fmt.Printf("%v is unknown \n ", value)
-	}
-}
 func DbGetNamespaceAndConfigFile(ns_to_cfgfile_map map[string]string) {
 	data, err := io.ReadFile(SONIC_DB_GLOBAL_CONFIG_FILE)
 	if err == nil {
