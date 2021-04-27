@@ -41,6 +41,7 @@ import (
 	gclient "github.com/jipanyang/gnmi/client/gnmi"
 	"github.com/jipanyang/gnxi/utils/xpath"
 	gnoi_system_pb "github.com/openconfig/gnoi/system"
+	"github.com/Azure/sonic-telemetry/test_utils"
 )
 
 var clientTypes = []string{gclient.Type}
@@ -229,10 +230,10 @@ func runServer(t *testing.T, s *Server) {
 	//t.Log("Exiting RPC server on address", s.Address())
 }
 
-func getRedisClientN(t *testing.T, n int) *redis.Client {
+func getRedisClientN(t *testing.T, n int, namespace string) *redis.Client {
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
-		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB", sdcfg.GetDbDefaultNamespace()),
+		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB", namespace),
 		Password:    "", // no password set
 		DB:          n,
 		DialTimeout: 0,
@@ -244,12 +245,13 @@ func getRedisClientN(t *testing.T, n int) *redis.Client {
 	return rclient
 }
 
-func getRedisClient(t *testing.T) *redis.Client {
+func getRedisClient(t *testing.T, namespace string) *redis.Client {
+
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
-		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB", sdcfg.GetDbDefaultNamespace()),
+		Addr:        sdcfg.GetDbTcpAddr("COUNTERS_DB", namespace),
 		Password:    "", // no password set
-		DB:          sdcfg.GetDbId("COUNTERS_DB", sdcfg.GetDbDefaultNamespace()),
+		DB:          sdcfg.GetDbId("COUNTERS_DB", namespace),
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
@@ -259,12 +261,13 @@ func getRedisClient(t *testing.T) *redis.Client {
 	return rclient
 }
 
-func getConfigDbClient(t *testing.T) *redis.Client {
+func getConfigDbClient(t *testing.T,  namespace string) *redis.Client {
+
 	rclient := redis.NewClient(&redis.Options{
 		Network:     "tcp",
-		Addr:        sdcfg.GetDbTcpAddr("CONFIG_DB", sdcfg.GetDbDefaultNamespace()),
+		Addr:        sdcfg.GetDbTcpAddr("CONFIG_DB", namespace),
 		Password:    "", // no password set
-		DB:          sdcfg.GetDbId("CONFIG_DB", sdcfg.GetDbDefaultNamespace()),
+		DB:          sdcfg.GetDbId("CONFIG_DB", namespace),
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
@@ -288,8 +291,8 @@ func loadConfigDB(t *testing.T, rclient *redis.Client, mpi map[string]interface{
 	}
 }
 
-func prepareConfigDb(t *testing.T) {
-	rclient := getConfigDbClient(t)
+func prepareConfigDb(t *testing.T, namespace string) {
+	rclient := getConfigDbClient(t, namespace)
 	defer rclient.Close()
 	rclient.FlushDB()
 
@@ -310,8 +313,8 @@ func prepareConfigDb(t *testing.T) {
 	loadConfigDB(t, rclient, mpi_pfcwd_map)
 }
 
-func prepareDb(t *testing.T) {
-	rclient := getRedisClient(t)
+func prepareDb(t *testing.T, namespace string) {
+	rclient := getRedisClient(t, namespace)
 	defer rclient.Close()
 	rclient.FlushDB()
 	//Enable keysapce notification
@@ -393,11 +396,11 @@ func prepareDb(t *testing.T) {
 	loadDB(t, rclient, mpi_counter)
 
 	// Load CONFIG_DB for alias translation
-	prepareConfigDb(t)
+	prepareConfigDb(t, namespace)
 }
 
 func prepareDbTranslib(t *testing.T) {
-	rclient := getRedisClient(t)
+	rclient := getRedisClient(t, sdcfg.GetDbDefaultNamespace())
 	rclient.FlushDB()
 	rclient.Close()
 
@@ -417,7 +420,7 @@ func prepareDbTranslib(t *testing.T) {
 		t.Fatalf("read file %v err: %v", fileName, err)
 	}
 	for n, v := range rj {
-		rclient := getRedisClientN(t, n)
+		rclient := getRedisClientN(t, n, sdcfg.GetDbDefaultNamespace())
 		loadDBNotStrict(t, rclient, v)
 		rclient.Close()
 	}
@@ -684,13 +687,7 @@ func TestGnmiSet(t *testing.T) {
 	s.s.Stop()
 }
 
-func TestGnmiGet(t *testing.T) {
-	//t.Log("Start server")
-	s := createServer(t, 8081)
-	go runServer(t, s)
-
-	prepareDb(t)
-
+func runGnmiTestGet(t *testing.T) {
 	//t.Log("Start gNMI client")
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
@@ -943,9 +940,46 @@ func TestGnmiGet(t *testing.T) {
 			runTestGet(t, ctx, gClient, td.pathTarget, td.textPbPath, td.wantRetCode, td.wantRespVal, td.valTest)
 		})
 	}
-	s.s.Stop()
+
 }
 
+
+func TestGnmiGet(t *testing.T) {
+	//t.Log("Start server")
+	s := createServer(t, 8081)
+	go runServer(t, s)
+
+	prepareDb(t, sdcfg.GetDbDefaultNamespace())
+
+	runGnmiTestGet(t)
+
+	s.s.Stop()
+}
+func TestGnmiGetMultiNs(t *testing.T) {
+	sdcfg.Init()
+	err := test_utils.SetupMultiNamespace()
+	if err != nil {
+		t.Fatalf("error Setting up MultiNamespace files with err %T", err)
+	}
+
+	/* https://www.gopherguides.com/articles/test-cleanup-in-go-1-14*/
+	t.Cleanup(func() {
+		if err:= test_utils.CleanUpMultiNamespace(); err != nil {
+			t.Fatalf("error Cleaning up MultiNamespace files with err %T", err)
+
+		}
+	})
+
+	//t.Log("Start server")
+	s := createServer(t, 8081)
+	go runServer(t, s)
+
+	prepareDb(t, test_utils.GetMultiNsNamespace())
+
+	runGnmiTestGet(t)
+
+	s.s.Stop()
+}
 func TestGnmiGetTranslib(t *testing.T) {
 	//t.Log("Start server")
 	s := createServer(t, 8081)
@@ -1101,7 +1135,7 @@ type tablePathValue struct {
 
 // runTestSubscribe subscribe DB path in stream mode or poll mode.
 // The return code and response value are compared with expected code and value.
-func runTestSubscribe(t *testing.T) {
+func runTestSubscribe(t *testing.T, namespace string) {
 	fileName := "../testdata/COUNTERS_PORT_NAME_MAP.txt"
 	countersPortNameMapByte, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -2068,10 +2102,10 @@ func runTestSubscribe(t *testing.T) {
 		},
 	}
 
-	rclient := getRedisClient(t)
+	rclient := getRedisClient(t, namespace)
 	defer rclient.Close()
 	for _, tt := range tests {
-		prepareDb(t)
+		prepareDb(t, namespace)
 		// Extra db preparation for this test case
 		for _, prepare := range tt.prepares {
 			switch prepare.op {
@@ -2082,6 +2116,7 @@ func runTestSubscribe(t *testing.T) {
 			}
 		}
 
+		sdcIntervalTicker := sdc.IntervalTicker
 		intervalTickerChan := make(chan time.Time)
 		if tt.generateIntervals {
 			sdc.IntervalTicker = func(interval time.Duration) <-chan time.Time {
@@ -2164,6 +2199,9 @@ func runTestSubscribe(t *testing.T) {
 				t.Errorf("unexpected updates:\n%s", diff)
 			}
 		})
+		if tt.generateIntervals {
+			sdc.IntervalTicker = sdcIntervalTicker
+		}
 	}
 }
 
@@ -2171,7 +2209,30 @@ func TestGnmiSubscribe(t *testing.T) {
 	s := createServer(t, 8081)
 	go runServer(t, s)
 
-	runTestSubscribe(t)
+	runTestSubscribe(t, sdcfg.GetDbDefaultNamespace())
+
+	s.s.Stop()
+}
+func TestGnmiSubscribeMultiNs(t *testing.T) {
+	sdcfg.Init()
+	err := test_utils.SetupMultiNamespace()
+	if err != nil {
+		t.Fatalf("error Setting up MultiNamespace files with err %T", err)
+	}
+
+	/* https://www.gopherguides.com/articles/test-cleanup-in-go-1-14*/
+	t.Cleanup(func() {
+		if err:= test_utils.CleanUpMultiNamespace(); err != nil {
+			t.Fatalf("error Cleaning up MultiNamespace files with err %T", err)
+
+		}
+	})
+
+
+	s := createServer(t, 8081)
+	go runServer(t, s)
+
+	runTestSubscribe(t, test_utils.GetMultiNsNamespace())
 
 	s.s.Stop()
 }

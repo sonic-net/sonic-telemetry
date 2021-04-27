@@ -52,3 +52,6 @@ func CleanUpMultiNamespace() error {
 	}
 	return nil
 }
+func GetMultiNsNamespace() string {
+    return "asic0"
+}
