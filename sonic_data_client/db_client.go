@@ -378,6 +378,7 @@ func GetTableKeySeparator(target string, ns string) (string, error) {
 	var separator string = sdcfg.GetDbSeparator(target, ns)
 	return separator, nil
 }
+
 func GetRedisClientsForDb(target string) map[string]*redis.Client {
 	redis_client_map := make(map[string]*redis.Client)
 	if sdcfg.CheckDbMultiNamespace() {
@@ -391,6 +392,10 @@ func GetRedisClientsForDb(target string) map[string]*redis.Client {
 	}
 	return redis_client_map
 }
+
+// This function get target present in GNMI Request and
+// returns: 1. DbName (string) 2. Is DbName valid (bool)
+//          3. DbNamespace (string) 4. Is DbNamespace present in Target
 func IsTargetDb(target string) (string, bool, string, bool) {
 	targetname := strings.Split(target, "/")
 	dbName := targetname[0]
@@ -1218,6 +1223,7 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 func (c *DbClient) Set(delete []*gnmipb.Path, replace []*gnmipb.Update, update []*gnmipb.Update) error {
 	return nil
 }
+
 func (c *DbClient) Capabilities() []gnmipb.ModelData {
 	return nil
 }

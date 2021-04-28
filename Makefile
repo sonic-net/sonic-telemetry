@@ -67,7 +67,7 @@ check:
 clean:
 	$(RM) -r build
 	$(RM) -r vendor
-	$(RM) -r ${DBDIR}
+	sudo $(RM) -r ${DBDIR}
 
 $(TELEMETRY_TEST_BIN): $(TEST_FILES) $(SRC_FILES)
 	mkdir -p $(@D)
