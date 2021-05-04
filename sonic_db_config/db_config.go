@@ -75,7 +75,7 @@ func GetDbList(ns string) map[string]interface{} {
 	}
 	db_list, ok := sonic_db_config[ns]["DATABASES"].(map[string]interface{})
 	if !ok {
-		panic(fmt.Errorf("DATABASES' is not valid key in database_config.json file for namespace %q!", ns))
+		panic(fmt.Errorf("DATABASES' is not valid key in database_config.json file for namespace `%v` !", ns))
 	}
 	return db_list
 }
@@ -86,15 +86,15 @@ func GetDbInst(db_name string, ns string) map[string]interface{} {
 	}
 	db, ok := sonic_db_config[ns]["DATABASES"].(map[string]interface{})[db_name]
 	if !ok {
-		panic(fmt.Errorf("database name '%v' is not valid in database_config.json file!", db_name))
+		panic(fmt.Errorf("database name '%v' is not valid in database_config.json file for namespace `%v`!", db_name, ns))
 	}
 	inst_name, ok := db.(map[string]interface{})["instance"]
 	if !ok {
-		panic(fmt.Errorf("'instance' is not a valid field in database_config.json file!"))
+		panic(fmt.Errorf("'instance' is not a valid field in database_config.json file for namespace `%v`!", ns))
 	}
 	inst, ok := sonic_db_config[ns]["INSTANCES"].(map[string]interface{})[inst_name.(string)]
 	if !ok {
-		panic(fmt.Errorf("instance name '%v' is not valid in database_config.json file!", inst_name))
+		panic(fmt.Errorf("instance name '%v' is not valid in database_config.json file for namespace `%v`!", inst_name, ns))
 	}
 	return inst.(map[string]interface{})
 }

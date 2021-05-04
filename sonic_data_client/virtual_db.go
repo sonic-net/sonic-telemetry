@@ -127,14 +127,14 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		separator, _ := GetTableKeySeparator(dbName, namespace)
 		_, err := redisDb.Ping().Result()
 		if err != nil {
-			log.V(1).Infof("Can not connect to %v, err: %v", dbName, err)
+			log.V(1).Infof("Can not connect to %v in namsespace %v, err: %v", dbName, namespace, err)
 			return nil, err
 		}
 
 		keyName := fmt.Sprintf("PFC_WD_TABLE%v*", separator)
 		resp, err := redisDb.Keys(keyName).Result()
 		if err != nil {
-			log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
+			log.V(1).Infof("redis get keys failed for %v in namsepace %v, key = %v, err: %v", dbName, namespace, keyName, err)
 			return nil, err
 		}
 
@@ -153,7 +153,7 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		keyName = "PORT_QOS_MAP*"
 		resp, err = redisDb.Keys(keyName).Result()
 		if err != nil {
-			log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
+			log.V(1).Infof("redis get keys failed for %v in namespace %v, key = %v, err: %v", dbName, namespace, keyName, err)
 			return nil, err
 		}
 		if len(resp) == 0 {
@@ -165,14 +165,14 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 		fieldName := "pfc_enable"
 		priorities, err := redisDb.HGet(qos_key, fieldName).Result()
 		if err != nil {
-			log.V(1).Infof("redis get field failed for %v, key = %v, field = %v, err: %v", dbName, qos_key, fieldName, err)
+			log.V(1).Infof("redis get field failed for %v in namsepace %v, key = %v, field = %v, err: %v", dbName, namespace, qos_key, fieldName, err)
 			return nil, err
 		}
 
 		keyName = fmt.Sprintf("MAP_PFC_PRIORITY_TO_QUEUE%vAZURE", separator)
 		pfc_queue_map, err := redisDb.HGetAll(keyName).Result()
 		if err != nil {
-			log.V(1).Infof("redis get fields failed for %v, key = %v, err: %v", dbName, keyName, err)
+			log.V(1).Infof("redis get fields failed for %v in namsepace %v, key = %v, err: %v", dbName, namespace, keyName, err)
 			return nil, err
 		}
 
@@ -220,20 +220,20 @@ func getAliasMap() (map[string]string, map[string]string, map[string]string, err
 		separator, _ := GetTableKeySeparator(dbName, namespace)
 		_, err := redisDb.Ping().Result()
 		if err != nil {
-			log.V(1).Infof("Can not connect to %v, err: %v", dbName, err)
+			log.V(1).Infof("Can not connect to %v, in namsepace %v, err: %v", dbName, namespace, err)
 			return nil, nil, nil, err
 		}
 
 		keyName := fmt.Sprintf("PORT%v*", separator)
 		resp, err := redisDb.Keys(keyName).Result()
 		if err != nil {
-			log.V(1).Infof("redis get keys failed for %v, key = %v, err: %v", dbName, keyName, err)
+			log.V(1).Infof("redis get keys failed for %v in namsepace %v, key = %v, err: %v", dbName, namespace, keyName, err)
 			return nil, nil, nil, err
 		}
 		for _, key := range resp {
 			alias, err := redisDb.HGet(key, "alias").Result()
 			if err != nil {
-				log.V(1).Infof("redis get field alias failed for %v, key = %v, err: %v", dbName, key, err)
+				log.V(1).Infof("redis get field alias failed for %v in namsepace %v, key = %v, err: %v", dbName, namespace, key, err)
 				// clear aliasMap
 				alias2name_map = make(map[string]string)
 				name2alias_map = make(map[string]string)
@@ -263,14 +263,14 @@ func addmap(a map[string]string, b map[string]string) {
 func getCountersMap(tableName string) (map[string]string, error) {
 	counter_map := make(map[string]string)
 	dbName := "COUNTERS_DB"
-	for _, redisDb := range GetRedisClientsForDb(dbName) {
+	for namespace, redisDb := range GetRedisClientsForDb(dbName) {
 		fv, err := redisDb.HGetAll(tableName).Result()
 		if err != nil {
-			log.V(2).Infof("redis HGetAll failed for COUNTERS_DB, tableName: %s", tableName)
+			log.V(2).Infof("redis HGetAll failed for COUNTERS_DB in namespace %v, tableName: %s", namespace, tableName)
 			return nil, err
 		}
 		addmap(counter_map, fv)
-		log.V(6).Infof("tableName: %s, map %v", tableName, fv)
+		log.V(6).Infof("tableName: %s in namespace %v, map %v", tableName, namespace, fv)
 	}
 	return counter_map, nil
 }

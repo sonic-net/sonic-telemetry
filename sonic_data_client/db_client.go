@@ -395,7 +395,7 @@ func GetRedisClientsForDb(target string) map[string]*redis.Client {
 
 // This function get target present in GNMI Request and
 // returns: 1. DbName (string) 2. Is DbName valid (bool)
-//          3. DbNamespace (string) 4. Is DbNamespace present in Target
+//          3. DbNamespace (string) 4. Is DbNamespace present in Target (bool)
 func IsTargetDb(target string) (string, bool, string, bool) {
 	targetname := strings.Split(target, "/")
 	dbName := targetname[0]
@@ -403,6 +403,7 @@ func IsTargetDb(target string) (string, bool, string, bool) {
 	dbNamespace := sdcfg.GetDbDefaultNamespace()
 
 	if len(targetname) > 2 {
+		log.V(1).Infof("target format is not correct")
 		return dbName, false, dbNamespace, dbNameSpaceExist
 	}
 
@@ -494,15 +495,15 @@ func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]
 
 	target := prefix.GetTarget()
 	targetDbName, targetDbNameValid, targetDbNameSpace, targetDbNameSpaceExist := IsTargetDb(target)
+	// Verify it is a valid db name
+	if !targetDbNameValid {
+		return fmt.Errorf("Invalid target dbName %v", targetDbName)
+	}
 
 	// Verify Namespace is valid
 	dbNamespace, ok := sdcfg.GetDbNamespaceFromTarget(targetDbNameSpace)
 	if !ok {
 		return fmt.Errorf("Invalid target dbNameSpace %v", targetDbNameSpace)
-	}
-	// Verify it is a valid db name
-	if !targetDbNameValid {
-		return fmt.Errorf("Invalid target dbName %v", targetDbName)
 	}
 
 	fullPath := path
@@ -550,7 +551,7 @@ func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]
 
 	redisDb, ok := Target2RedisDb[tblPath.dbNamespace][tblPath.dbName]
 	if !ok {
-		return fmt.Errorf("Redis Client not present for dbName %v dbNamespace", targetDbName, dbNamespace)
+		return fmt.Errorf("Redis Client not present for dbName %v dbNamespace %v", targetDbName, dbNamespace)
 	}
 
 	// The expect real db path could be in one of the formats:
