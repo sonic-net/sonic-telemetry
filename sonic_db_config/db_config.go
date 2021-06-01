@@ -31,7 +31,7 @@ func CheckDbMultiNamespace() bool {
 	}
 	return sonic_db_multi_namespace
 }
-func GetDbNonDefaultNamespaces() ([]string, int) {
+func GetDbNonDefaultNamespaces() []string {
 	if !sonic_db_init {
 		DbInit()
 	}
@@ -42,7 +42,7 @@ func GetDbNonDefaultNamespaces() ([]string, int) {
 		}
 		ns_list = append(ns_list, ns)
 	}
-	return ns_list, len(ns_list)
+	return ns_list
 }
 func GetDbAllNamespaces() []string {
 	if !sonic_db_init {
@@ -61,7 +61,7 @@ func GetDbNamespaceFromTarget(target string) (string, bool) {
 	if target == GetDbDefaultNamespace() {
 		return target, true
 	}
-	ns_list, _ := GetDbNonDefaultNamespaces()
+	ns_list := GetDbNonDefaultNamespaces()
 	for _, ns := range ns_list {
 		if target == ns {
 			return target, true
@@ -176,12 +176,11 @@ func DbGetNamespaceAndConfigFile(ns_to_cfgfile_map map[string]string) {
 		if err != nil {
 			panic(err)
 		}
-		var sonic_db_global_config = make(map[string]interface{})
+		sonic_db_global_config := make(map[string]interface{})
 		err = json.Unmarshal([]byte(data), &sonic_db_global_config)
 		if err != nil {
 			panic(err)
 		}
-		var db_include_file string
 		for _, entry := range sonic_db_global_config["INCLUDES"].([]interface{}) {
 			ns, ok := entry.(map[string]interface{})["namespace"]
 			if !ok {
@@ -192,7 +191,7 @@ func DbGetNamespaceAndConfigFile(ns_to_cfgfile_map map[string]string) {
 				panic(fmt.Errorf("Global Database config file is not valid(multiple include for same namespace!"))
 			}
 			//Ref:https://www.geeksforgeeks.org/filepath-join-function-in-golang-with-examples/
-			db_include_file = filepath.Join(dir, entry.(map[string]interface{})["include"].(string))
+			db_include_file := filepath.Join(dir, entry.(map[string]interface{})["include"].(string))
 			ns_to_cfgfile_map[ns.(string)] = db_include_file
 		}
 		if len(ns_to_cfgfile_map) > 1 {

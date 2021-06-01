@@ -15,7 +15,7 @@ func TestGetDb(t *testing.T) {
 	t.Run("Sock", func(t *testing.T) {
 		sock_path := GetDbSock("CONFIG_DB", GetDbDefaultNamespace())
 		if sock_path != "/var/run/redis/redis.sock" {
-			t.Fatalf(`Sock("") = %q, want "", error`, sock_path)
+			t.Fatalf(`Sock("") = %q, want "/var/run/redis/redis.sock", error`, sock_path)
 		}
 	})
 	t.Run("AllNamespaces", func(t *testing.T) {
@@ -23,7 +23,7 @@ func TestGetDb(t *testing.T) {
 		if len(ns_list) != 1 {
 			t.Fatalf(`AllNamespaces("") = %q, want "1", error`, len(ns_list))
 		}
-		if !(ns_list[0] == GetDbDefaultNamespace()) {
+		if ns_list[0] != GetDbDefaultNamespace() {
 			t.Fatalf(`AllNamespaces("") = %q, want default, error`, ns_list[0])
 		}
 	})
@@ -57,7 +57,7 @@ func TestGetDbMultiNs(t *testing.T) {
 	t.Run("Sock", func(t *testing.T) {
 		sock_path := GetDbSock("CONFIG_DB", "asic0")
 		if sock_path != "/var/run/redis0/redis.sock" {
-			t.Fatalf(`Sock("") = %q, want "", error`, sock_path)
+			t.Fatalf(`Sock("") = %q, want "/var/run/redis0/redis.sock", error`, sock_path)
 		}
 	})
 	t.Run("AllNamespaces", func(t *testing.T) {

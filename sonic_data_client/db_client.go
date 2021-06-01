@@ -382,7 +382,7 @@ func GetTableKeySeparator(target string, ns string) (string, error) {
 func GetRedisClientsForDb(target string) map[string]*redis.Client {
 	redis_client_map := make(map[string]*redis.Client)
 	if sdcfg.CheckDbMultiNamespace() {
-		ns_list, _ := sdcfg.GetDbNonDefaultNamespaces()
+		ns_list := sdcfg.GetDbNonDefaultNamespaces()
 		for _, ns := range ns_list {
 			redis_client_map[ns] = Target2RedisDb[ns][target]
 		}
@@ -422,22 +422,22 @@ func IsTargetDb(target string) (string, bool, string, bool) {
 
 // For testing only
 func useRedisTcpClient() {
-	if UseRedisLocalTcpPort {
-		for _, dbNamespace := range sdcfg.GetDbAllNamespaces() {
-			Target2RedisDb[dbNamespace] = make(map[string]*redis.Client)
-			for dbName, dbn := range spb.Target_value {
-				if dbName != "OTHERS" {
-					// DB connector for direct redis operation
-					var redisDb *redis.Client
-					redisDb = redis.NewClient(&redis.Options{
-						Network:     "tcp",
-						Addr:        sdcfg.GetDbTcpAddr(dbName, dbNamespace),
-						Password:    "", // no password set
-						DB:          int(dbn),
-						DialTimeout: 0,
-					})
-					Target2RedisDb[dbNamespace][dbName] = redisDb
-				}
+	if !UseRedisLocalTcpPort {
+		return
+	}
+	for _, dbNamespace := range sdcfg.GetDbAllNamespaces() {
+		Target2RedisDb[dbNamespace] = make(map[string]*redis.Client)
+		for dbName, dbn := range spb.Target_value {
+			if dbName != "OTHERS" {
+				// DB connector for direct redis operation
+				redisDb := redis.NewClient(&redis.Options{
+					Network:     "tcp",
+					Addr:        sdcfg.GetDbTcpAddr(dbName, dbNamespace),
+					Password:    "", // no password set
+					DB:          int(dbn),
+					DialTimeout: 0,
+				})
+				Target2RedisDb[dbNamespace][dbName] = redisDb
 			}
 		}
 	}
@@ -450,8 +450,7 @@ func init() {
 		for dbName, dbn := range spb.Target_value {
 			if dbName != "OTHERS" {
 				// DB connector for direct redis operation
-				var redisDb *redis.Client
-				redisDb = redis.NewClient(&redis.Options{
+				redisDb := redis.NewClient(&redis.Options{
 					Network:     "unix",
 					Addr:        sdcfg.GetDbSock(dbName, dbNamespace),
 					Password:    "", // no password set
