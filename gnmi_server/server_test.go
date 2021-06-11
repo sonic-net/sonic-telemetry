@@ -815,128 +815,137 @@ func runGnmiTestGet(t *testing.T, namespace string) {
 		`,
 		wantRetCode: codes.Unimplemented,
 	}, {
-		desc:       "Get valid but non-existing node",
-		pathTarget: "COUNTERS_DB",
+		desc:       "Test passing asic in path for V2R Dataset Target",
+		pathTarget: "COUNTER_DB" + "/" + namespace,
 		textPbPath: `
+					elem: <name: "COUNTERS" >
+					elem: <name: "Ethernet68" >
+				`,
+		wantRetCode: codes.NotFound,
+	},
+		{
+			desc:       "Get valid but non-existing node",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 			elem: <name: "MyCounters" >
 		`,
-		wantRetCode: codes.NotFound,
-	}, {
-		desc:       "Get COUNTERS_PORT_NAME_MAP",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.NotFound,
+		}, {
+			desc:       "Get COUNTERS_PORT_NAME_MAP",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 			elem: <name: "COUNTERS_PORT_NAME_MAP" >
 		`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersPortNameMapByte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS:Ethernet68",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersPortNameMapByte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS:Ethernet68",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68Byte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernet68Byte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS:Ethernet68 SAI_PORT_STAT_PFC_7_RX_PKTS",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68" >
 					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: "2",
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS:Ethernet68 Pfcwd",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: "2",
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS:Ethernet68 Pfcwd",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68" >
 					elem: <name: "Pfcwd" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68PfcwdByte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernet68PfcwdByte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS (use vendor alias):Ethernet68/1",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68/1" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68Byte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernet68Byte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS (use vendor alias):Ethernet68/1 SAI_PORT_STAT_PFC_7_RX_PKTS",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68/1" >
 					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: "2",
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: "2",
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS (use vendor alias):Ethernet68/1 Pfcwd",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet68/1" >
 					elem: <name: "Pfcwd" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernet68PfcwdAliasByte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS:Ethernet*",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernet68PfcwdAliasByte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS:Ethernet*",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet*" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernetWildcardByte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernetWildcardByte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS:Ethernet* SAI_PORT_STAT_PFC_7_RX_PKTS",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet*" >
 					elem: <name: "SAI_PORT_STAT_PFC_7_RX_PKTS" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernetWildcardPfcByte,
-		valTest:     true,
-	}, {
-		desc:       "get COUNTERS:Ethernet* Pfcwd",
-		pathTarget: "COUNTERS_DB",
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernetWildcardPfcByte,
+			valTest:     true,
+		}, {
+			desc:       "get COUNTERS:Ethernet* Pfcwd",
+			pathTarget: "COUNTERS_DB",
+			textPbPath: `
 					elem: <name: "COUNTERS" >
 					elem: <name: "Ethernet*" >
 					elem: <name: "Pfcwd" >
 				`,
-		wantRetCode: codes.OK,
-		wantRespVal: countersEthernetWildcardPfcwdByte,
-		valTest:     true,
-	}, {
-		desc:       "get State DB Data for SWITCH_CAPABILITY switch",
-		pathTarget: stateDBPath,
-		textPbPath: `
+			wantRetCode: codes.OK,
+			wantRespVal: countersEthernetWildcardPfcwdByte,
+			valTest:     true,
+		}, {
+			desc:       "get State DB Data for SWITCH_CAPABILITY switch",
+			pathTarget: stateDBPath,
+			textPbPath: `
 					elem: <name: "SWITCH_CAPABILITY" >
 					elem: <name: "switch" >
 				`,
-		valTest:     true,
-		wantRetCode: codes.OK,
-		wantRespVal: []byte(`{"test_field": "test_value"}`),
-	},
+			valTest:     true,
+			wantRetCode: codes.OK,
+			wantRespVal: []byte(`{"test_field": "test_value"}`),
+		},
 
 		// Happy path
 		createBuildVersionTestCase(

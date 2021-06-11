@@ -129,24 +129,6 @@ func NewDbClient(paths []*gnmipb.Path, prefix *gnmipb.Path) (Client, error) {
 	if UseRedisLocalTcpPort {
 		useRedisTcpClient()
 	}
-	if prefix.GetTarget() == "COUNTERS_DB" {
-		err = initCountersPortNameMap()
-		if err != nil {
-			return nil, err
-		}
-		err = initCountersQueueNameMap()
-		if err != nil {
-			return nil, err
-		}
-		err = initAliasMap()
-		if err != nil {
-			return nil, err
-		}
-		err = initCountersPfcwdNameMap()
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	client.prefix = prefix
 	client.pathG2S = make(map[*gnmipb.Path][]tablePath)
@@ -504,6 +486,26 @@ func populateDbtablePath(prefix, path *gnmipb.Path, pathG2S *map[*gnmipb.Path][]
 	if !ok {
 		return fmt.Errorf("Invalid target dbNameSpace %v", targetDbNameSpace)
 	}
+
+	if targetDbName == "COUNTERS_DB" {
+        err := initCountersPortNameMap()
+		if err != nil {
+			return err
+		}
+		err = initCountersQueueNameMap()
+		if err != nil {
+			return err
+		}
+		err = initAliasMap()
+		if err != nil {
+			return err
+		}
+		err = initCountersPfcwdNameMap()
+		if err != nil {
+			return err
+		}
+	}
+
 
 	fullPath := path
 	if prefix != nil {
