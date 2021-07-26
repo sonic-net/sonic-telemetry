@@ -101,6 +101,10 @@ var (
 			path:    []string{"OTHERS", "osversion", "build"},
 			getFunc: dataGetFunc(getBuildVersion),
 		},
+		{ // Get device syslog
+			path:    []string{"OTHERS", "device", "syslog"},
+			getFunc: dataGetFunc(getDeviceSyslog),
+		},
 	}
 )
 
@@ -227,6 +231,33 @@ func getCpuUtil() ([]byte, error) {
 	}
 	log.V(4).Infof("getCpuUtil, output %v", string(b))
 	return b, nil
+}
+
+func getDeviceSyslog() ([]byte, error) {
+	hostName := "localhost"
+	portNum := "5150"
+	service := hostName + ":" + portNum
+	bufferSize := 1024
+	RemoteAddr, err := net.ResolveUDPAddr("udp4", service)
+	portConn, err := net.ListenUDP("udp4", RemoteAddr)
+	if err != nil {
+		log.V(2).Infof("%v", err)
+		return nil, err
+	}
+	defer portConn.Close()
+	buffer := make([]byte, bufferSize)
+	payloadSize, _, err := portConn.ReadFromUDP(buffer)
+	if err != nil {
+		log.V(2).Infof("%v", err)
+		return buffer, err
+	}
+	if bufferSize < payloadSize {
+		log.V(2).Infof("Payload was larger than buffer", err)
+		return nil, nil
+	}
+
+	log.V(4).Infof("getDeviceSyslog, output %v", string(buffer[:payloadSize]))
+	return buffer[:payloadSize], nil
 }
 
 func getProcMeminfo() ([]byte, error) {
