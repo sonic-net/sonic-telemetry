@@ -7,7 +7,7 @@
          
 # Overview 
 ## Purpose:
-To replace the original UDP Proxy syslog pipeline to allow a secure transfer of syslog information from the SONiC device using the streaming telemetry servive to the client.
+To replace the original syslog pipeline to allow a secure transfer of syslog information from the SONiC device using the streaming telemetry servive to the client.
 
 
 ## Syslog Extraction Method
