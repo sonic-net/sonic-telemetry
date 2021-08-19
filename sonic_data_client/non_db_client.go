@@ -1,6 +1,7 @@
 package client
 
 import (
+	"container/list"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -28,6 +29,25 @@ const (
 )
 
 type dataGetFunc func() ([]byte, error)
+
+// connects the port for the syslog messages
+func openPort() {
+	hostName := "localhost"
+	portNum := "5150"
+	service := hostName + ":" + portNum
+	RemoteAddr, err := net.ResolveUDPAddr("udp4", service)
+	portConn, err := net.ListenUDP("udp4", RemoteAddr)
+	if err != nil {
+		log.V(2).Infof("%v", err)
+		return
+	}
+	syslogPort = portConn
+}
+
+// closes the port for the syslog messages
+func closePort() {
+	syslogPort.Close()
+}
 
 type path2DataFunc struct {
 	path    []string
@@ -61,6 +81,9 @@ func InvalidateVersionFileStash() {
 var (
 	clientTrie *Trie
 	statsR     statsRing
+
+	// the connection port for the syslog data set
+	syslogPort *net.UDPConn
 
 	versionFileStash sonicVersionYmlStash
 
@@ -235,19 +258,9 @@ func getCpuUtil() ([]byte, error) {
 }
 
 func getDeviceSyslog() ([]byte, error) {
-	hostName := "localhost"
-	portNum := "5150"
-	service := hostName + ":" + portNum
 	bufferSize := 1024
-	RemoteAddr, err := net.ResolveUDPAddr("udp4", service)
-	portConn, err := net.ListenUDP("udp4", RemoteAddr)
-	if err != nil {
-		log.V(2).Infof("%v", err)
-		return nil, err
-	}
-	defer portConn.Close()
 	buffer := make([]byte, bufferSize)
-	payloadSize, _, err := portConn.ReadFromUDP(buffer)
+	payloadSize, _, err := syslogPort.ReadFromUDP(buffer)
 	if err != nil {
 		log.V(2).Infof("%v", err)
 		return buffer, err
@@ -460,6 +473,10 @@ func (c *NonDbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *s
 	for _, sub := range subscribe.GetSubscription() {
 		subMode := sub.GetMode()
 		if subMode != gnmipb.SubscriptionMode_SAMPLE {
+			if subMode == gnmipb.SubscriptionMode_ON_CHANGE {
+				streamOnChange(c, stop, sub)
+				return
+			}
 			putFatalMsg(c.q, fmt.Sprintf("Unsupported subscription mode: %v.", subMode))
 			return
 		}
@@ -523,6 +540,55 @@ func streamSample(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription, 
 		case <-time.After(interval):
 			runGetterAndSend(c, gnmiPath, getter)
 		}
+	}
+}
+
+func streamOnChange(c *NonDbClient, stop chan struct{}, sub *gnmipb.Subscription) {
+	storageBuffer := list.New()
+	gnmiPath := sub.GetPath()
+	openPort()
+	getter, _ := c.path2Getter[gnmiPath]
+
+	c.q.Put(Value{
+		&spb.Value{
+			Timestamp:    time.Now().UnixNano(),
+			SyncResponse: true,
+		},
+	})
+
+	for {
+		elem, _ := getter()
+		// adds new elem to storage space
+		storageBuffer.PushBack(elem)
+		select {
+		case <-stop:
+			log.V(1).Infof("Stopping NonDbClient.streamOnChange routine for sub '%s'", sub)
+			// closes the port once the connection has been made
+			closePort()
+			return
+
+		default:
+			// prints value to the gnmi client
+			spbv := &spb.Value{
+				Prefix:       c.prefix,
+				Path:         gnmiPath,
+				Timestamp:    time.Now().UnixNano(),
+				SyncResponse: false,
+				Val: &gnmipb.TypedValue{
+					Value: &gnmipb.TypedValue_JsonIetfVal{
+						JsonIetfVal: storageBuffer.Back().Value.([]byte),
+					}},
+			}
+			err := c.q.Put(Value{spbv})
+			if err != nil {
+				log.V(3).Infof("Failed to put for %v, %v", gnmiPath, err)
+			} else {
+				log.V(6).Infof("Added spbv #%v", spbv)
+			}
+			// removes the message once it has been sent to the client
+			storageBuffer.Remove(storageBuffer.Front())
+		}
+
 	}
 }
 
