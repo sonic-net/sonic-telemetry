@@ -89,7 +89,10 @@ func (d Destination) Validate() error {
 	if len(d.Addrs) == 0 {
 		return errors.New("Destination.Addrs is empty")
 	}
-	// TODO: validate Addrs is in format IP:PORT
+
+	if !strings.Contains(d.Addrs, ":") && len(strings.Split(d.Addrs, ":")) != 2 {
+		return errors.New("Destination.Addrs IP validation failed")
+	}
 	return nil
 }
 
