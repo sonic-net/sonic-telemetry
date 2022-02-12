@@ -335,11 +335,22 @@ func addTimer(c *TranslClient, ticker_map map[int][]*ticker_info, cases *[]refle
 }
 
 func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map[string]*gnmipb.Path, c *TranslClient, updates_only bool) {
+	sync_done := false
 	defer c.w.Done()
+
+	// Helper to signal sync
+	signalSync := func() {
+		if !sync_done {
+			c.synced.Done()
+			sync_done = true
+		}
+	}
+
+	defer signalSync()
+
 	rc, ctx := common_utils.GetContext(c.ctx)
 	c.ctx = ctx
 	q := queue.NewPriorityQueue(1, false)
-	var sync_done bool
 	req := translib.SubscribeRequest{Paths:stringPaths, Q:q, Stop:c.channel}
 	if rc.BundleVersion != nil {
 		nver, err := translib.NewVersion(*rc.BundleVersion)
@@ -397,8 +408,7 @@ func TranslSubscribe(gnmiPaths []*gnmipb.Path, stringPaths []string, pathMap map
 			
 			if v.SyncComplete && !sync_done {
 				fmt.Println("SENDING SYNC")
-				c.synced.Done()
-				sync_done = true
+				signalSync()
 			}
 		default:
 			log.V(1).Infof("Unknown data type %v for %s in queue", items[0], c)

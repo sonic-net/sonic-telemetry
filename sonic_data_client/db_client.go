@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"runtime"
+	"runtime/debug"
 
 	log "github.com/golang/glog"
 
@@ -20,6 +22,7 @@ import (
 	"github.com/go-redis/redis"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
+
 
 const (
 	// indentString represents the default indentation string used for
@@ -219,6 +222,9 @@ func (c *DbClient) StreamRun(q *queue.PriorityQueue, stop chan struct{}, w *sync
 
 	<-c.channel
 	log.V(1).Infof("Exiting StreamRun routine for Client %v", c)
+	debug.FreeOSMemory()
+	n := runtime.NumGoroutine()
+	log.V(1).Infof("Force mem release; numRoutine=%v", n)
 }
 
 // streamOnChangeSubscription implements Subscription "ON_CHANGE STREAM" mode
@@ -300,6 +306,9 @@ func (c *DbClient) PollRun(q *queue.PriorityQueue, poll chan struct{}, w *sync.W
 			},
 		})
 		log.V(4).Infof("Sync done, poll time taken: %v ms", int64(time.Since(t1)/time.Millisecond))
+		debug.FreeOSMemory()
+		n := runtime.NumGoroutine()
+		log.V(1).Infof("Force mem release; numRoutine=%v", n)
 	}
 }
 func (c *DbClient) OnceRun(q *queue.PriorityQueue, once chan struct{}, w *sync.WaitGroup, subscribe *gnmipb.SubscriptionList) {
@@ -797,6 +806,9 @@ func dbFieldMultiSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, in
 			log.V(1).Infof("Queue error:  %v", err)
 			return err
 		}
+		debug.FreeOSMemory()
+		n := runtime.NumGoroutine()
+		log.V(1).Infof("Force mem release; numRoutine=%v", n)
 
 		return nil
 	}
@@ -874,6 +886,9 @@ func dbFieldSubscribe(c *DbClient, gnmiPath *gnmipb.Path, onChange bool, interva
 			log.V(1).Infof("Queue error:  %v", err)
 			return err
 		}
+		debug.FreeOSMemory()
+		n := runtime.NumGoroutine()
+		log.V(1).Infof("Force mem release; numRoutine=%v", n)
 
 		return nil
 	}
@@ -1043,6 +1058,9 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 		if err = c.q.Put(Value{spbv}); err != nil {
 			return fmt.Errorf("Queue error:  %v", err)
 		}
+		debug.FreeOSMemory()
+		n := runtime.NumGoroutine()
+		log.V(1).Infof("Force mem release; numRoutine=%v", n)
 
 		return nil
 	}
@@ -1126,7 +1144,7 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 
 		select {
 		case updatedTable := <-updateChannel:
-			log.V(1).Infof("update received: %v", updatedTable)
+			// log.V(1).Infof("update received: %v", updatedTable)
 			if interval == 0 {
 				// on-change mode, send the updated data.
 				if err := sendMsiData(updatedTable); err != nil {
@@ -1140,7 +1158,7 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 				}
 			}
 		case <-intervalTicker:
-			log.V(1).Infof("ticker received: %v", len(msiAll))
+			// log.V(1).Infof("ticker received: %v", len(msiAll))
 
 			if err := sendMsiData(msiAll); err != nil {
 				handleFatalMsg(err.Error())
@@ -1150,7 +1168,7 @@ func dbTableKeySubscribe(c *DbClient, gnmiPath *gnmipb.Path, interval time.Durat
 			// Clear the payload so that next time it will send only updates
 			if updateOnly {
 				msiAll = make(map[string]interface{})
-				log.V(1).Infof("msiAll cleared: %v", len(msiAll))
+				// log.V(1).Infof("msiAll cleared: %v", len(msiAll))
 			}
 
 		case <-c.channel:

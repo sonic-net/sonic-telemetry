@@ -6,6 +6,8 @@ import (
 	"flag"
 	"io/ioutil"
 	"time"
+	"runtime"
+	"runtime/debug"
 
 	log "github.com/golang/glog"
 	"google.golang.org/grpc"
@@ -130,6 +132,15 @@ func main() {
 
 	gnmi.GenerateJwtSecretKey()
 }
+
+    go func() {
+        for {
+			debug.FreeOSMemory()
+			n := runtime.NumGoroutine()
+			log.V(1).Infof("Force mem release; numRoutine=%v", n)
+			time.Sleep(5 * time.Second)
+		}
+	}()
 
 	s, err := gnmi.NewServer(cfg, opts)
 	if err != nil {

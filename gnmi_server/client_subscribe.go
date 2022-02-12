@@ -5,6 +5,8 @@ import (
 	"io"
 	"net"
 	"sync"
+	"runtime"
+	"runtime/debug"
 
 	"github.com/Workiva/go-datastructures/queue"
 	log "github.com/golang/glog"
@@ -83,6 +85,7 @@ func (c *Client) Run(stream gnmipb.GNMI_SubscribeServer) (err error) {
 		if err != nil {
 			c.errors++
 		}
+        log.V(2).Infof("Client %s exiting", c)
 	}()
 
 	query, err := stream.Recv()
@@ -261,5 +264,8 @@ func (c *Client) send(stream gnmipb.GNMI_SubscribeServer) error {
 			return err
 		}
 		log.V(5).Infof("Client %s done sending, msg count %d, msg %v", c, c.sendMsg, resp)
+		debug.FreeOSMemory()
+		n := runtime.NumGoroutine()
+		log.V(1).Infof("Force mem release; numRoutine=%v", n)
 	}
 }
