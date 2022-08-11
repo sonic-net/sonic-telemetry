@@ -157,6 +157,17 @@ func (srv *Server) Serve() error {
 	return srv.s.Serve(srv.lis)
 }
 
+// Stop stops all gRPC server. It immediately closes all open connections and listeners. It
+// cancels all active RPCs on the server side and the corresponding pending RPCs on the client
+// side will get notified by connection errors.
+func (srv *Server) Stop() {
+    s := srv.s
+    if s == nil {
+        fmt.Errorf("gRPC server failed to stop!")
+    }
+    srv.s.Stop()
+}
+
 // Address returns the port the Server is listening to.
 func (srv *Server) Address() string {
 	addr := srv.lis.Addr().String()
