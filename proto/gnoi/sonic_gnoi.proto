@@ -31,6 +31,7 @@ message TechsupportRequest {
 message TechsupportResponse {
     message Output {
         string output_filename = 1 [(gogoproto.jsontag) = "output-filename", (gogoproto.moretags) = "xml:\",comment\""];
+        string output_status = 2 [(gogoproto.jsontag) = "output-status", (gogoproto.moretags) = "xml:\",comment\""];
     }
     Output output = 1 [(gogoproto.jsontag) = "sonic-show-techsupport:output", (gogoproto.moretags) = "xml:\",comment\""];
 }
