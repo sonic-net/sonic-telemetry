@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
+
 	spb "github.com/Azure/sonic-telemetry/proto"
 	sdc "github.com/Azure/sonic-telemetry/sonic_data_client"
 	sdcfg "github.com/Azure/sonic-telemetry/sonic_db_config"
@@ -16,7 +18,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"net"
+
 	//"reflect"
 	"strconv"
 	"strings"
@@ -262,9 +264,14 @@ func newClient(ctx context.Context, dest Destination) (*Client, error) {
 	opts := []grpc.DialOption{
 		grpc.WithBlock(),
 	}
+
 	if clientCfg.TLS != nil {
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(clientCfg.TLS)))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+		log.V(2).Infof("gRPC without TLS")
 	}
+
 	conn, err := grpc.DialContext(ctx, dest.Addrs, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("Dial to (%s, timeout %v): %v", dest, timeout, err)
