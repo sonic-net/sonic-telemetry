@@ -694,6 +694,13 @@ func DialOutRun(ctx context.Context, ccfg *ClientConfig) error {
 	}
 
 	for {
+		// Check if ctx was canceled.
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		
 		msgi, err := pubsub.ReceiveTimeout(time.Millisecond * 1000)
 		if err != nil {
 			neterr, ok := err.(net.Error)
@@ -714,12 +721,6 @@ func DialOutRun(ctx context.Context, ccfg *ClientConfig) error {
 		} else {
 			log.V(2).Infof("Invalid psubscribe payload notification:  %v", subscr)
 			continue
-		}
-		// Check if ctx was canceled.
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
 		}
 	}
 }
