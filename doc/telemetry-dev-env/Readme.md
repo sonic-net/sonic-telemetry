@@ -45,3 +45,14 @@ docker exec -it telemetry-dev-env bash
 # Make a query
 /src/sonic-telemetry/build/bin/gnmi_cli -client_types=gnmi -a 127.0.0.1:8080 -t OTHERS -logtostderr -insecure -qt p -pi 10s -q proc/loadavg
 ```
+Common Issue Solutions
+- Redis Server Not Connecting
+    - Make sure that you replaced the dump file with a non empty one. This can be recieved from a co worker
+    - Make sure that the redis-server outside of the docker is not running, if it is run:
+    ```
+    service redis-server stop
+    ```
+- If you recieve: fatal error: security/pam_appl.h, run:
+  ```
+  apt-get install -y libpam0g-dev
+  ```
